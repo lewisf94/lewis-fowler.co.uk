@@ -29,7 +29,7 @@
         <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
 
         <!--==================== TITLE and Favicon ====================-->
-        <title>Lewis Fowler's Portfolio</title>
+        <title>Lewis Fowler's Portfolio 👋</title>
         <!-- <link rel="shortcut icon" type="image/png" href="assets/img/"> --> 
         <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png">
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png">
@@ -40,7 +40,7 @@
         <meta name="msapplication-TileImage" content="https://github.com/nucerl/myPortfolio/blob/main/assets/snaps/light.png?raw=true" />    
 
         <!-- HTML Meta Tags -->
-        <title>Lewis Fowler's Portfolio</title>
+        <title>Lewis Fowler's Portfolio 👋</title>
         <meta name="description" content="Extensive experience in nuclear safety analyses and international project development.">
 
         <!-- Facebook Meta Tags -->
@@ -91,13 +91,6 @@
                                 <i class="uil uil-user nav__icon"></i> About
                             </a>
                         </li>
-
-                         <li class="nav__item">
-                            <a href="#projects" class="nav__link">
-                                <i class="uil uil-file-alt nav__icon"></i> Projects
-                            </a>
-                        </li>
-                        
                         <li class="nav__item">
                             <a href="#skills" class="nav__link">
                                 <i class="uil uil-setting nav__icon"></i> Skills
@@ -110,6 +103,11 @@
                             </a>
                         </li>
 
+                        <li class="nav__item">
+                            <a href="#projects" class="nav__link">
+                                <i class="uil uil-file-alt nav__icon"></i> Projects
+                            </a>
+                        </li>
                         <li class="nav__item">
                             <a href="#contact" class="nav__link">
                                 <i class="uil uil-message nav__icon"></i> Contact
@@ -174,7 +172,7 @@
                         <div class="home__data">
                             <h1 class="home__title">Lewis Fowler, MEng</h1>
                             <h3 class="home__subtitle">Mechanical Engineer</h3>
-                            <p class="home__description">I specialize in thermal-fluid systems and robotics, with hands-on experience across aerospace, energy, and embedded systems.</p>
+                            <p class="home__description">I specialize in thermal management solutions and have a passion for robotics.</p>
                             <a href="#contact" class="button button--flex">
                                 Contact Me <i class="uil uil-message button__icon"></i>
                             </a>
@@ -197,11 +195,29 @@
                 <span class="section__subtitle">Introduction</span>
 
                 <div class="about__container container grid">
-                    <img src="assets/img/about.jpg" alt="Erol Bicer Nuclear Power Plants Summit Session" class="about__img">
+                    <img src="assets/img/about.png" alt="Erol Bicer Nuclear Power Plants Summit Session" class="about__img">
 
 
                     <div class="about__data">
-                        <p class="about__description">I am a Mechanical Engineering graduate from the University of Glasgow with practical experience across aerospace, energy, and robotics. From Rolls-Royce heat exchanger design to robotics research at university, I have developed both technical depth and communication through global projects and placements.</p>
+                        <p class="about__description">My experience encompasses safety analyses for various nuclear power plant types using advanced system and CFD codes, 
+                            along with successfully developing, leading, and completing international projects through effective collaboration with global teams.</p>
+
+                        <div class="about__info">
+                            <div>
+                                <span class="about__info-title">08+</span>
+                                <span class="about__info-name">Years' <br> Experience</span>
+                            </div>
+
+                            <div>
+                                <span class="about__info-title">11+</span>
+                                <span class="about__info-name">Projects <br> Completed</span>
+                            </div>
+
+                            <div>
+                                <span class="about__info-title">16</span>
+                                <span class="about__info-name">Papers <br> Published</span>
+                            </div>
+                        </div>
                     <!--
                         <div class="about__buttons">
                             <a download="" href="assets/pdf/ErolBicer-Resume.pdf" class="button button--flex">
@@ -211,50 +227,6 @@
                     </div>
                 </div>
             </section>
-
-                                    <!--==================== PROJECTS ====================-->
-            <section class="projects section" id="projects" data-id="projects">
-            <h2 class="section__title">Projects</h2>
-            <span class="section__subtitle">Recent Work</span>
-
-            <div class="projects__container container grid">
-                
-                <!-- Project 1 -->
-                <div class="projects__card">
-                <img src="assets/img/self-balancing.png" alt="Self-Balancing Robot" class="projects__img">
-                <h3 class="projects__title">Self-Balancing Robot</h3>
-                <p class="projects__description">A two-wheeled robot built with Arduino, gyroscope, and PID control. Designed to test stability and embedded control systems.</p>
-                <a href="projects/self-balancing-robot.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-
-                <!-- Project 2 -->
-                <div class="projects__card">
-                <img src="assets/img/sonos-controller.jpg" alt="Sonos Controller" class="projects__img">
-                <h3 class="projects__title">ESP32 Sonos Controller</h3>
-                <p class="projects__description">Standalone touchscreen Sonos controller with album art, playback buttons, and real-time metadata using LVGL and ESP32.</p>
-                <a href="projects/sonos-controller.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-
-                <!-- Add more projects below -->
-                <!--
-                <div class="projects__card">
-                <img src="assets/img/your-image.png" alt="Your Project" class="projects__img">
-                <h3 class="projects__title">Project Name</h3>
-                <p class="projects__description">Short summary of what it is.</p>
-                <a href="projects/your-project.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-                -->
-
-            </div>
-            </section>
-
-
 
             <!--==================== SKILLS ====================-->
             <section class="skills section" id="skills" data-id="skills">
@@ -266,10 +238,57 @@
                         <!--==================== SKILLS 1 ====================-->
                         <div class="skills__content skills__open">
                             <div class="skills__header">
-                                <i class="uil uil-cube skills__icon"></i>
+                                <i class="uil uil-brackets-curly skills__icon"></i>
 
                                 <div>
-                                    <h1 class="skills__titles">CAD</h1>
+                                    <h1 class="skills__titles">System Codes</h1>
+                                    <!-- <span class="skills__subtitle">More than 8 years</span> -->
+                                </div>
+
+                                <i class="uil uil-angle-down skills__arrow"></i>
+                            </div>
+
+                            <div class="skills__list grid">
+                                <div class="skills__data">
+                                    <div class="skills__titles">
+                                        <h3 class="skills__name">RELAP5 | MARS-KS | SPACE</h3>
+                                        <!--<span class="skills__number">Advanced</span> -->
+                                    </div>
+                                    <div class="skills__bar">
+                                        <span class="skills__percantage skills__sys-code"></span>
+                                    </div>
+                                </div>
+
+                                <div class="skills__data">
+                                    <div class="skills__titles">
+                                        <h3 class="skills__name">GOTHIC | CAP</h3>
+                                        <!--<span class="skills__number">Advanced</span> -->
+                                    </div>
+                                    <div class="skills__bar">
+                                        <span class="skills__percantage skills__sys-code"></span>
+                                    </div>
+                                </div> 
+
+                                <div class="skills__data">
+                                    <div class="skills__titles">
+                                        <h3 class="skills__name">MELCOR</h3>
+                                        <!--<span class="skills__number">Advanced</span> -->
+                                    </div>
+                                    <div class="skills__bar">
+                                        <span class="skills__percantage skills__sys-code"></span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!--==================== SKILLS 2 ====================-->
+                        <div class="skills__content skills__close">
+                            <div class="skills__header">
+                                <i class="uil uil-vector-square skills__icon"></i>
+
+                                <div>
+                                    <h1 class="skills__titles">CFD Codes</h1>
                                     <!-- <span class="skills__subtitle">More than 2 years</span> -->
                                 </div>
 
@@ -279,7 +298,7 @@
                             <div class="skills__list grid">
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">Solidworks</h3>
+                                        <h3 class="skills__name">Ansys Fluent</h3>
                                         <!--<span class="skills__number">Proficient</span>--> 
                                     </div>
                                     <div class="skills__bar">
@@ -290,7 +309,7 @@
 
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">Fusion 360</h3>
+                                        <h3 class="skills__name">Something else</h3>
                                     </div>
                                     <div class="skills__bar">
                                         <!--<span class="skills__percantage skills__20"></span>-->
@@ -299,15 +318,17 @@
                                 </div>
 
                             </div>
-                        </div>     
-                        
-                        <!--==================== SKILLS 2 ====================-->
+                        </div>                        
+                    </div>
+
+                    <div>
+                        <!--==================== SKILLS 3 ====================-->
                         <div class="skills__content skills__close">
                             <div class="skills__header">
                                 <i class="uil uil-arrow skills__icon"></i>
 
                                 <div>
-                                    <h1 class="skills__titles">Programming</h1>
+                                    <h1 class="skills__titles">Coding Languages</h1>
                                     <!-- <span class="skills__subtitle">More than 2 years</span> -->
                                 </div>
 
@@ -317,7 +338,7 @@
                             <div class="skills__list grid">
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">Python </h3>
+                                        <h3 class="skills__name">PYTHON </h3>
                                         <!--<span class="skills__number">Proficient</span>--> 
                                     </div>
                                     <div class="skills__bar">
@@ -336,7 +357,7 @@
 
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">C++ | Arduino IDE</h3>
+                                        <h3 class="skills__name">C++</h3>
                                     </div>
                                     <div class="skills__bar">
                                         <span class="skills__percantage skills__sys-code"></span>
@@ -352,77 +373,17 @@
                                     </div>
                                 </div>
 
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">ROS 2</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
 
                             </div>
                         </div>  
-
-                                                <!--==================== SKILLS 3 ====================-->
-                        <div class="skills__content skills__close">
-                            <div class="skills__header">
-                                <i class="uil uil-wind skills__icon"></i>
-
-                                <div>
-                                    <h1 class="skills__titles">CFD</h1>
-                                    <!-- <span class="skills__subtitle">More than 8 years</span> -->
-                                </div>
-
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Ansys FLuent</h3>
-                                        <!--<span class="skills__number">Advanced</span> -->
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Simcenter STAR-CCM+</h3>
-                                        <!--<span class="skills__number">Advanced</span> -->
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div> 
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Boxer</h3>
-                                        <!--<span class="skills__number">Advanced</span> -->
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        
 
                         <!--==================== SKILLS 4 ====================-->
                         <div class="skills__content skills__close">
                             <div class="skills__header">
-                                <i class="uil uil-file-alt skills__icon"></i>
+                                <i class="uil uil-code-branch skills__icon"></i>
 
                                 <div>
-                                    <h1 class="skills__titles">Office</h1>
+                                    <h1 class="skills__titles">Tools</h1>
                                     <!-- <span class="skills__subtitle">More than 2 years</span> -->
                                 </div>
 
@@ -432,7 +393,7 @@
                             <div class="skills__list grid">
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">Microsoft Word | Microsoft Excel</h3>
+                                        <h3 class="skills__name">ERP | MS Project | Trello | Jira</h3>
                                     </div>
                                     <div class="skills__bar">
                                         <span class="skills__percantage skills__sys-code"></span>
@@ -441,34 +402,7 @@
 
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">LaTeX</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>  
-
-                
-                        <!--==================== SKILLS 5 ====================-->
-                        <div class="skills__content skills__close">
-                            <div class="skills__header">
-                                <i class="uil uil-wrench skills__icon"></i>
-
-                                <div>
-                                    <h1 class="skills__titles">Fabrication</h1>
-                                    <!-- <span class="skills__subtitle">More than 2 years</span> -->
-                                </div>
-
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Welding</h3>
+                                        <h3 class="skills__name">DOS | UNIX | Git</h3>
                                     </div>
                                     <div class="skills__bar">
                                         <span class="skills__percantage skills__sys-code"></span>
@@ -477,16 +411,7 @@
 
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">Soldering</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">3D Printing</h3>
+                                        <h3 class="skills__name">PCTRAN | SNAP</h3>
                                     </div>
                                     <div class="skills__bar">
                                         <span class="skills__percantage skills__sys-code"></span>
@@ -495,8 +420,17 @@
                                 
                                 <div class="skills__data">
                                     <div class="skills__titles">
-                                        <h3 class="skills__name">Woodworking</h3>
+                                        <h3 class="skills__name">ParaView | Salome | Origin</h3>
                                         <!--<span class="skills__number">Proficient</span>--> 
+                                    </div>
+                                    <div class="skills__bar">
+                                        <span class="skills__percantage skills__sys-code"></span>
+                                    </div>
+                                </div>
+
+                                <div class="skills__data">
+                                    <div class="skills__titles">
+                                        <h3 class="skills__name">CATIA | Mathcad | LaTeX</h3>
                                     </div>
                                     <div class="skills__bar">
                                         <span class="skills__percantage skills__sys-code"></span>
@@ -533,12 +467,12 @@
                              <!--==================== QUALIFICATION  1 ====================-->
                              <div class="qualification__data">
                                 <div>
-                                    <span class="qualification__degree">MEng</span>
-                                    <h3 class="qualification__title">Mechanical Engineering</h3>
-                                    <span class="qualification__subtitle">University of Glasgow</span>
+                                    <span class="qualification__degree">B.Sc.</span>
+                                    <h3 class="qualification__title">Nuclear Energy Engineering</h3>
+                                    <span class="qualification__subtitle">Hacettepe University</span>
                                     <div class="qualification__calendar">
                                         <i class="uil uil-calendar-alt"></i>
-                                        2018 - 2023
+                                        2013
                                     </div>
                                 </div>
                                 <div>
@@ -546,6 +480,66 @@
                                     <span class="qualification__line"></span>
                                 </div>
                             </div>
+
+                             <!--==================== QUALIFICATION  2 ====================-->
+                             <div class="qualification__data">
+                                <div></div>
+                                <div>
+                                    <span class="qualification__rounder"></span>
+                                    <span class="qualification__line"></span>
+                                </div>
+
+                                <div>
+                                    <span class="qualification__degree">MEng</span>
+                                    <h4 class="qualification__title">Mechanical Engineering</h4>
+                                    <span class="qualification__subtitle">University of Glasgow</span>
+                                    <div class="qualification__calendar">
+                                        <i class="uil uil-calendar-alt"></i>
+                                        2018 - 2023
+                                    </div>
+                                </div>
+
+                            </div>
+
+                             <!--==================== QUALIFICATION  3 ====================-->
+                             <div class="qualification__data">
+                                <div>
+                                    <span class="qualification__degree">Ph.D.</span>
+                                    <h3 class="qualification__title">Nuclear Engineering</h3>
+                                    <span class="qualification__subtitle">Seoul National University</span>
+                                    <div class="qualification__calendar">
+                                        <i class="uil uil-calendar-alt"></i>
+                                        2024
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="qualification__rounder"></span>
+                                    <!-- <span class="qualification__line"></span> -->
+                                </div>
+                            </div>
+
+                             <!--==================== QUALIFICATION  4 ====================-->
+                             <div class="qualification__data">
+                                <!-- <div></div> -->
+
+                                <!-- <div>
+                                    <span class="qualification__rounder"></span> -->
+                                    <!-- <span class="qualification__line"></span> -->
+                                <!-- </div> -->
+
+                                <!-- <div>
+                                    <h3 class="qualification__title">Nuclear Engineer</h3>
+                                    <span class="qualification__subtitle">Hacettepe University</span>
+                                    <div class="qualification__calendar">
+                                        <i class="uil uil-calendar-alt"></i>
+                                        2008 - 2013
+                                    </div>
+                                </div> -->
+
+
+                                
+                            </div>
+
                         </div>
 
                         <!--==================== QUALIFICATION CONTENT 2 ====================-->
@@ -553,11 +547,11 @@
                             <!--==================== QUALIFICATION  1 ====================-->
                             <div class="qualification__data">
                                <div>
-                                   <h3 class="qualification__title">Engineer (Placement)</h3>
-                                   <span class="qualification__subtitle">Rolls-Royce</span>
+                                   <h3 class="qualification__title">Pipeline Engineer</h3>
+                                   <span class="qualification__subtitle">ROSEN</span>
                                    <div class="qualification__calendar">
                                        <i class="uil uil-calendar-alt"></i>
-                                       2022 - 2023
+                                       2023 - 2024
                                    </div>
                                </div>
                                <div>
@@ -575,11 +569,11 @@
                                </div>
 
                                <div>
-                                   <h3 class="qualification__title">Engineer</h3>
-                                   <span class="qualification__subtitle">ROSEN</span>
+                                   <h3 class="qualification__title">Something Enginner</h3>
+                                   <span class="qualification__subtitle">Boyd</span>
                                    <div class="qualification__calendar">
                                        <i class="uil uil-calendar-alt"></i>
-                                       2023 - 2024
+                                       2025
                                    </div>
                                </div>
 
@@ -588,11 +582,11 @@
                             <!--==================== QUALIFICATION  3 ====================-->
                             <div class="qualification__data">
                                <div>
-                                   <h3 class="qualification__title">Applications Engineer</h3>
-                                   <span class="qualification__subtitle">Boyd</span>
+                                   <h3 class="qualification__title">Associate Manager</h3>
+                                   <span class="qualification__subtitle">FNC Technology</span>
                                    <div class="qualification__calendar">
                                        <i class="uil uil-calendar-alt"></i>
-                                       2025 - Present
+                                       2019 - 2023
                                    </div>
                                </div>
                                <div>
@@ -600,6 +594,26 @@
                                    <span class="qualification__line"></span>
                                </div>
                            </div>
+
+                            <!--==================== QUALIFICATION  4 ====================-->
+                            <div class="qualification__data">
+                                <div></div>
+                                <div>
+                                    <span class="qualification__rounder"></span>
+                                    <!-- <span class="qualification__line"></span> -->
+                                </div>
+ 
+                                <div>
+                                    <h3 class="qualification__title">Manager</h3>
+                                    <span class="qualification__subtitle">FNC Technology</span>
+                                    <div class="qualification__calendar">
+                                        <i class="uil uil-calendar-alt"></i>
+                                        2023 - Present
+                                    </div>
+                                </div>
+ 
+                            </div>
+
                        </div>
 
                     </div>
@@ -675,7 +689,7 @@
 
                             <div>
                                 <h3 class="contact__title">Call Me</h3>
-                                <span class="contact__subtitle">+44 7956158261</span>
+                                <span class="contact__subtitle">+82-10-7497-0705</span>
                             </div>
                         </div>
 
@@ -685,7 +699,7 @@
                             <div>
                                 <h3 class="contact__title">Email</h3>
                                 <!-- <span class="contact__subtitle">erolbicer@live.com</span> -->
-                                <p><a class="contact__subtitle" href="mailto:lewisfoweler94@gmail.com">lewisfowler94@gmail.com</a></p>
+                                <p><a class="contact__subtitle" href="mailto:erolbicer@live.com">erolbicer@live.com</a></p>
                             </div>
                         </div>
 
@@ -694,7 +708,7 @@
 
                             <div>
                                 <h3 class="contact__title">Location</h3>
-                                <span class="contact__subtitle">Newcastle upon Tyne</span>
+                                <span class="contact__subtitle">South Korea</span>
                             </div>
                         </div>
                     </div>
@@ -712,20 +726,42 @@
                     </div>
 
                     <ul class="footer__links">
-                        <li><a href="#about" class="footer__link">About</a></li>
-                        <li><a href="#projects" class="footer__link">Projects</a></li>
-                        <li><a href="#skills" class="footer__link">Skills</a></li>
-                        <li><a href="#qualifications" class="footer__link">Qualifications</a></li>
-                        <li><a href="#contact" class="footer__link">Contact</a></li>
+                        <li>
+                            <a href="#qualifications" class="footer__link">Qualifications</a>
+                        </li>
+
+                        <li>
+                            <a href="#testimonials" class="footer__link">References</a>
+                        </li>
+
+                        <li>
+                            <a href="#paper" class="footer__link">Papers</a>
+                        </li>
+
+                        <li>
+                            <a href="#presentation" class="footer__link">Presentations</a>
+                        </li>
+
+                        <li>
+                            <a href="#meeting" class="footer__link">Meeting</a>
+                        </li>
+
+                        <li>
+                            <a href="#videos" class="footer__link">Videos</a>
+                        </li>
+                        
                     </ul>
 
-
                     <div class="footer__socials">
-                        <a href="https://www.linkedin.com/in/lewis-fowler94/" target="_blank" class="footer__social">
+                        <a href="https://www.linkedin.com/in/erolbicer/" target="_blank" class="footer__social">
                             <i class="uil uil-linkedin-alt"></i>
                         </a>
 
-                        <a href="https://github.com/lewisf94" target="_blank" class="footer__social">
+                        <a href="https://www.researchgate.net/profile/Erol-Bicer/research" target="_blank" class="footer__social">
+                            <i class="uil uil-book-open"></i>
+                        </a>
+
+                        <a href="https://github.com/nucerl" target="_blank" class="footer__social">
                             <i class="uil uil-github-alt"></i>
                         </a>
 
