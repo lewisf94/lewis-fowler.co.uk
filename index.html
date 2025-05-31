@@ -37,26 +37,25 @@
         <!-- <link rel="manifest" href="/site.webmanifest"> -->
 
         <!-- MS Tile - for Microsoft apps-->
-        <meta name="msapplication-TileImage" content="https://github.com/nucerl/myPortfolio/blob/main/assets/snaps/light.png?raw=true" />    
+        <meta name="msapplication-TileImage" content="assets/img/profile.jpg" />
 
         <!-- HTML Meta Tags -->
-        <title>Lewis Fowler's Portfolio</title>
-        <meta name="description" content="Extensive experience in nuclear safety analyses and international project development.">
+        <meta name="description" content="Mechanical engineer with hands-on experience in robotics, embedded systems, and thermal-fluid design.">
 
         <!-- Facebook Meta Tags -->
         <meta property="og:url" content="https://www.lewis-fowler.co.uk/">
         <meta property="og:type" content="website">
-        <meta property="og:title" content="Lewis Fowler's Portfolio 👋">
-        <meta property="og:description" content="Extensive experience in nuclear safety analyses and international project development.">
-        <meta property="og:image" content="https://github.com/nucerl/myPortfolio/blob/main/assets/snaps/light.png?raw=true">
+        <meta property="og:title" content="Lewis Fowler's Portfolio">
+        <meta property="og:description" content="Projects in robotics, electronics, and mechanical systems.">
+        <meta property="og:image" content="assets/img/profile.jpg">
 
         <!-- Twitter Meta Tags -->
         <meta name="twitter:card" content="summary_large_image">
-        <meta property="twitter:domain" content="erolbicer.com">
+        <meta property="twitter:domain" content="lewis-fowler.co.uk">
         <meta property="twitter:url" content="https://www.lewis-fowler.co.uk/">
-        <meta name="twitter:title" content="Lewis Fowler's Portfolio 👋">
-        <meta name="twitter:description" content="Extensive experience in nuclear safety analyses and international project development.">
-        <meta name="twitter:image" content="https://github.com/nucerl/myPortfolio/blob/main/assets/snaps/light.png?raw=true">
+        <meta name="twitter:title" content="Lewis Fowler's Portfolio">
+        <meta name="twitter:description" content="Projects in robotics, electronics, and mechanical systems.">
+        <meta name="twitter:image" content="assets/img/profile.jpg">
 
         <!-- Google tag (gtag.js) -->
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-2367QRTG56"></script>
@@ -201,13 +200,12 @@
 
 
                     <div class="about__data">
-                        <p class="about__description">I am a Mechanical Engineering graduate from the University of Glasgow with practical experience across aerospace, energy, and robotics. From Rolls-Royce heat exchanger design to robotics research at university, I have developed both technical depth and communication through global projects and placements.</p>
-                    <!--
+                        <p class="about__description">I am a Mechanical Engineer with a passion for design, robotics, and thermal systems. I hold an MEng in Mechanical Engineering from the University of Glasgow and currently work at Boyd as a Design Engineer, developing custom cold plates for clients in the space and automotive industries. During university, I partnered with Rolls-Royce for my final-year project, designing a novel high-performance heat exchanger. My interest in robotics has grown through Formula Student and personal projects, many of which are featured below.</p>
                         <div class="about__buttons">
-                            <a download="" href="assets/pdf/ErolBicer-Resume.pdf" class="button button--flex">
+                            <a download="" href="assets/pdf/LewisFowlerCV.pdf" class="button button--flex">
                                 Download CV<i class="uil uil-download-alt button__icon"></i>
                             </a>
-                        </div> -->
+                        </div>
                     </div>
                 </div>
             </section>
@@ -221,9 +219,13 @@
                 
                 <!-- Project 1 -->
                 <div class="projects__card">
-                <img src="assets/img/self-balancing.png" alt="Self-Balancing Robot" class="projects__img">
+                <a href="projects/self-balancing-robot.html">
+                    <img src="assets/img/self-balancing.png" alt="Self-Balancing Robot" class="projects__img">
+                </a>
                 <h3 class="projects__title">Self-Balancing Robot</h3>
-                <p class="projects__description">A two-wheeled robot built with Arduino, gyroscope, and PID control. Designed to test stability and embedded control systems.</p>
+                <p class="projects__description">
+                    A two-wheeled robot built with Arduino, gyroscope, and PID control. Designed to test stability and embedded control systems.
+                </p>
                 <a href="projects/self-balancing-robot.html" class="button button--flex button--small projects__button">
                     View Project <i class="uil uil-arrow-right button__icon"></i>
                 </a>
@@ -231,10 +233,28 @@
 
                 <!-- Project 2 -->
                 <div class="projects__card">
-                <img src="assets/img/sonos-controller.jpg" alt="Sonos Controller" class="projects__img">
+                <a href="projects/sonos-controller.html">
+                    <img src="assets/img/sonos-controller.jpg" alt="Sonos Controller" class="projects__img">
+                </a>
                 <h3 class="projects__title">ESP32 Sonos Controller</h3>
-                <p class="projects__description">Standalone touchscreen Sonos controller with album art, playback buttons, and real-time metadata using LVGL and ESP32.</p>
+                <p class="projects__description">
+                    Standalone touchscreen Sonos controller with album art, playback buttons, and real-time metadata using LVGL and ESP32.
+                </p>
                 <a href="projects/sonos-controller.html" class="button button--flex button--small projects__button">
+                    View Project <i class="uil uil-arrow-right button__icon"></i>
+                </a>
+                </div>
+
+                <!-- Project 3 -->
+                <div class="projects__card">
+                <a href="projects/convoylink.html">
+                    <img src="assets/img/convoylink.png" alt="ConvoyLink" class="projects__img">
+                </a>
+                <h3 class="projects__title">ConvoyLink: GPS + Voice Comm for Group Road Trips</h3>
+                <p class="projects__description">
+                    Keeps your road trip group connected with push-to-talk voice, real-time GPS sharing, and a visual radar map showing each car's position — all without mobile signal.
+                </p>
+                <a href="projects/convoylink.html" class="button button--flex button--small projects__button">
                     View Project <i class="uil uil-arrow-right button__icon"></i>
                 </a>
                 </div>
