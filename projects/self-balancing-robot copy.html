@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Self-Balancing Robot | Lewis Fowler</title>
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+</head>
+<body>
+  <main class="main">
+    <section class="section">
+      <h2 class="section__title">Self-Balancing Robot</h2>
+      <span class="section__subtitle">A modular robotics project using Arduino + PID control</span>
+
+      <div class="projects__container">
+
+        <!-- Overview -->
+        <div class="projects__card" style="grid-column: span 2;">
+          <i class="uil uil-robot projects__icon"></i>
+          <h3 class="projects__title">Project Overview</h3>
+          <p class="projects__description">
+            A self-balancing, two-wheeled robot built with off-the-shelf components and a custom 3D-printed chassis. It uses an MPU-6050 IMU and a PID control loop to maintain balance in real time.
+          </p>
+        </div>
+
+        <!-- Hardware -->
+        <div class="projects__card">
+          <i class="uil uil-microchip projects__icon"></i>
+          <h3 class="projects__title">Hardware</h3>
+          <ul class="projects__description">
+            <li><strong>Controller:</strong> Arduino Nano</li>
+            <li><strong>IMU:</strong> MPU-6050</li>
+            <li><strong>Motors:</strong> 2x yellow DC geared motors</li>
+            <li><strong>Driver:</strong> TB6612FNG</li>
+            <li><strong>Power:</strong> 3.7V or 7.4V LiPo</li>
+            <li><strong>Chassis:</strong> 3D printed black PLA+</li>
+          </ul>
+        </div>
+
+        <!-- Control System -->
+        <div class="projects__card">
+          <i class="uil uil-sliders-v-alt projects__icon"></i>
+          <h3 class="projects__title">Control System</h3>
+          <p class="projects__description">
+            The robot fuses gyroscope and accelerometer data using a complementary filter to estimate tilt. A PID controller then adjusts motor speeds to stay balanced.
+          </p>
+          <ul class="projects__description">
+            <li><strong>P:</strong> Immediate error correction</li>
+            <li><strong>I:</strong> Drift compensation</li>
+            <li><strong>D:</strong> Stability and damping</li>
+          </ul>
+        </div>
+
+        <!-- Challenges -->
+        <div class="projects__card" style="grid-column: span 2;">
+          <i class="uil uil-exclamation-triangle projects__icon"></i>
+          <h3 class="projects__title">Key Challenges</h3>
+          <ul class="projects__description">
+            <li>Sensor noise required careful filtering</li>
+            <li>PID tuning without external tools</li>
+            <li>Voltage dips caused resets</li>
+            <li>Balance affected by smooth surfaces</li>
+          </ul>
+        </div>
+
+        <!-- CAD -->
+        <div class="projects__card">
+          <i class="uil uil-cube projects__icon"></i>
+          <h3 class="projects__title">CAD & Fabrication</h3>
+          <p class="projects__description">
+            Designed in SolidWorks and printed with black PLA+. The frame balances minimalism with function and uses bearings and mounting holes for easy assembly.
+          </p>
+          <a href="../assets/files/self-balancing-robot-cad.stl" class="button button--small button--link">Download STL</a>
+        </div>
+
+        <!-- GitHub -->
+        <div class="projects__card">
+          <i class="uil uil-github projects__icon"></i>
+          <h3 class="projects__title">Source Code</h3>
+          <p class="projects__description">All code and wiring diagrams are available on GitHub.</p>
+          <a href="https://github.com/lewisf94/self-balancing-robot" target="_blank" class="button button--small button--flex">
+            View on GitHub <i class="uil uil-arrow-right button__icon"></i>
+          </a>
+        </div>
+
+        <!-- Video -->
+        <div class="projects__card" style="grid-column: span 2;">
+          <i class="uil uil-play-circle projects__icon"></i>
+          <h3 class="projects__title">Video Demo</h3>
+          <div class="iframe__container">
+            <iframe class="iframe" src="https://www.youtube.com/embed/your_video_id" title="Self-Balancing Robot Demo" allowfullscreen></iframe>
+          </div>
+        </div>
+
+        <!-- Future Improvements -->
+        <div class="projects__card">
+          <i class="uil uil-lightbulb-alt projects__icon"></i>
+          <h3 class="projects__title">Future Improvements</h3>
+          <ul class="projects__description">
+            <li>Switch to ESP32 (wireless + ROS 2)</li>
+            <li>Add LiDAR or camera</li>
+            <li>Replace PID with LQR/Kalman</li>
+            <li>Custom PCB for clean wiring</li>
+          </ul>
+        </div>
+
+        <!-- Return -->
+        <div class="projects__card">
+          <i class="uil uil-arrow-left projects__icon"></i>
+          <h3 class="projects__title">Return</h3>
+          <p class="projects__description">Want to see more projects?</p>
+          <a href="../index.html#projects" class="button button--flex">
+            ← Back to Projects
+          </a>
+        </div>
+
+      </div>
+    </section>
+  </main>
+</body>
+</html>
