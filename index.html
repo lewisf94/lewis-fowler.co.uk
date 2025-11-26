@@ -1,770 +1,1081 @@
 <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       
-        <!--==================== UNICONS ====================-->
-        <link rel="stylesheet" href="https://unicons.iconscout.com/release/v4.0.8/css/line.css">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lewis Fowler - Engineering Portfolio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Import Map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "react": "https://esm.sh/react@18.2.0",
+                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+                "three": "https://esm.sh/three@0.160.0",
+                "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/",
+                "lucide-react": "https://esm.sh/lucide-react@0.300.0",
+                "matter-js": "https://esm.sh/matter-js@0.19.0"
+            }
+        }
+    </script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        body { font-family: 'Inter', sans-serif; }
         
-        <!--==================== SWIPER CSS ====================-->
-        <link rel="stylesheet" href="assets/css/swiper-bundle.min.css">
+        .blueprint-grid {
+            background-color: #1e3a8a;
+            background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
         
-        <!--==================== CSS ====================-->
-        <link rel="stylesheet" href="assets/css/styles.css">
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none; 
+            background: transparent; 
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            margin-top: -8px;
+            cursor: grab;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.2);
+            background: #2563eb;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
+    <div id="root"></div>
 
-        <!--==================== EMAIL SERVICE ====================-->
-        <!-- Sweet Alert -->
-        <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-        <!-- Email.JS -->
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-        <script type="text/javascript">
-            (function() {
-                emailjs.init('gF3M_-jS8KuvoCpV4');
-            })();
-        </script>
+    <!-- MAIN APP SCRIPT -->
+    <script type="text/babel" data-type="module">
+        import React, { useState, useEffect, useRef } from 'react';
+        import { createRoot } from 'react-dom/client';
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import Matter from 'matter-js';
+        import { 
+            Cpu, Code, Wrench, Radio, ChevronRight, ArrowLeft, 
+            Github, Linkedin, Mail, MapPin, Zap, Sun, Moon, 
+            Briefcase, GraduationCap, Layers, ExternalLink, 
+            MousePointer2, Move3d, Grid, Terminal, Play, RotateCw, Sliders, FileCode
+        } from 'lucide-react';
 
-        <!--==================== CALENDAR SERVICE ====================-->
-        <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet">
-        <script src="https://assets.calendly.com/assets/external/widget.js" type="text/javascript" async></script>
+        // ==========================================
+        //      USER CONFIGURATION
+        // ==========================================
+        
+        const DATA = {
+            config: {
+                mouseSensitivity: 2.0,
+                damping: 0.05,
+                defaultControlMode: 'hover',
+                heroScrollSensitivity: 2.5, 
+                heroSettings: { cameraZ: 6.0, yOffset: -0.5, scale: 1.0 },
+                armSettings: {
+                    cameraZ: 8.0,   
+                    yOffset: -1.5,  
+                    xOffset: 0.0,   
+                    scale: 1.2      
+                }
+            },
+            profile: {
+                name: "Lewis Fowler",
+                brandName: "LEWIS",
+                role: "Design Engineer",
+                subRoles: ["Thermal Management", "CFD Analysis", "Robotics"],
+                bio: "Design Engineer based in Newcastle upon Tyne, working with clients in automotive and space industries. Specializing in bespoke cold plate solutions, 3D CAD design, and CFD analysis with a strong background in robotics and fabrication.",
+                availability: "Design Engineer @ Boyd",
+                email: "Lewisfowler94@gmail.com",
+                linkedin: "linkedin.com/in/lewisfowler", 
+                github: "github.com/lewisfowler",
+                socialLinks: {
+                    linkedin: "#",
+                    github: "#",
+                    email: "mailto:Lewisfowler94@gmail.com"
+                }
+            },
+            experience: [
+                {
+                    id: 1,
+                    type: "work",
+                    title: "Design Engineer",
+                    place: "Boyd",
+                    date: "Jan 2025 – Present",
+                    desc: "Designing bespoke cold plate solutions for thermal management in automotive and space sectors. Managing projects from concept to delivery, utilizing 3D CAD, CFD analysis, and DFM."
+                },
+                {
+                    id: 2,
+                    type: "work",
+                    title: "Data Engineer",
+                    place: "ROSEN (UK)",
+                    date: "Sep 2023 – Dec 2024",
+                    desc: "Authored technical reports and analyzed In-Line Inspection Data. Liaised with engineering disciplines on technical calculations and standards."
+                },
+                {
+                    id: 3,
+                    type: "education",
+                    title: "University of Glasgow",
+                    place: "MEng",
+                    date: "2018 – 2023",
+                    desc: "Formula Student: Aerodynamics (CFD) & Control Teams. Final Year: Rolls-Royce placement designing high-performance heat exchangers."
+                },
+                {
+                    id: 4,
+                    type: "work",
+                    title: "External Placement",
+                    place: "Rolls-Royce",
+                    date: "May 2022 – Jan 2023",
+                    desc: "Developed designs for novel high-performance heat exchangers to improve aircraft system efficiency. Conducted risk assessments and regular presentations."
+                }
+            ],
+            // Types: 'chip', 'snake', 'printer', 'gear', 'wrench', 'plus', 'atom'
+            skills: [
+                { category: "Mechanical", name: "SolidWorks", type: "gear" },
+                { category: "Mechanical", name: "Fusion 360", type: "gear" },
+                { category: "Mechanical", name: "CFD / Fluent", type: "atom" },
+                { category: "Mechanical", name: "Fabrication", type: "wrench" },
+                { category: "Mechanical", name: "3D Printing", type: "printer" },
+                { category: "Embedded", name: "Arduino", type: "chip" },
+                { category: "Embedded", name: "ROS 2", type: "chip" },
+                { category: "Software", name: "MATLAB", type: "chip" },
+                { category: "Software", name: "Python", type: "snake" },
+                { category: "Software", name: "C++", type: "plus" },
+            ],
+            projects: [
+                {
+                    id: 'balance',
+                    title: 'Self-Balancing Robot',
+                    shortDesc: 'Formula Student Motion & Control Project.',
+                    type: 'robot',
+                    tags: ['C++', 'ROS 2', 'Control Theory'],
+                    modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0 }, 
+                    content: {
+                        intro: "Part of the Formula Student Motion and Control sub-team investigation. A classic engineering challenge: keeping an inherently unstable system upright.",
+                        tech: "Investigated implementing a PID controller and Extended Kalman Filter (EKF) for state estimation. This project developed my knowledge of robotics software such as ROS 2.",
+                        math: "PID Output = Kp * e(t) + Ki * ∫e(t)dt + Kd * de/dt. EKF used for sensor fusion to determine accurate tilt angle.",
+                        challenges: "Sensor noise was a major issue. The raw accelerometer data was too noisy for the D-term, requiring a moving average filter."
+                    }
+                },
+                {
+                    id: 'arm',
+                    title: 'Robotic Arm Control',
+                    shortDesc: 'Inverse Kinematics & Precision Control.',
+                    type: 'arm',
+                    tags: ['Robotics', 'MATLAB', 'Mechanical'],
+                    modelSettings: { cameraZ: 9.0, yOffset: -0.8, scale: 0.85 },
+                    content: {
+                        intro: "Exploration into robotics control systems. A desktop-scale manipulator designed to understand coordinate systems and actuator control.",
+                        tech: "Uses inverse kinematics to map cartesian coordinates to joint angles. Control logic implemented to ensure smooth path planning.",
+                        math: "Inverse Kinematics (IK) using Jacobian Transpose method to solve joint angles (θ1, θ2, θ3) for a given (x,y,z) target.",
+                        challenges: "Mitigating mechanical backlash in gears and ensuring mathematical solutions remained within physical joint constraints."
+                    }
+                },
+                {
+                    id: 'sonos',
+                    title: 'ESP32 SONOS Remote',
+                    shortDesc: 'Tactile smart home interface with Deep Sleep optimizations.',
+                    type: 'remote',
+                    tags: ['IoT', 'PCB Design', 'SolidWorks'],
+                    modelSettings: { cameraZ: 7.0, yOffset: 0.0, scale: 1.0 },
+                    content: {
+                        intro: "A physical volume knob for Sonos systems. Focus on low power consumption and sleek industrial design.",
+                        tech: "ESP32-C3 Deep Sleep architecture. Wakes on interrupt, connects, sends, sleeps. Battery life > 6 months.",
+                        math: "Implemented an exponential volume mapping curve (Logarithmic Potentiometer simulation) to match human hearing perception.",
+                        challenges: "Latency reduction. Optimistic UI updates were implemented to give instant LED feedback before network confirmation."
+                    }
+                },
+                {
+                    id: 'convoy',
+                    title: 'ConvoyLink',
+                    shortDesc: 'Off-grid LoRa Voice Comm & GPS Tracking.',
+                    type: 'convoy',
+                    tags: ['RF', 'Hardware', 'React Native'],
+                    modelSettings: { cameraZ: 6.0, yOffset: 0.0, scale: 1.1 },
+                    content: {
+                        intro: "Mesh network for vehicle tracking outside cell service areas.",
+                        tech: "LoRa (915MHz) for telemetry. Bluetooth bridge to mobile app. ESP32-S3 processor.",
+                        math: "Haversine formula used to calculate distance and bearing between nodes on the curved earth surface.",
+                        challenges: "Bandwidth limitations. Implemented Codec2 voice compression to fit audio data into small LoRa packets."
+                    }
+                }
+            ]
+        };
 
-        <!--==================== TITLE and Favicon ====================-->
-        <title>Lewis Fowler's Portfolio</title>
-        <!-- <link rel="shortcut icon" type="image/png" href="assets/img/"> --> 
-        <link rel="apple-touch-icon" sizes="180x180" href="/assets/favicon_io/apple-touch-icon.png">
-        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon_io/favicon-32x32.png">
-        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon_io/favicon-16x16.png">
-        <!-- <link rel="manifest" href="/site.webmanifest"> -->
+        // ==========================================
+        //      APP COMPONENTS
+        // ==========================================
 
-        <!-- MS Tile - for Microsoft apps-->
-        <meta name="msapplication-TileImage" content="assets/img/profile.jpg" />
+        const RobotTerminal = () => {
+            const [input, setInput] = useState("");
+            const [logs, setLogs] = useState([
+                { text: "Connecting to Serial Port /dev/ttyUSB0...", color: "text-slate-400" },
+                { text: "Connection Established (115200 baud)", color: "text-emerald-400" },
+                { text: "Ready. Type 'help' for commands.", color: "text-blue-400" }
+            ]);
+            const endRef = useRef(null);
 
-        <!-- HTML Meta Tags -->
-        <meta name="description" content="Mechanical engineer with hands-on experience in robotics, embedded systems, and thermal-fluid design.">
+            const handleCommand = (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = input.trim().toLowerCase();
+                    const newLogs = [...logs, { text: `> ${input}`, color: "text-white" }];
+                    if (cmd === 'help') {
+                        newLogs.push({ text: "Available Commands:", color: "text-yellow-400" });
+                        newLogs.push({ text: "  status    - Check battery & tilt angle", color: "text-slate-300" });
+                        newLogs.push({ text: "  tune pid  - Start auto-tune sequence", color: "text-slate-300" });
+                        newLogs.push({ text: "  clear     - Clear screen", color: "text-slate-300" });
+                    } else if (cmd === 'status') {
+                        newLogs.push({ text: "BATTERY: 84% | TILT: -0.4° | MOTOR: IDLE", color: "text-emerald-400" });
+                    } else if (cmd === 'tune pid') {
+                         newLogs.push({ text: "Starting Zig-Nichols tuning...", color: "text-yellow-400" });
+                         newLogs.push({ text: "Oscillation detected at Kp=12.5", color: "text-slate-400" });
+                         newLogs.push({ text: "Calculated: Kp=7.5, Ki=10.2, Kd=0.4", color: "text-emerald-400" });
+                         newLogs.push({ text: "Values saved to EEPROM.", color: "text-blue-400" });
+                    } else if (cmd === 'clear') {
+                        setLogs([{ text: "Console Cleared.", color: "text-slate-500" }]);
+                        setInput("");
+                        return;
+                    } else {
+                        newLogs.push({ text: `Unknown command: ${cmd}`, color: "text-red-400" });
+                    }
+                    setLogs(newLogs);
+                    setInput("");
+                }
+            };
+            useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
+            return (
+                <div className="w-full h-64 bg-black rounded-xl border border-slate-700 p-4 font-mono text-sm flex flex-col shadow-2xl">
+                    <div className="flex gap-2 mb-2 border-b border-slate-800 pb-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                        <span className="text-xs text-slate-500 ml-2">Serial Monitor (COM3)</span>
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-1">
+                        {logs.map((log, i) => <div key={i} className={`${log.color}`}>{log.text}</div>)}
+                        <div ref={endRef}></div>
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-300 mt-2 border-t border-slate-800 pt-2">
+                        <span>$</span>
+                        <input className="bg-transparent focus:outline-none flex-1" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} placeholder="Type command..." autoFocus />
+                    </div>
+                </div>
+            );
+        };
 
-        <!-- Facebook Meta Tags -->
-        <meta property="og:url" content="https://www.lewis-fowler.co.uk/">
-        <meta property="og:type" content="website">
-        <meta property="og:title" content="Lewis Fowler's Portfolio">
-        <meta property="og:description" content="Projects in robotics, electronics, and mechanical systems.">
-        <meta property="og:image" content="assets/img/profile.jpg">
+        const PhysicsSkills = ({ skills, isDark, isBlueprint }) => {
+            const sceneRef = useRef(null);
+            const engineRef = useRef(null);
+            const [resetKey, setResetKey] = useState(0);
 
-        <!-- Twitter Meta Tags -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta property="twitter:domain" content="lewis-fowler.co.uk">
-        <meta property="twitter:url" content="https://www.lewis-fowler.co.uk/">
-        <meta name="twitter:title" content="Lewis Fowler's Portfolio">
-        <meta name="twitter:description" content="Projects in robotics, electronics, and mechanical systems.">
-        <meta name="twitter:image" content="assets/img/profile.jpg">
+            useEffect(() => {
+                if (!sceneRef.current) return;
 
-        <!-- Google tag (gtag.js) -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-2367QRTG56"></script>
-        <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
+                const timer = setTimeout(() => {
+                    const width = sceneRef.current.clientWidth || 600;
+                    const height = 450; 
+                    const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodies = Matter.Bodies, Mouse = Matter.Mouse, MouseConstraint = Matter.MouseConstraint, Runner = Matter.Runner;
 
-        gtag('config', 'G-2367QRTG56');
-        </script>
+                    const engine = Engine.create();
+                    engineRef.current = engine;
 
-        <!-- Crisp Chatbot 
-        <script type="text/javascript">window.$crisp=[];window.CRISP_WEBSITE_ID="f1ceb2e6-7b94-4347-b101-6c1389f7f827";(function(){d=document;s=d.createElement("script");s.src="https://client.crisp.chat/l.js";s.async=1;d.getElementsByTagName("head")[0].appendChild(s);})();</script>
-        -->
-    </head>
+                    const render = Render.create({
+                        element: sceneRef.current,
+                        engine: engine,
+                        options: { width, height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
+                    });
 
-    <body>
-        <!--==================== HEADER ====================-->
-        <header class="header" id="header">
-            <nav class="nav container">
-                <a href="#" class="nav__logo">Lewis Fowler</a>
+                    const wallOptions = { isStatic: true, render: { fillStyle: isBlueprint ? '#1e3a8a' : (isDark ? '#1e293b' : '#e2e8f0'), visible: true } };
+                    World.add(engine.world, [
+                        Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions), 
+                        Bodies.rectangle(-25, height / 2, 50, height, wallOptions),      
+                        Bodies.rectangle(width + 25, height / 2, 50, height, wallOptions) 
+                    ]);
 
-                <div class="nav__menu" id="nav-menu">
-                    <ul class="nav__list grid">
-                        <li class="nav__item">
-                            <a href="#home" class="nav__link active-link">
-                                <i class="uil uil-estate nav__icon"></i> Home
-                            </a>
-                        </li>
-                        <li class="nav__item">
-                            <a href="#about" class="nav__link">
-                                <i class="uil uil-user nav__icon"></i> About
-                            </a>
-                        </li>
+                    const categoryColors = {
+                        'Mechanical': isBlueprint ? '#3b82f6' : '#3b82f6', 
+                        'Embedded': isBlueprint ? '#10b981' : '#10b981',   
+                        'Software': isBlueprint ? '#a855f7' : '#a855f7'    
+                    };
 
-                         <li class="nav__item">
-                            <a href="#projects" class="nav__link">
-                                <i class="uil uil-file-alt nav__icon"></i> Projects
-                            </a>
-                        </li>
+                    skills.forEach((skill, i) => {
+                        const x = Math.random() * (width - 150) + 75;
+                        const y = -Math.random() * 500 - 100; 
+                        let body;
+
+                        const commonProps = {
+                            restitution: 0.5,
+                            friction: 0.5,
+                            label: skill.name,
+                            plugin: { type: skill.type } 
+                        };
                         
-                        <li class="nav__item">
-                            <a href="#skills" class="nav__link">
-                                <i class="uil uil-setting nav__icon"></i> Skills
-                            </a>
-                        </li>
+                        const color = categoryColors[skill.category] || '#64748b';
+                        const stroke = isBlueprint ? '#ffffff' : 'transparent';
 
-                        <li class="nav__item">
-                            <a href="#qualifications" class="nav__link">
-                                <i class="uil uil-briefcase-alt nav__icon"></i> Qualifications
-                            </a>
-                        </li>
-
-                        <li class="nav__item">
-                            <a href="#contact" class="nav__link">
-                                <i class="uil uil-message nav__icon"></i> Contact
-                            </a>
-                        </li>
-                        <!--
-                        <li class="nav__item">
-                            <a href="resume.html" class="nav__link">
-                                <i class="uil uil-file-alt nav__icon"></i> Resume
-                            </a>
-                        </li> -->
-                    </ul>
-                    <i class="uil uil-times nav__close" id="nav-close"></i>
-                </div>
-
-                <div class="nav__btns">
-                    <!-- Theme Change Buttons -->
-                    <i class="uil uil-moon change-theme" id="theme-button"></i>
-
-
-                    <div class="nav__toggle" id="nav-toggle">
-                        <i class="uil uil-apps"></i>
-                    </div>
-                </div>
-            </nav>
-        </header>
-
-        <!--==================== MAIN ====================-->
-        <main class="main">
-            <!--==================== HOME ====================-->
-            <section class="home section" id="home" data-id="home">
-                <div class="home__container container grid">
-                    <div class="home__content grid">
-                        <div class="home__social">
-                            <a href="https://www.linkedin.com/in/lewis-fowler94/" target="_blank" class="home__social-icon">
-                                <i class="uil uil-linkedin-alt"></i>
-                            </a>
-                            <a href="https://github.com/lewisf94" target="_blank" class="home__social-icon">
-                                <i class="uil uil-github-alt"></i>
-                            </a>
-                        </div>
-
-                        <div class="home__img">
-                            <svg class="home__blob" viewBox="0 0 200 187" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                                <mask id="mask0" mask-type="alpha">
-                                    <path d="M190.312 36.4879C206.582 62.1187 201.309 102.826 182.328 134.186C163.346 165.547 
-                                    130.807 187.559 100.226 186.353C69.6454 185.297 41.0228 161.023 21.7403 129.362C2.45775 
-                                    97.8511 -7.48481 59.1033 6.67581 34.5279C20.9871 10.1032 59.7028 -0.149132 97.9666 
-                                    0.00163737C136.23 0.303176 174.193 10.857 190.312 36.4879Z"/>
-                                </mask>
-                                <g mask="url(#mask0)">
-                                    <path d="M190.312 36.4879C206.582 62.1187 201.309 102.826 182.328 134.186C163.346 
-                                    165.547 130.807 187.559 100.226 186.353C69.6454 185.297 41.0228 161.023 21.7403 
-                                    129.362C2.45775 97.8511 -7.48481 59.1033 6.67581 34.5279C20.9871 10.1032 59.7028 
-                                    -0.149132 97.9666 0.00163737C136.23 0.303176 174.193 10.857 190.312 36.4879Z"/>
-
-                                    <image class="home__blob-img" width="200" height="220" transform="translate(-20, -70) scale(1.5)" xlink:href="assets/img/perfil.png"/>
-                                </g>
-                            </svg>
-                        </div>
-
-                        <div class="home__data">
-                            <h1 class="home__title">Lewis Fowler, MEng</h1>
-                            <h3 class="home__subtitle">Mechanical Engineer</h3>
-                            <p class="home__description">I specialize in thermal-fluid systems and robotics, with hands-on experience across aerospace, energy, and embedded systems.</p>
-                            <a href="#contact" class="button button--flex">
-                                Contact Me <i class="uil uil-message button__icon"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="home__scroll">
-                        <a href="#about" class="home__scroll-button button--flex">
-                            <i class="uil uil-mouse-alt home__scroll-mouse"></i>
-                            <span class="home__scroll-name">Scroll Down</span>
-                            <i class="uil uil-arrow-down home__scroll-arrow"></i>
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            <!--==================== ABOUT ====================-->
-            <section class="about section" id="about" data-id="about">
-                <h2 class="section__title">About Me</h2>
-                <span class="section__subtitle">Introduction</span>
-
-                <div class="about__container container grid">
-                    <img src="assets/img/about.jpg" alt="Erol Bicer Nuclear Power Plants Summit Session" class="about__img">
-
-
-                    <div class="about__data">
-                        <p class="about__description">I am a Mechanical Engineer with a passion for design, robotics, and thermal systems. I hold an MEng in Mechanical Engineering from the University of Glasgow and currently work at Boyd as a Design Engineer, developing custom cold plates for clients in the space and automotive industries. During university, I partnered with Rolls-Royce for my final-year project, designing a novel high-performance heat exchanger. My interest in robotics has grown through Formula Student and personal projects, many of which are featured below.</p>
-                        <div class="about__buttons">
-                            <a download="" href="assets/pdf/LewisFowlerCV.pdf" class="button button--flex">
-                                Download CV<i class="uil uil-download-alt button__icon"></i>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-                                    <!--==================== PROJECTS ====================-->
-            <section class="projects section" id="projects" data-id="projects">
-            <h2 class="section__title">Projects</h2>
-            <span class="section__subtitle">Recent Work</span>
-
-            <div class="projects__container container grid">
-                
-                <!-- Project 1 -->
-                <div class="projects__card">
-                <a href="projects/self-balancing-robot.html">
-                    <img src="assets/img/self-balancing.png" alt="Self-Balancing Robot" class="projects__img">
-                </a>
-                <h3 class="projects__title">Self-Balancing Robot</h3>
-                <p class="projects__description">
-                    A two-wheeled robot built with Arduino, gyroscope, and PID control. Designed to test stability and embedded control systems.
-                </p>
-                <a href="projects/self-balancing-robot.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-
-                <!-- Project 2 -->
-                <div class="projects__card">
-                <a href="projects/sonos-controller.html">
-                    <img src="assets/img/sonos-controller.jpg" alt="Sonos Controller" class="projects__img">
-                </a>
-                <h3 class="projects__title">ESP32 Sonos Controller</h3>
-                <p class="projects__description">
-                    Standalone touchscreen Sonos controller with album art, playback buttons, and real-time metadata using LVGL and ESP32.
-                </p>
-                <a href="projects/sonos-controller.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-
-                <!-- Project 3 -->
-                <div class="projects__card">
-                <a href="projects/convoylink.html">
-                    <img src="assets/img/convoylink.png" alt="ConvoyLink" class="projects__img">
-                </a>
-                <h3 class="projects__title">ConvoyLink: GPS + Voice Comm for Group Road Trips</h3>
-                <p class="projects__description">
-                    Keeps your road trip group connected with push-to-talk voice, real-time GPS sharing, and a visual radar map showing each car's position — all without mobile signal.
-                </p>
-                <a href="projects/convoylink.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-
-                <!-- Add more projects below -->
-                <!--
-                <div class="projects__card">
-                <img src="assets/img/your-image.png" alt="Your Project" class="projects__img">
-                <h3 class="projects__title">Project Name</h3>
-                <p class="projects__description">Short summary of what it is.</p>
-                <a href="projects/your-project.html" class="button button--flex button--small projects__button">
-                    View Project <i class="uil uil-arrow-right button__icon"></i>
-                </a>
-                </div>
-                -->
-
-            </div>
-            </section>
-
-
-
-            <!--==================== SKILLS ====================-->
-            <section class="skills section" id="skills" data-id="skills">
-                <h2 class="section__title">Skills</h2>
-                <span class="section__subtitle">Technical Competence</span>
-
-                <div class="skills__container container grid">
-                    <div>
-                        <!--==================== SKILLS 1 ====================-->
-                        <div class="skills__content skills__open">
-                            <div class="skills__header">
-                                <i class="uil uil-cube skills__icon"></i>
-
-                                <div>
-                                    <h1 class="skills__titles">CAD</h1>
-                                    <!-- <span class="skills__subtitle">More than 2 years</span> -->
-                                </div>
-
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Solidworks</h3>
-                                        <!--<span class="skills__number">Proficient</span>--> 
-                                    </div>
-                                    <div class="skills__bar">
-                                        <!--<span class="skills__percantage skills__80"></span>-->
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Fusion 360</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <!--<span class="skills__percantage skills__20"></span>-->
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>     
+                        if (skill.type === 'snake') {
+                            // Compound Body: Sinuous "S" shape for Snake
+                            // Circles offset in X and Y to make a wave
+                            const c1 = Bodies.circle(-20, -10, 15);
+                            const c2 = Bodies.circle(-10, -5, 15);
+                            const c3 = Bodies.circle(0, 0, 15);
+                            const c4 = Bodies.circle(10, 5, 15);
+                            const c5 = Bodies.circle(20, 10, 15);
+                            
+                            body = Matter.Body.create({
+                                parts: [c1, c2, c3, c4, c5],
+                                ...commonProps
+                            });
+                        } else if (skill.type === 'chip') {
+                            // Chip body
+                            body = Bodies.rectangle(x, y, 120, 60, { 
+                                ...commonProps, 
+                                chamfer: { radius: 2 } 
+                            });
+                        } else if (skill.type === 'plus') {
+                            // C++ Plus Shape
+                            const partV = Bodies.rectangle(0, 0, 25, 80);
+                            const partH = Bodies.rectangle(0, 0, 80, 25);
+                            body = Matter.Body.create({ parts: [partV, partH], ...commonProps });
+                        } else if (skill.type === 'wrench') {
+                            // Wrench: Handle + U-Jaw
+                            const handle = Bodies.rectangle(0, 20, 15, 90);
+                            // Jaw made of 3 parts to form a 'C'
+                            const jawBack = Bodies.rectangle(0, -30, 40, 15);
+                            const jawL = Bodies.rectangle(-15, -45, 10, 30, { angle: -0.2 });
+                            const jawR = Bodies.rectangle(15, -45, 10, 30, { angle: 0.2 });
+                            
+                            body = Matter.Body.create({ parts: [handle, jawBack, jawL, jawR], ...commonProps });
+                        } else if (skill.type === 'atom') {
+                            // Central + Orbital
+                            const center = Bodies.circle(0, 0, 25);
+                            const orbit1 = Bodies.rectangle(0, 0, 90, 8, { angle: Math.PI/4 });
+                            const orbit2 = Bodies.rectangle(0, 0, 90, 8, { angle: -Math.PI/4 });
+                            body = Matter.Body.create({ parts: [center, orbit1, orbit2], ...commonProps });
+                        } else if (skill.type === 'printer') {
+                            body = Bodies.rectangle(x, y, 100, 80, commonProps);
+                        } else {
+                            // Gear
+                            body = Bodies.polygon(x, y, 6, 40, commonProps);
+                        }
                         
-                        <!--==================== SKILLS 2 ====================-->
-                        <div class="skills__content skills__close">
-                            <div class="skills__header">
-                                <i class="uil uil-arrow skills__icon"></i>
+                        if(body) {
+                            Matter.Body.setPosition(body, { x, y });
+                            body.plugin.renderType = skill.type; 
+                            body.plugin.color = color;
+                            World.add(engine.world, body);
+                        }
+                    });
 
-                                <div>
-                                    <h1 class="skills__titles">Programming</h1>
-                                    <!-- <span class="skills__subtitle">More than 2 years</span> -->
-                                </div>
+                    const mouse = Mouse.create(render.canvas);
+                    mouse.pixelRatio = window.devicePixelRatio;
+                    const mouseConstraint = MouseConstraint.create(engine, {
+                        mouse: mouse,
+                        constraint: { stiffness: 0.2, render: { visible: false } }
+                    });
+                    World.add(engine.world, mouseConstraint);
+                    render.mouse = mouse;
 
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Python </h3>
-                                        <!--<span class="skills__number">Proficient</span>--> 
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">MATLAB</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">C++ | Arduino IDE</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
+                    // --- CUSTOM RENDERER ---
+                    Matter.Events.on(render, 'afterRender', function() {
+                        const context = render.context;
+                        context.textAlign = "center";
+                        context.textBaseline = "middle";
+                        
+                        engine.world.bodies.forEach(body => {
+                            if (!body.isStatic) {
+                                const { x, y } = body.position;
+                                const type = body.plugin.renderType || 'default';
+                                const color = body.plugin.color || '#64748b';
                                 
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">HTML | CSS</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
+                                context.save();
+                                context.translate(x, y);
+                                context.rotate(body.angle);
 
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">ROS 2</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-
-                            </div>
-                        </div>  
-
-                                                <!--==================== SKILLS 3 ====================-->
-                        <div class="skills__content skills__close">
-                            <div class="skills__header">
-                                <i class="uil uil-wind skills__icon"></i>
-
-                                <div>
-                                    <h1 class="skills__titles">CFD</h1>
-                                    <!-- <span class="skills__subtitle">More than 8 years</span> -->
-                                </div>
-
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Ansys FLuent</h3>
-                                        <!--<span class="skills__number">Advanced</span> -->
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Simcenter STAR-CCM+</h3>
-                                        <!--<span class="skills__number">Advanced</span> -->
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div> 
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Boxer</h3>
-                                        <!--<span class="skills__number">Advanced</span> -->
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        
-
-                        <!--==================== SKILLS 4 ====================-->
-                        <div class="skills__content skills__close">
-                            <div class="skills__header">
-                                <i class="uil uil-file-alt skills__icon"></i>
-
-                                <div>
-                                    <h1 class="skills__titles">Office</h1>
-                                    <!-- <span class="skills__subtitle">More than 2 years</span> -->
-                                </div>
-
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Microsoft Word | Microsoft Excel</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">LaTeX</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                            </div>
-                        </div>  
-
-                
-                        <!--==================== SKILLS 5 ====================-->
-                        <div class="skills__content skills__close">
-                            <div class="skills__header">
-                                <i class="uil uil-wrench skills__icon"></i>
-
-                                <div>
-                                    <h1 class="skills__titles">Fabrication</h1>
-                                    <!-- <span class="skills__subtitle">More than 2 years</span> -->
-                                </div>
-
-                                <i class="uil uil-angle-down skills__arrow"></i>
-                            </div>
-
-                            <div class="skills__list grid">
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Welding</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Soldering</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
-
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">3D Printing</h3>
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
+                                context.fillStyle = color;
                                 
-                                <div class="skills__data">
-                                    <div class="skills__titles">
-                                        <h3 class="skills__name">Woodworking</h3>
-                                        <!--<span class="skills__number">Proficient</span>--> 
-                                    </div>
-                                    <div class="skills__bar">
-                                        <span class="skills__percantage skills__sys-code"></span>
-                                    </div>
-                                </div>
+                                // --- DRAWING BASED ON TYPE ---
+                                if (type === 'snake') {
+                                    // Body is drawn by parts mostly, let's add eyes/tongue to the "head" area
+                                    // Assuming head is at top right due to creation order
+                                    context.fillStyle = "white";
+                                    context.beginPath(); context.arc(25, 8, 3, 0, 2*Math.PI); context.fill(); 
+                                    context.beginPath(); context.arc(15, 12, 3, 0, 2*Math.PI); context.fill();
+                                    context.fillStyle = "red"; 
+                                    context.fillRect(28, 8, 8, 2);
+                                } 
+                                else if (type === 'chip') {
+                                    context.fillStyle = '#1f2937'; 
+                                    context.fillRect(-60, -30, 120, 60);
+                                    context.fillStyle = "#fbbf24"; 
+                                    for(let i=-3; i<=3; i++) {
+                                        context.fillRect(-70, i*8 - 2, 10, 4);
+                                        context.fillRect(60, i*8 - 2, 10, 4);
+                                    }
+                                }
+                                else if (type === 'wrench') {
+                                    context.fillStyle = color; 
+                                }
+                                else if (type === 'plus') {
+                                    context.fillStyle = color;
+                                }
+                                else if (type === 'atom') {
+                                    context.fillStyle = color;
+                                    context.beginPath(); context.arc(0,0,25,0,2*Math.PI); context.fill();
+                                    context.strokeStyle = "rgba(255,255,255,0.5)";
+                                    context.lineWidth = 2;
+                                    context.beginPath(); context.ellipse(0,0,45,4, Math.PI/4, 0, 2*Math.PI); context.stroke();
+                                    context.beginPath(); context.ellipse(0,0,45,4, -Math.PI/4, 0, 2*Math.PI); context.stroke();
+                                }
+                                else if (type === 'printer') {
+                                    context.fillStyle = color;
+                                    context.fillRect(-50, -40, 100, 80);
+                                    context.strokeStyle = "rgba(255,255,255,0.3)";
+                                    context.lineWidth = 2;
+                                    context.beginPath();
+                                    context.moveTo(-40, 20); context.lineTo(40, 20);
+                                    context.moveTo(-40, 0); context.lineTo(40, 0);
+                                    context.moveTo(-40, -20); context.lineTo(40, -20);
+                                    context.stroke();
+                                }
+                                else if (type === 'gear') {
+                                    context.fillStyle = color;
+                                    context.fillStyle = "#1e293b";
+                                    context.beginPath(); context.arc(0, 0, 12, 0, 2 * Math.PI); context.fill();
+                                }
 
-                            </div>
-                        </div>  
+                                // LABEL
+                                if (body.label) {
+                                    context.font = "bold 11px 'Inter', sans-serif";
+                                    context.fillStyle = "#ffffff";
+                                    // Offset text for complex shapes
+                                    if(type === 'wrench') context.fillText(body.label, 0, 20);
+                                    else if(type === 'snake') context.fillText(body.label, -5, -5);
+                                    else context.fillText(body.label, 0, 0);
+                                }
+                                
+                                context.restore();
+                            }
+                        });
+                    });
 
-                    </div> 
-                </div>
-            </section>
+                    Runner.run(engine);
+                    Render.run(render);
+                }, 100);
 
-            <!--==================== QUALIFICATION ====================-->
-            <section class="qualification section" id="qualifications" data-id="qualification">
-                <h2 class="section__title">Qualifications</h2>
-                <span class="section__subtitle">Academic and Professional Career</span>
+                return () => {
+                    clearTimeout(timer);
+                    if (engineRef.current) {
+                        Matter.World.clear(engineRef.current.world);
+                        Matter.Engine.clear(engineRef.current);
+                    }
+                    if (sceneRef.current) sceneRef.current.innerHTML = '';
+                };
+            }, [resetKey, isDark, isBlueprint]);
 
-                <div class="qualification__container container">
-                    <div class="qualification__tabs">
-                        <div class="qualification__button button--flex qualification__active" data-target="#education">
-                            <i class="uil uil-graduation-cap qualification__icon"></i>
-                            Education
-                        </div>
-
-                        <div class="qualification__button button--flex" data-target="#work">
-                            <i class="uil uil-briefcase-alt qualification__icon"></i>
-                            Work
-                        </div>
-                    </div>
-                    <div class="qualification__sections">
-                        <!--==================== QUALIFICATION CONTENT 1 ====================-->
-                        <div class="qualification__content qualification__active" data-content id="education">
-                             <!--==================== QUALIFICATION  1 ====================-->
-                             <div class="qualification__data">
-                                <div>
-                                    <span class="qualification__degree">MEng</span>
-                                    <h3 class="qualification__title">Mechanical Engineering</h3>
-                                    <span class="qualification__subtitle">University of Glasgow</span>
-                                    <div class="qualification__calendar">
-                                        <i class="uil uil-calendar-alt"></i>
-                                        2018 - 2023
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="qualification__rounder"></span>
-                                    <span class="qualification__line"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!--==================== QUALIFICATION CONTENT 2 ====================-->
-                        <div class="qualification__content" data-content id="work">
-                            <!--==================== QUALIFICATION  1 ====================-->
-                            <div class="qualification__data">
-                               <div>
-                                   <h3 class="qualification__title">Engineer (Placement)</h3>
-                                   <span class="qualification__subtitle">Rolls-Royce</span>
-                                   <div class="qualification__calendar">
-                                       <i class="uil uil-calendar-alt"></i>
-                                       2022 - 2023
-                                   </div>
-                               </div>
-                               <div>
-                                   <span class="qualification__rounder"></span>
-                                   <span class="qualification__line"></span>
-                               </div>
-                           </div>
-
-                            <!--==================== QUALIFICATION  2 ====================-->
-                            <div class="qualification__data">
-                               <div></div>
-                               <div>
-                                   <span class="qualification__rounder"></span>
-                                   <span class="qualification__line"></span>
-                               </div>
-
-                               <div>
-                                   <h3 class="qualification__title">Engineer</h3>
-                                   <span class="qualification__subtitle">ROSEN</span>
-                                   <div class="qualification__calendar">
-                                       <i class="uil uil-calendar-alt"></i>
-                                       2023 - 2024
-                                   </div>
-                               </div>
-
-                           </div>
-
-                            <!--==================== QUALIFICATION  3 ====================-->
-                            <div class="qualification__data">
-                               <div>
-                                   <h3 class="qualification__title">Applications Engineer</h3>
-                                   <span class="qualification__subtitle">Boyd</span>
-                                   <div class="qualification__calendar">
-                                       <i class="uil uil-calendar-alt"></i>
-                                       2025 - Present
-                                   </div>
-                               </div>
-                               <div>
-                                   <span class="qualification__rounder"></span>
-                                   <span class="qualification__line"></span>
-                               </div>
-                           </div>
-                       </div>
-
+            return (
+                <div className="relative mt-8">
+                    <div className="w-full h-[450px] overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 relative">
+                        <div ref={sceneRef} className="w-full h-full block"></div>
+                        <div className="absolute top-4 left-4 text-xs font-mono opacity-50 pointer-events-none">PHYSICS ENGINE: ACTIVE</div>
+                        <button onClick={() => setResetKey(k => k + 1)} className="absolute top-4 right-4 p-2 bg-slate-200 dark:bg-slate-800 rounded-full hover:scale-110 transition-transform"><RotateCw size={14} /></button>
                     </div>
                 </div>
-            </section>
+            );
+        };
+
+        // --- ROBOT ARM CONTROLS (REF BASED) ---
+        const RobotArmControls = ({ armStateRef, isBlueprint, isDark }) => {
+            const [, forceUpdate] = useState(0);
+
+            const handleChange = (key, value) => {
+                if (armStateRef.current) {
+                    armStateRef.current[key] = parseFloat(value);
+                    forceUpdate(n => n + 1); 
+                }
+            };
+
+            const Slider = ({ label, propKey, min, max }) => {
+                const val = armStateRef.current ? armStateRef.current[propKey] : 0;
+                return (
+                    <div className="mb-6">
+                        <div className="flex justify-between mb-2 text-xs font-mono font-bold">
+                            <span className={isBlueprint ? "text-cyan-300" : "text-slate-500"}>{label}</span>
+                            <span className={isBlueprint ? "text-white" : (isDark ? "text-white" : "text-slate-900")}>{val.toFixed(0)}°</span>
+                        </div>
+                        <input 
+                            type="range" min={min} max={max} 
+                            defaultValue={val}
+                            onInput={(e) => handleChange(propKey, e.target.value)} 
+                            className="w-full h-2 rounded-lg appearance-none cursor-grab active:cursor-grabbing bg-slate-300 dark:bg-slate-700 accent-blue-600"
+                        />
+                    </div>
+                );
+            };
+
+            return (
+                <div className={`h-full flex flex-col justify-center p-8 rounded-2xl border ${isBlueprint ? 'bg-blue-900/40 border-blue-700' : (isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}`}>
+                    <div className={`flex items-center gap-3 mb-8 ${isBlueprint ? 'text-cyan-300' : 'text-blue-600'}`}>
+                        <Sliders size={24} />
+                        <h2 className="text-xl font-bold">Manual Override</h2>
+                    </div>
+                    <div className="space-y-4">
+                        <Slider label="BASE (J1)" propKey="base" min={-180} max={180} />
+                        <Slider label="SHOULDER (J2)" propKey="shoulder" min={-45} max={90} />
+                        <Slider label="ELBOW (J3)" propKey="elbow" min={-90} max={90} />
+                        <Slider label="WRIST (J4)" propKey="wrist" min={-180} max={180} />
+                        <Slider label="GRIPPER" propKey="gripper" min={0} max={100} />
+                    </div>
+                    <div className={`mt-auto pt-6 border-t ${isBlueprint ? 'border-blue-800 text-blue-300' : 'border-slate-200 text-slate-500'} text-xs font-mono`}>
+                        > STATUS: ONLINE<br/>> SERVO SYNC: ACTIVE
+                    </div>
+                </div>
+            );
+        };
+
+        const ThreeScene = ({ type, isDark, isBlueprint, scaleOnHover, customSettings, armStateRef, staticCamera }) => {
+            const mountRef = useRef(null);
+            const mouseRef = useRef({ x: 0, y: 0 });
+            const frameIdRef = useRef(null);
+            const modelRef = useRef(null);
+            const [controlMode, setControlMode] = useState(DATA.config.defaultControlMode); 
             
-            <!--==================== TESTIMONIAL ====================
-            <section class="testimonial section" id="testimonials">
-                <h2 class="section__title">References</h2>
-                <span class="section__subtitle">Testimonials</span>
+            const dragStartPos = useRef({ x: 0, y: 0 });
+            const isDragging = useRef(false);
+            const hasMoved = useRef(false);
+            const settings = customSettings || DATA.config.heroSettings;
 
-                <div class="testimonial__container container swiper">
-                    <div class="swiper-wrapper">
-                         ==================== TESTIMONIAL 1 ====================
-                         <div class="testimonial__content swiper-slide">
-                            <div class="testimonial__data">
-                                <div class="testimonial__header">
-                                    <img src="assets/img/dsk.jpg" alt="" class="testimonial__img">
+            const droneParts = useRef({ motors: [], props: [], camera: null, arms: [] });
+            const armParts = useRef({ base: null, shoulder: null, elbow: null, wrist: null });
 
-                                    <div>
-                                        <h3 class="testimonial__name">Mr. David S. Kessel</h3>
-                                        <span class="testimonial__client">KINGS, Research Professor</span>
+            useEffect(() => {
+                const handleMouseUp = () => { isDragging.current = false; };
+                window.addEventListener('mouseup', handleMouseUp);
+
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+                
+                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+                
+                if (mountRef.current) {
+                    mountRef.current.innerHTML = '';
+                    mountRef.current.appendChild(renderer.domElement);
+                    const rect = mountRef.current.getBoundingClientRect();
+                    renderer.setSize(rect.width, rect.height);
+                    camera.aspect = rect.width / rect.height;
+                    camera.updateProjectionMatrix();
+                }
+
+                const resizeObserver = new ResizeObserver(() => {
+                    if (mountRef.current) {
+                        const rect = mountRef.current.getBoundingClientRect();
+                        renderer.setSize(rect.width, rect.height);
+                        camera.aspect = rect.width / rect.height;
+                        camera.updateProjectionMatrix();
+                    }
+                });
+                if(mountRef.current) resizeObserver.observe(mountRef.current);
+
+                if (type === 'arm' && DATA.config.armSettings) {
+                    camera.position.z = DATA.config.armSettings.cameraZ;
+                } else {
+                    camera.position.z = settings.cameraZ;
+                }
+                camera.position.y = 0.5;
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                scene.add(ambientLight);
+                const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                dirLight.position.set(5, 5, 5);
+                scene.add(dirLight);
+                const backLight = new THREE.DirectionalLight(0x3b82f6, 0.5);
+                backLight.position.set(-5, 0, -5);
+                scene.add(backLight);
+
+                let materialMain, materialAccent, materialWire;
+
+                if (isBlueprint) {
+                    materialMain = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
+                    materialAccent = new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true });
+                    materialWire = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.2 });
+                } else {
+                    const colorMain = isDark ? 0xe2e8f0 : 0x334155; 
+                    materialMain = new THREE.MeshPhongMaterial({ color: colorMain, specular: 0x555555, shininess: 30 });
+                    materialAccent = new THREE.MeshPhongMaterial({ color: 0x3b82f6, emissive: 0x1d4ed8, emissiveIntensity: 0.1 });
+                    materialWire = new THREE.MeshBasicMaterial({ color: 0x3b82f6, wireframe: true, transparent: true, opacity: 0.15 });
+                }
+
+                const group = new THREE.Group();
+                
+                if (type === 'arm' && DATA.config.armSettings) {
+                    group.position.y = DATA.config.armSettings.yOffset;
+                    group.position.x = DATA.config.armSettings.xOffset;
+                    group.scale.set(DATA.config.armSettings.scale, DATA.config.armSettings.scale, DATA.config.armSettings.scale);
+                } else {
+                    group.position.y = settings.yOffset;
+                    group.scale.set(settings.scale, settings.scale, settings.scale);
+                }
+
+                createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
+
+                scene.add(group);
+                modelRef.current = group;
+
+                const animate = () => {
+                    frameIdRef.current = requestAnimationFrame(animate);
+                    
+                    if (type === 'hero') {
+                        const scrollY = window.scrollY;
+                        const maxScroll = 500; 
+                        let progress = Math.min(scrollY / maxScroll, 1);
+                        progress = progress * (2 - progress); 
+                        const sens = DATA.config.heroScrollSensitivity;
+                        droneParts.current.motors.forEach(p => p.position.y = 0.1 + (progress * 0.5 * sens));
+                        droneParts.current.props.forEach((p, i) => {
+                            p.position.y = 0.25 + (progress * 0.8 * sens);
+                            p.rotation.y += 0.2; 
+                        });
+                        if (droneParts.current.camera) droneParts.current.camera.position.y = -0.3 - (progress * 0.3 * sens);
+                        if (modelRef.current) modelRef.current.rotation.y += 0.005;
+                    }
+                    
+                    if (type === 'arm' && armStateRef && armStateRef.current && armParts.current.base) {
+                         const s = armStateRef.current;
+                         armParts.current.base.rotation.y = THREE.MathUtils.degToRad(s.base);
+                         armParts.current.shoulder.rotation.z = THREE.MathUtils.degToRad(s.shoulder);
+                         armParts.current.elbow.rotation.z = THREE.MathUtils.degToRad(s.elbow);
+                         if (armParts.current.wrist) {
+                             armParts.current.wrist.rotation.x = THREE.MathUtils.degToRad(s.wrist);
+                             const gripScale = 1 - (s.gripper / 200);
+                             armParts.current.wrist.scale.set(gripScale, gripScale, gripScale);
+                         }
+                    }
+
+                    if (modelRef.current && type !== 'hero') {
+                        if (!staticCamera && controlMode === 'hover') {
+                            const targetX = mouseRef.current.y * DATA.config.mouseSensitivity; 
+                            const targetY = mouseRef.current.x * DATA.config.mouseSensitivity;
+                            modelRef.current.rotation.x += (targetX - modelRef.current.rotation.x) * DATA.config.damping;
+                            modelRef.current.rotation.y += (targetY - modelRef.current.rotation.y) * DATA.config.damping;
+                        } 
+                        
+                        if (!staticCamera && !isDragging.current && type !== 'arm') {
+                             modelRef.current.rotation.y += 0.001;
+                        }
+                    }
+                    renderer.render(scene, camera);
+                };
+                animate();
+
+                return () => {
+                    cancelAnimationFrame(frameIdRef.current);
+                    window.removeEventListener('mouseup', handleMouseUp);
+                    resizeObserver.disconnect();
+                    if (mountRef.current) mountRef.current.innerHTML = '';
+                    renderer.dispose();
+                };
+            }, [type, isDark, controlMode, settings, isBlueprint, staticCamera]);
+
+            const onMouseMove = (e) => {
+                if (controlMode === 'hover') {
+                    const rect = mountRef.current.getBoundingClientRect();
+                    mouseRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouseRef.current.y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+                } else if (controlMode === 'drag' && isDragging.current) {
+                    const deltaX = e.clientX - dragStartPos.current.x;
+                    const deltaY = e.clientY - dragStartPos.current.y;
+                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) hasMoved.current = true;
+                    if (modelRef.current) {
+                        modelRef.current.rotation.y += deltaX * 0.01;
+                        modelRef.current.rotation.x += deltaY * 0.01;
+                    }
+                    dragStartPos.current = { x: e.clientX, y: e.clientY };
+                }
+            };
+
+            const onMouseDown = (e) => {
+                dragStartPos.current = { x: e.clientX, y: e.clientY };
+                hasMoved.current = false; 
+                if (controlMode === 'drag' || staticCamera) {
+                    isDragging.current = true;
+                    setControlMode('drag');
+                }
+            }
+
+            return (
+                <div 
+                    ref={mountRef} 
+                    onMouseMove={onMouseMove}
+                    onMouseDown={onMouseDown}
+                    className={`relative w-full h-full flex items-center justify-center group/canvas overflow-hidden ${controlMode === 'drag' || staticCamera ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+                >
+                    {!staticCamera && (
+                        <div className="absolute top-4 left-4 z-10">
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); setControlMode(controlMode === 'hover' ? 'drag' : 'hover'); }}
+                                className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
+                                    isBlueprint ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 
+                                    (isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white')
+                                }`}
+                                title={controlMode === 'hover' ? "Switch to Manual (CAD) Control" : "Switch to Auto (Hover) Control"}
+                            >
+                                {controlMode === 'hover' ? <MousePointer2 size={16} /> : <Move3d size={16} className={isBlueprint ? "text-cyan-300" : "text-blue-500"} />}
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const createProceduralModel = (type, group, matMain, matAccent, matWire, droneRefs, armRefs) => {
+            if (type === 'robot') {
+                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.2, 32), matMain);
+                const wheelL = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.3, 32), matMain);
+                wheelL.rotateX(Math.PI/2); wheelL.position.set(-0.8, -1, 0);
+                const wheelR = wheelL.clone(); wheelR.position.set(0.8, -1, 0);
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.6), matAccent);
+                head.position.y = 1.2;
+                group.add(body, wheelL, wheelR, head);
+            } else if (type === 'hero') {
+                const bodyGeo = new THREE.BoxGeometry(1.0, 0.3, 1.5);
+                const body = new THREE.Mesh(bodyGeo, matMain);
+                group.add(body);
+                const camGeo = new THREE.SphereGeometry(0.2, 16, 16);
+                const cam = new THREE.Mesh(camGeo, matAccent);
+                cam.position.y = -0.3; cam.position.z = 0.6;
+                group.add(cam);
+                if (droneRefs) droneRefs.current.camera = cam;
+                [{x: 1, z: 1}, {x: -1, z: 1}, {x: 1, z: -1}, {x: -1, z: -1}].forEach(pos => {
+                    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.2), matMain);
+                    arm.position.set(pos.x/2, 0, pos.z/2); arm.rotation.y = Math.atan2(pos.z, pos.x);
+                    group.add(arm);
+                    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.3, 16), matAccent);
+                    motor.position.set(pos.x * 1.2, 0.1, pos.z * 1.2); group.add(motor);
+                    if(droneRefs) droneRefs.current.motors.push(motor);
+                    const prop = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.05, 0.15), matWire);
+                    prop.position.set(pos.x * 1.2, 0.25, pos.z * 1.2); group.add(prop);
+                    if(droneRefs) droneRefs.current.props.push(prop);
+                });
+            } else if (type === 'remote') {
+                const body = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 2.5), matMain);
+                const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32), matAccent);
+                knob.position.y = 0.4; group.add(body, knob); group.rotation.x = 0.5;
+            } else if (type === 'arm') {
+                const base = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.2, 32), matMain);
+                base.position.y = -1.5; group.add(base);
+                const turret = new THREE.Group(); turret.position.y = -1.4;
+                const turretMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.4, 32), matAccent);
+                turretMesh.position.y = 0.2; turret.add(turretMesh); group.add(turret);
+                if (armRefs) armRefs.current.base = turret;
+                const shoulder = new THREE.Group(); shoulder.position.y = 0.4; 
+                const shoulderMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.5, 0.5), matMain);
+                shoulderMesh.position.y = 0.75; shoulder.add(shoulderMesh); turret.add(shoulder);
+                if (armRefs) armRefs.current.shoulder = shoulder;
+                const elbow = new THREE.Group(); elbow.position.y = 1.5;
+                const elbowMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, 0.4), matMain);
+                elbowMesh.position.y = 0.6; elbow.add(elbowMesh); shoulder.add(elbow);
+                if (armRefs) armRefs.current.elbow = elbow;
+                const wrist = new THREE.Group(); wrist.position.y = 1.2;
+                const clawL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), matAccent);
+                clawL.position.set(-0.15, 0.2, 0); clawL.rotation.z = 0.2;
+                const clawR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), matAccent);
+                clawR.position.set(0.15, 0.2, 0); clawR.rotation.z = -0.2;
+                wrist.add(clawL, clawR); elbow.add(wrist);
+                if (armRefs) armRefs.current.wrist = wrist;
+            } else if (type === 'convoy') {
+                const globe = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 1), matMain);
+                const sat = new THREE.Mesh(new THREE.SphereGeometry(0.2), matAccent);
+                sat.position.set(1.5, 1, 0);
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.02, 16, 100), matWire);
+                ring.rotation.x = Math.PI/2; group.add(globe, sat, ring);
+            }
+        };
+
+        const Portfolio = () => {
+            const [activeProject, setActiveProject] = useState(null);
+            const [isDark, setIsDark] = useState(false);
+            const [isBlueprint, setIsBlueprint] = useState(false);
+            const [codeView, setCodeView] = useState(false); // New Code View Toggle
+            const [skillFilter, setSkillFilter] = useState("All");
+            
+            // USE REF FOR ARM STATE (Fixes lag/input dropping)
+            const armStateRef = useRef({ base: 0, shoulder: 0, elbow: 0, wrist: 0, gripper: 0 });
+
+            const activeData = DATA.projects.find(p => p.id === activeProject);
+            const filteredSkills = skillFilter === "All" ? DATA.skills : DATA.skills.filter(s => s.category === skillFilter);
+
+            useEffect(() => { window.scrollTo(0,0); }, [activeProject]);
+
+            const styles = {
+                bg: isBlueprint ? "blueprint-grid" : (isDark ? "bg-slate-950" : "bg-slate-50"),
+                text: isBlueprint ? "text-blue-100" : (isDark ? "text-slate-200" : "text-slate-800"),
+                textSub: isBlueprint ? "text-blue-300" : (isDark ? "text-slate-400" : "text-slate-500"),
+                card: isBlueprint ? "bg-blue-900/40 border-blue-700 backdrop-blur-sm" : (isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"),
+                nav: isBlueprint ? "bg-blue-950/80 border-blue-800" : (isDark ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"),
+                skillColors: { Mechanical: "bg-blue-500", Embedded: "bg-emerald-500", Software: "bg-purple-500" }
+            };
+
+            return (
+                <div className={`min-h-screen ${styles.bg} ${styles.text} font-sans selection:bg-blue-500/30 transition-all duration-500`}>
+                    <nav className={`fixed top-0 w-full z-50 backdrop-blur-md border-b ${styles.nav} transition-colors duration-300`}>
+                        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveProject(null)}>
+                                <div className={`p-2 rounded-lg ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
+                                    <Cpu className={isBlueprint ? "text-white" : "text-blue-600"} size={20} />
+                                </div>
+                                <span className="font-bold text-xl tracking-tight">
+                                    {DATA.profile.brandName}<span className={isBlueprint ? "text-cyan-300" : "text-blue-600"}>.CAD</span>
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setCodeView(!codeView)} className={`p-2 rounded-full transition-colors ${codeView ? 'bg-emerald-600 text-white' : (isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-200')}`} title="Toggle Code View">
+                                    <FileCode size={20} />
+                                </button>
+                                <button onClick={() => setIsBlueprint(!isBlueprint)} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'bg-blue-700 text-white' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500'}`} title="Toggle Blueprint Mode">
+                                    <Grid size={20} />
+                                </button>
+                                <button onClick={() => !isBlueprint && setIsDark(!isDark)} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'opacity-50 cursor-not-allowed' : (isDark ? 'hover:bg-slate-800 text-yellow-400' : 'hover:bg-slate-100 text-slate-600')}`}>
+                                    {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {activeProject ? (
+                        <div className="pt-32 pb-20 max-w-6xl mx-auto px-6 animate-fade-in">
+                            <button onClick={() => setActiveProject(null)} className={`flex items-center gap-2 mb-8 transition-colors group ${isBlueprint ? 'text-blue-300 hover:text-white' : 'text-slate-500 hover:text-blue-600'}`}>
+                                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Back to Lab
+                            </button>
+
+                            <div className="mb-12">
+                                <h1 className="text-4xl md:text-6xl font-bold mb-4">{activeData.title}</h1>
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {activeData.tags.map(tag => (
+                                        <span key={tag} className={`px-3 py-1 rounded-full text-sm font-medium border ${isBlueprint ? 'bg-blue-800/50 border-blue-600 text-blue-100' : (isDark ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-blue-50 text-blue-700 border-blue-100')}`}>{tag}</span>
+                                    ))}
+                                </div>
+                                
+                                {codeView ? (
+                                    <div className="font-mono text-sm p-6 rounded-xl bg-slate-900 text-green-400 border border-slate-700 shadow-xl">
+                                        <p>// Project: {activeData.title}</p>
+                                        <p>// Status: Complete</p>
+                                        <p>// Description: {activeData.content.intro}</p>
+                                        <br/>
+                                        <p>void setup() {'{'}</p>
+                                        <p>&nbsp;&nbsp;System.init(Mechanical, Electrical, Software);</p>
+                                        <p>{'}'}</p>
+                                    </div>
+                                ) : (
+                                    <p className={`text-xl leading-relaxed max-w-3xl ${styles.textSub}`}>{activeData.content.intro}</p>
+                                )}
+                            </div>
+
+                            {/* --- FULL WIDTH ROW FOR ROBOT ARM --- */}
+                            {activeData.id === 'arm' ? (
+                                <div className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                                    <div className={`lg:col-span-2 rounded-2xl border overflow-hidden relative ${styles.card}`}>
+                                        {/* Pass REF instead of State */}
+                                        <ThreeScene type="arm" isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} customSettings={activeData.modelSettings} armStateRef={armStateRef} staticCamera={true} />
+                                        <div className="absolute bottom-4 left-4 text-xs font-mono opacity-50">CAM: LOCKED | DRAG TO ROTATE</div>
+                                    </div>
+                                    <div className="lg:col-span-1 h-full">
+                                        {/* Pass REF instead of State */}
+                                        <RobotArmControls armStateRef={armStateRef} isBlueprint={isBlueprint} isDark={isDark} />
                                     </div>
                                 </div>
-                                 <div>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                </div>
-                            </div>
-                            <p class="testimonial__description">I have known Erol since 2014 when he was in my systems engineering class at KINGS and I can say without reservation that he is bright, hard working, and of the highest integrity.</p>
-                         </div>
-                         
-                         ==================== TESTIMONIAL 2 ====================
-                         <div class="testimonial__content swiper-slide">
-                            <div class="testimonial__data">
-                                <div class="testimonial__header">
-                                    <img src="assets/img/ad.jpg" alt="" class="testimonial__img">
-
-                                    <div>
-                                        <h3 class="testimonial__name">Dr. Aya Diab</h3>
-                                        <span class="testimonial__client">KINGS, Associate Professor</span>
+                            ) : (
+                                <div className={`relative h-80 w-full rounded-2xl border overflow-hidden flex items-center justify-center mb-12 ${styles.card}`}>
+                                    <div className="scale-125 cursor-move w-full h-full">
+                                        <ThreeScene type={activeData.type} isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} customSettings={activeData.modelSettings} />
                                     </div>
                                 </div>
-                                 <div>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
-                                    <i class="uil uil-star testimonial__icon-star"></i>
+                            )}
+
+                            <div className="grid md:grid-cols-3 gap-8">
+                                <div className="md:col-span-2 space-y-8">
+                                    <section className={`p-8 rounded-2xl border ${styles.card}`}>
+                                        <div className={`flex items-center gap-3 mb-4 ${isBlueprint ? 'text-cyan-300' : 'text-blue-600'}`}><Wrench /> <h2 className="text-2xl font-bold">Engineering</h2></div>
+                                        <p className={`whitespace-pre-line leading-relaxed ${styles.textSub}`}>{activeData.content.tech}</p>
+                                    </section>
+                                    {activeData.id === 'balance' && (
+                                        <section className="animate-fade-in">
+                                            <div className={`flex items-center gap-3 mb-4 ${isBlueprint ? 'text-emerald-300' : 'text-emerald-600'}`}>
+                                                <Terminal size={24} />
+                                                <h2 className="text-2xl font-bold">Serial Monitor</h2>
+                                            </div>
+                                            <RobotTerminal />
+                                        </section>
+                                    )}
+                                    <section className={`p-8 rounded-2xl border ${styles.card}`}>
+                                        <div className={`flex items-center gap-3 mb-4 ${isBlueprint ? 'text-purple-300' : 'text-purple-600'}`}><Radio /> <h2 className="text-2xl font-bold">The Math</h2></div>
+                                        <div className={`font-mono text-sm p-4 rounded-lg border-l-4 border-purple-500 ${isBlueprint ? 'bg-blue-950 text-blue-200' : (isDark ? 'bg-black/30 text-slate-300' : 'bg-slate-100 text-slate-700')}`}>
+                                            {activeData.content.math}
+                                        </div>
+                                    </section>
+                                </div>
+                                <div className={`p-6 rounded-xl border h-fit ${styles.card}`}>
+                                    <h3 className="text-lg font-bold mb-4">Challenges</h3>
+                                    <p className={`text-sm ${styles.textSub}`}>{activeData.content.challenges}</p>
                                 </div>
                             </div>
-                            <p class="testimonial__description">I met Erol in 2016, and ever since he always impressed me with his zeal to expand his knowledge, hone his skills and take on new challenges to enhance his career.</p>
-                         </div>
-                    </div>
-
-                     Add Pagination
-                    <div class="swiper-pagination swiper-pagination-testimonial"></div>
-                </div>
-            </section>
-            -->
-            <!--==================== CONTACT ME ====================-->
-            <section class="contact section" id="contact" data-id="contact">
-                <h2 class="section__title">Contact Me</h2>
-                <span class="section__subtitle">Get in Touch</span>
-
-                <div class="contact__container container grid">
-                    <div>
-                        <div class="contact__information">
-                            <i class="uil uil-phone contact__icon"></i>
-
-                            <div>
-                                <h3 class="contact__title">Call Me</h3>
-                                <span class="contact__subtitle">+44 7956158261</span>
-                            </div>
                         </div>
+                    ) : (
+                        <>
+                            <section className="relative pt-32 pb-20 px-6">
+                                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
+                                    <div className="z-10 space-y-8">
+                                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border ${isBlueprint ? 'bg-emerald-900/50 border-emerald-700 text-emerald-300' : (isDark ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700')}`}>
+                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {DATA.profile.availability}
+                                        </div>
+                                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+                                            {DATA.profile.role} <br/>
+                                            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${isBlueprint ? 'from-cyan-300 to-blue-100' : 'from-blue-600 to-purple-600'}`}> & Innovator</span>
+                                        </h1>
+                                        <p className={`text-xl max-w-lg leading-relaxed ${styles.textSub}`}>{DATA.profile.bio}</p>
+                                        <div className="flex gap-4">
+                                            <a href="#projects" className={`px-8 py-4 rounded-xl font-bold shadow-lg transition-all ${isBlueprint ? 'bg-white text-blue-900 hover:bg-blue-100' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'}`}>View Work</a>
+                                            <a href={DATA.profile.socialLinks.email} className={`px-8 py-4 border rounded-xl font-medium transition-all ${isBlueprint ? 'border-blue-700 hover:bg-blue-800/50' : (isDark ? 'border-slate-700 hover:bg-slate-800' : 'border-slate-300 hover:bg-slate-100')}`}>Contact</a>
+                                        </div>
+                                    </div>
+                                    <div className="h-[500px] flex items-center justify-center relative">
+                                        <div className="w-full h-full">
+                                            <ThreeScene type="hero" isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} />
+                                        </div>
+                                        <div className={`absolute bottom-0 left-0 right-0 text-center text-xs font-mono opacity-50 pointer-events-none ${styles.textSub}`}>
+                                            SCROLL TO EXPLODE VIEW
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
-                        <div class="contact__information">
-                            <i class="uil uil-envelope contact__icon"></i>
+                            <section id="projects" className="py-20 max-w-7xl mx-auto px-6">
+                                <h2 className="text-3xl font-bold mb-12">Selected Projects</h2>
+                                <div className="grid md:grid-cols-2 gap-8">
+                                    {DATA.projects.map(project => (
+                                        <div key={project.id} onClick={() => setActiveProject(project.id)} className={`group rounded-3xl overflow-hidden border cursor-pointer hover:shadow-2xl transition-all duration-300 ${styles.card} ${isBlueprint ? 'hover:border-cyan-500/50' : (isDark ? 'hover:border-blue-500/50' : 'hover:border-blue-400')}`}>
+                                            <div className={`h-72 relative overflow-hidden ${isBlueprint ? 'bg-blue-950/50' : (isDark ? 'bg-slate-900' : 'bg-slate-50')}`}>
+                                                <div className="w-full h-full">
+                                                    <ThreeScene type={project.type} isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={true} customSettings={project.modelSettings} />
+                                                </div>
+                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                    <div className={`p-2 rounded-full ${isBlueprint ? 'bg-white text-blue-900' : 'bg-blue-600 text-white'}`}><ChevronRight size={20} /></div>
+                                                </div>
+                                            </div>
+                                            <div className="p-8">
+                                                <h3 className={`text-2xl font-bold mb-2 transition-colors ${isBlueprint ? 'group-hover:text-cyan-300' : 'group-hover:text-blue-600'}`}>{project.title}</h3>
+                                                <p className={`${styles.textSub} mb-4`}>{project.shortDesc}</p>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {project.tags.map(tag => <span key={tag} className={`text-xs font-bold px-3 py-1 rounded-full ${isBlueprint ? 'bg-blue-800/50 text-blue-200' : (isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600')}`}>{tag}</span>)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
 
-                            <div>
-                                <h3 class="contact__title">Email</h3>
-                                <!-- <span class="contact__subtitle">erolbicer@live.com</span> -->
-                                <p><a class="contact__subtitle" href="mailto:lewisfoweler94@gmail.com">lewisfowler94@gmail.com</a></p>
-                            </div>
-                        </div>
+                            <section className={`py-20 border-y ${isBlueprint ? 'border-blue-800 bg-blue-950/30' : (isDark ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200')}`}>
+                                <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20">
+                                    <div>
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h2 className={`text-3xl font-bold flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Layers className={isBlueprint ? "text-cyan-300" : "text-blue-600"}/> Skills & Tools</h2>
+                                        </div>
+                                        <p className={`mb-4 ${styles.textSub}`}>Drag and throw the blocks below!</p>
+                                        <PhysicsSkills skills={DATA.skills} isDark={isDark} isBlueprint={isBlueprint} />
+                                    </div>
+                                    <div>
+                                        <h2 className={`text-3xl font-bold mb-8 flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Briefcase className={isBlueprint ? "text-purple-300" : "text-purple-600"}/> Experience</h2>
+                                        <div className={`space-y-8 border-l-2 ml-3 pl-8 relative ${isBlueprint ? 'border-blue-800' : (isDark ? 'border-slate-800' : 'border-slate-200')}`}>
+                                            {DATA.experience.map(item => (
+                                                <div key={item.id} className="relative group">
+                                                    <span className={`absolute -left-[41px] top-6 w-4 h-4 rounded-full border-2 transition-all duration-300 
+                                                        ${isBlueprint ? 'bg-blue-950 border-cyan-500 group-hover:bg-cyan-500' : (isDark ? 'bg-slate-950 border-blue-500 group-hover:bg-blue-500' : 'bg-white border-blue-600 group-hover:bg-blue-600')}
+                                                    `}></span>
+                                                    <div className={`p-6 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-lg cursor-default ${styles.card} ${isBlueprint ? 'group-hover:border-cyan-500/30' : 'group-hover:border-blue-500/30'}`}>
+                                                        <div className="flex justify-between mb-2">
+                                                            <h3 className={`font-bold text-lg transition-colors ${isBlueprint ? 'group-hover:text-cyan-300' : 'group-hover:text-blue-600'}`}>{item.title}</h3>
+                                                            <span className={`text-xs font-mono px-2 py-1 rounded ${isBlueprint ? 'bg-blue-800 text-blue-200' : 'text-blue-600 bg-blue-500/10'}`}>{item.date}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-sm mb-4 opacity-70">
+                                                            {item.type === 'education' ? <GraduationCap size={16}/> : <Briefcase size={16}/>}
+                                                            {item.place}
+                                                        </div>
+                                                        <p className={`text-sm ${styles.textSub}`}>{item.desc}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
 
-                        <div class="contact__information">
-                            <i class="uil uil-map-marker contact__icon"></i>
-
-                            <div>
-                                <h3 class="contact__title">Location</h3>
-                                <span class="contact__subtitle">Newcastle upon Tyne</span>
-                            </div>
-                        </div>
-                    </div>
+                            <footer className={`py-12 text-center border-t ${isBlueprint ? 'border-blue-800 text-blue-400' : (isDark ? 'border-slate-800 text-slate-600' : 'border-slate-200 text-slate-400')}`}>
+                                <div className="flex justify-center gap-6 mb-8">
+                                    <a href={DATA.profile.socialLinks.github} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Github /></a>
+                                    <a href={DATA.profile.socialLinks.linkedin} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Linkedin /></a>
+                                    <a href={DATA.profile.socialLinks.email} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Mail /></a>
+                                </div>
+                                <p>© {new Date().getFullYear()} {DATA.profile.name}. Built with React & Three.js.</p>
+                            </footer>
+                        </>
+                    )}
                 </div>
-            </section>
-        </main>
+            );
+        };
 
-        <!--==================== FOOTER ====================-->
-        <footer class="footer">
-            <div class="footer__bg">
-                <div class="footer__container container grid">
-                    <div>
-                        <a href="#" class="footer__title">Lewis Fowler, MEng</a><br>
-                        <span class="footer__subtitle">Mechanical Engineer</span>
-                    </div>
-
-                    <ul class="footer__links">
-                        <li><a href="#about" class="footer__link">About</a></li>
-                        <li><a href="#projects" class="footer__link">Projects</a></li>
-                        <li><a href="#skills" class="footer__link">Skills</a></li>
-                        <li><a href="#qualifications" class="footer__link">Qualifications</a></li>
-                        <li><a href="#contact" class="footer__link">Contact</a></li>
-                    </ul>
-
-
-                    <div class="footer__socials">
-                        <a href="https://www.linkedin.com/in/lewis-fowler94/" target="_blank" class="footer__social">
-                            <i class="uil uil-linkedin-alt"></i>
-                        </a>
-
-                        <a href="https://github.com/lewisf94" target="_blank" class="footer__social">
-                            <i class="uil uil-github-alt"></i>
-                        </a>
-
-                    </div>
-                </div>
-
-                <p class="footer__copy">&#169; All rights reserved.</p>
-            </div>
-        </footer>
-        
-        <!--==================== SCROLL TOP ====================-->
-        <a href="" class="scrollup" id="scroll-up">
-            <i class="uil uil-arrow-up scrollup__icon"></i>
-        </a>
-
-        <!--==================== SWIPER JS ====================-->
-        <script src="assets/js/swiper-bundle.min.js"></script>
-
-        <!--==================== MAIN JS ====================-->
-        <script src="assets/js/main.js"></script>
-    </body>
+        const root = createRoot(document.getElementById('root'));
+        root.render(<Portfolio />);
+    </script>
+</body>
 </html>
