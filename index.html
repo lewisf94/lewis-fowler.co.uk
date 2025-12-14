@@ -130,6 +130,9 @@
                     xOffset: 0.0,   
                     scale: 1.2      
                 }
+                ,
+                // Global multiplier to tweak model size across all viewers
+                modelScaleMultiplier: 1.0
             },
             profile: {
                 name: "Lewis Fowler",
@@ -201,7 +204,7 @@
                     shortDesc: 'Formula Student Motion & Control Project.',
                     type: 'robot',
                     tags: ['C++', 'ROS 2', 'Control Theory'],
-                    modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0, modelPath: 'assets/models/Self-Balancing-Robot.glb' }, 
+                    modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0, modelPath: 'assets/models/Self-Balancing-Robot.glb', modelScaleMultiplier: 2.0, internalsModelPath: 'assets/models/Self-Balancing-Robot-Internals.glb' }, 
                     content: {
                         intro: "Part of the Formula Student Motion and Control sub-team investigation. A classic engineering challenge: keeping an inherently unstable system upright.",
                         tech: "Investigated implementing a PID controller and Extended Kalman Filter (EKF) for state estimation. This project developed my knowledge of robotics software such as ROS 2.",
@@ -215,7 +218,7 @@
                     shortDesc: 'Inverse Kinematics & Precision Control.',
                     type: 'arm',
                     tags: ['Robotics', 'MATLAB', 'Mechanical'],
-                    modelSettings: { cameraZ: 9.0, yOffset: -0.8, scale: 0.85 },
+                    modelSettings: { cameraZ: 9.0, yOffset: -0.8, scale: 0.85, modelScaleMultiplier: 1.0 },
                     content: {
                         intro: "Exploration into robotics control systems. A desktop-scale manipulator designed to understand coordinate systems and actuator control.",
                         tech: "Uses inverse kinematics to map cartesian coordinates to joint angles. Control logic implemented to ensure smooth path planning.",
@@ -229,7 +232,7 @@
                     shortDesc: 'Tactile smart home interface with Deep Sleep optimizations.',
                     type: 'remote',
                     tags: ['IoT', 'PCB Design', 'SolidWorks'],
-                    modelSettings: { cameraZ: 7.0, yOffset: 0.0, scale: 1.0 },
+                    modelSettings: { cameraZ: 7.0, yOffset: 0.0, scale: 1.0, modelScaleMultiplier: 1.0 },
                     content: {
                         intro: "A physical volume knob for Sonos systems. Focus on low power consumption and sleek industrial design.",
                         tech: "ESP32-C3 Deep Sleep architecture. Wakes on interrupt, connects, sends, sleeps. Battery life > 6 months.",
@@ -243,7 +246,7 @@
                     shortDesc: 'Off-grid LoRa Voice Comm & GPS Tracking.',
                     type: 'convoy',
                     tags: ['RF', 'Hardware', 'React Native'],
-                    modelSettings: { cameraZ: 6.0, yOffset: 0.0, scale: 1.1 },
+                    modelSettings: { cameraZ: 6.0, yOffset: 0.0, scale: 1.1, modelScaleMultiplier: 1.0 },
                     content: {
                         intro: "Mesh network for vehicle tracking outside cell service areas.",
                         tech: "LoRa (915MHz) for telemetry. Bluetooth bridge to mobile app. ESP32-S3 processor.",
@@ -590,6 +593,8 @@
             const mouseRef = useRef({ x: 0, y: 0 });
             const frameIdRef = useRef(null);
             const modelRef = useRef(null);
+            const loadedModelRef = useRef(null); // reference to the currently-loaded GLTF scene/group
+            const [showInternals, setShowInternals] = useState(false);
             const [controlMode, setControlMode] = useState(DATA.config.defaultControlMode); 
             
             const dragStartPos = useRef({ x: 0, y: 0 });
@@ -659,20 +664,50 @@
 
                 const group = new THREE.Group();
                 
+                // Compute combined model scale multiplier: global * project-specific
+                const globalScaleMultiplier = (DATA.config && DATA.config.modelScaleMultiplier) ? DATA.config.modelScaleMultiplier : 1.0;
+                const projectScaleMultiplier = (customSettings && typeof customSettings.modelScaleMultiplier === 'number') ? customSettings.modelScaleMultiplier : 1.0;
+                const combinedScaleMultiplier = globalScaleMultiplier * projectScaleMultiplier;
+
                 if (type === 'arm' && DATA.config.armSettings) {
                     group.position.y = DATA.config.armSettings.yOffset;
                     group.position.x = DATA.config.armSettings.xOffset;
-                    group.scale.set(DATA.config.armSettings.scale, DATA.config.armSettings.scale, DATA.config.armSettings.scale);
+                    const s = DATA.config.armSettings.scale * combinedScaleMultiplier;
+                    group.scale.set(s, s, s);
                 } else {
                     group.position.y = settings.yOffset;
-                    group.scale.set(settings.scale, settings.scale, settings.scale);
+                    const s = settings.scale * combinedScaleMultiplier;
+                    group.scale.set(s, s, s);
                 }
 
                 // If a custom model path is provided (e.g. a GLB), load it; otherwise use procedural model
-                const modelPath = customSettings && customSettings.modelPath ? customSettings.modelPath : null;
-                if (modelPath) {
+                const baseModelPath = customSettings && customSettings.modelPath ? customSettings.modelPath : null;
+                const internalsModelPath = customSettings && customSettings.internalsModelPath ? customSettings.internalsModelPath : null;
+
+                const currentModelPath = (internalsModelPath && showInternals) ? internalsModelPath : baseModelPath;
+
+                const disposeModel = (obj) => {
+                    if (!obj) return;
+                    obj.traverse && obj.traverse((child) => {
+                        if (child.geometry) child.geometry.dispose && child.geometry.dispose();
+                        if (child.material) {
+                            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose && m.dispose());
+                            else child.material.dispose && child.material.dispose();
+                        }
+                    });
+                };
+
+                if (currentModelPath) {
                     const loader = new GLTFLoader();
-                    loader.load(modelPath, (gltf) => {
+
+                    // Remove previous GLTF model if present
+                    if (loadedModelRef.current) {
+                        group.remove(loadedModelRef.current);
+                        disposeModel(loadedModelRef.current);
+                        loadedModelRef.current = null;
+                    }
+
+                    loader.load(currentModelPath, (gltf) => {
                         const model = gltf.scene || (gltf.scenes && gltf.scenes[0]);
                         if (model) {
                             // Compute bounding box to scale and center the model
@@ -680,12 +715,14 @@
                             const size = new THREE.Vector3();
                             box.getSize(size);
                             const maxDim = Math.max(size.x, size.y, size.z) || 1;
-                            const desiredScale = settings.scale ? (settings.scale / maxDim) : (1 / maxDim);
+                            const baseScale = settings.scale ? (settings.scale / maxDim) : (1 / maxDim);
+                            const desiredScale = baseScale * combinedScaleMultiplier;
                             model.scale.set(desiredScale, desiredScale, desiredScale);
                             const center = new THREE.Vector3();
                             box.getCenter(center);
                             model.position.sub(center);
                             group.add(model);
+                            loadedModelRef.current = model;
                         } else {
                             // Fallback to procedural if gltf has no scene
                             createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
