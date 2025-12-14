@@ -201,7 +201,7 @@
                     shortDesc: 'Formula Student Motion & Control Project.',
                     type: 'robot',
                     tags: ['C++', 'ROS 2', 'Control Theory'],
-                    modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0 }, 
+                    modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0, modelPath: 'assets/models/Self-Balancing-Robot.glb' }, 
                     content: {
                         intro: "Part of the Formula Student Motion and Control sub-team investigation. A classic engineering challenge: keeping an inherently unstable system upright.",
                         tech: "Investigated implementing a PID controller and Extended Kalman Filter (EKF) for state estimation. This project developed my knowledge of robotics software such as ROS 2.",
@@ -668,10 +668,42 @@
                     group.scale.set(settings.scale, settings.scale, settings.scale);
                 }
 
-                createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
-
-                scene.add(group);
-                modelRef.current = group;
+                // If a custom model path is provided (e.g. a GLB), load it; otherwise use procedural model
+                const modelPath = customSettings && customSettings.modelPath ? customSettings.modelPath : null;
+                if (modelPath) {
+                    const loader = new GLTFLoader();
+                    loader.load(modelPath, (gltf) => {
+                        const model = gltf.scene || (gltf.scenes && gltf.scenes[0]);
+                        if (model) {
+                            // Compute bounding box to scale and center the model
+                            const box = new THREE.Box3().setFromObject(model);
+                            const size = new THREE.Vector3();
+                            box.getSize(size);
+                            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+                            const desiredScale = settings.scale ? (settings.scale / maxDim) : (1 / maxDim);
+                            model.scale.set(desiredScale, desiredScale, desiredScale);
+                            const center = new THREE.Vector3();
+                            box.getCenter(center);
+                            model.position.sub(center);
+                            group.add(model);
+                        } else {
+                            // Fallback to procedural if gltf has no scene
+                            createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
+                        }
+                        scene.add(group);
+                        modelRef.current = group;
+                    }, undefined, (err) => {
+                        console.error('GLTF load error:', err);
+                        // On error, fallback to procedural model
+                        createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
+                        scene.add(group);
+                        modelRef.current = group;
+                    });
+                } else {
+                    createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
+                    scene.add(group);
+                    modelRef.current = group;
+                }
 
                 const animate = () => {
                     frameIdRef.current = requestAnimationFrame(animate);
