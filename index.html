@@ -614,9 +614,19 @@
                 
                 const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
                 
+                let canvasWrapper = null;
                 if (mountRef.current) {
-                    mountRef.current.innerHTML = '';
-                    mountRef.current.appendChild(renderer.domElement);
+                    // keep React children (buttons) intact — append canvas inside a wrapper
+                    // remove old wrapper if present
+                    const old = mountRef.current.querySelector('.three-canvas-wrapper');
+                    if (old) mountRef.current.removeChild(old);
+                    canvasWrapper = document.createElement('div');
+                    canvasWrapper.className = 'three-canvas-wrapper';
+                    canvasWrapper.style.position = 'absolute';
+                    canvasWrapper.style.inset = '0';
+                    canvasWrapper.style.zIndex = '0';
+                    canvasWrapper.appendChild(renderer.domElement);
+                    mountRef.current.appendChild(canvasWrapper);
                     const rect = mountRef.current.getBoundingClientRect();
                     renderer.setSize(rect.width, rect.height);
                     camera.aspect = rect.width / rect.height;
@@ -792,10 +802,12 @@
                     cancelAnimationFrame(frameIdRef.current);
                     window.removeEventListener('mouseup', handleMouseUp);
                     resizeObserver.disconnect();
-                    if (mountRef.current) mountRef.current.innerHTML = '';
+                    if (canvasWrapper && mountRef.current && mountRef.current.contains(canvasWrapper)) {
+                        mountRef.current.removeChild(canvasWrapper);
+                    }
                     renderer.dispose();
                 };
-            }, [type, isDark, controlMode, settings, isBlueprint, staticCamera]);
+            }, [type, isDark, controlMode, settings, isBlueprint, staticCamera, showInternals]);
 
             const onMouseMove = (e) => {
                 if (controlMode === 'hover') {
@@ -831,7 +843,7 @@
                     className={`relative w-full h-full flex items-center justify-center group/canvas overflow-hidden ${controlMode === 'drag' || staticCamera ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                 >
                     {!staticCamera && (
-                        <div className="absolute top-4 left-4 z-10">
+                        <div className="absolute top-4 left-4 z-10 flex gap-2">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setControlMode(controlMode === 'hover' ? 'drag' : 'hover'); }}
                                 className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
@@ -842,6 +854,19 @@
                             >
                                 {controlMode === 'hover' ? <MousePointer2 size={16} /> : <Move3d size={16} className={isBlueprint ? "text-cyan-300" : "text-blue-500"} />}
                             </button>
+
+                            {customSettings && customSettings.internalsModelPath && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setShowInternals(s => !s); }}
+                                    className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
+                                        isBlueprint ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 
+                                        (isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white')
+                                    }`}
+                                    title={showInternals ? "Show Exterior" : "Show Internals"}
+                                >
+                                    <Layers size={16} className={showInternals ? (isBlueprint ? "text-cyan-300" : "text-blue-600") : ""} />
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
