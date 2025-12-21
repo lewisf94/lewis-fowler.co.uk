@@ -650,6 +650,57 @@
                 }
                 camera.position.y = 0.5;
 
+                // Zoom limits (relative to starting camera z)
+                const startCameraZ = camera.position.z;
+                const minZ = startCameraZ * 0.5;
+                const maxZ = startCameraZ * 2.5;
+
+                // Mouse wheel zoom (attach to this scene's canvas only)
+                const handleWheel = (ev) => {
+                    ev.preventDefault();
+                    const delta = ev.deltaY * 0.01 * (DATA.config.mouseSensitivity || 1);
+                    camera.position.z = THREE.MathUtils.clamp(camera.position.z + delta, minZ, maxZ);
+                };
+                if (canvasWrapper) canvasWrapper.addEventListener('wheel', handleWheel, { passive: false });
+
+                // Basic pinch-to-zoom (pointer events)
+                let pointers = {};
+                let initialPinchDist = null;
+                const getDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+                const onPointerDown = (ev) => {
+                    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+                    if (Object.keys(pointers).length === 2) {
+                        const ids = Object.keys(pointers);
+                        initialPinchDist = getDist(pointers[ids[0]], pointers[ids[1]]);
+                    }
+                };
+
+                const onPointerMove = (ev) => {
+                    if (!pointers[ev.pointerId]) return;
+                    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+                    if (Object.keys(pointers).length === 2 && initialPinchDist) {
+                        const ids = Object.keys(pointers);
+                        const dist = getDist(pointers[ids[0]], pointers[ids[1]]);
+                        const diff = initialPinchDist - dist;
+                        const zoomDelta = diff * 0.005 * (DATA.config.mouseSensitivity || 1);
+                        camera.position.z = THREE.MathUtils.clamp(camera.position.z + zoomDelta, minZ, maxZ);
+                        initialPinchDist = dist;
+                    }
+                };
+
+                const onPointerUp = (ev) => {
+                    delete pointers[ev.pointerId];
+                    if (Object.keys(pointers).length < 2) initialPinchDist = null;
+                };
+
+                if (canvasWrapper) {
+                    canvasWrapper.addEventListener('pointerdown', onPointerDown);
+                    canvasWrapper.addEventListener('pointermove', onPointerMove);
+                    canvasWrapper.addEventListener('pointerup', onPointerUp);
+                    canvasWrapper.addEventListener('pointercancel', onPointerUp);
+                }
+
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
                 scene.add(ambientLight);
                 const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -801,6 +852,13 @@
                 return () => {
                     cancelAnimationFrame(frameIdRef.current);
                     window.removeEventListener('mouseup', handleMouseUp);
+                    if (canvasWrapper) {
+                        canvasWrapper.removeEventListener('wheel', handleWheel);
+                        canvasWrapper.removeEventListener('pointerdown', onPointerDown);
+                        canvasWrapper.removeEventListener('pointermove', onPointerMove);
+                        canvasWrapper.removeEventListener('pointerup', onPointerUp);
+                        canvasWrapper.removeEventListener('pointercancel', onPointerUp);
+                    }
                     resizeObserver.disconnect();
                     if (canvasWrapper && mountRef.current && mountRef.current.contains(canvasWrapper)) {
                         mountRef.current.removeChild(canvasWrapper);
