@@ -141,13 +141,11 @@
                 subRoles: ["Thermal Management", "CFD Analysis", "Robotics"],
                 bio: "Design Engineer based in Newcastle upon Tyne, working with clients in automotive and space industries. Specializing in bespoke cold plate solutions, 3D CAD design, and CFD analysis with a strong background in robotics and fabrication.",
                 availability: "Design Engineer @ Boyd",
-                email: "Lewisfowler94@gmail.com",
                 linkedin: "linkedin.com/in/lewisfowler", 
                 github: "github.com/lewisfowler",
                 socialLinks: {
                     linkedin: "#",
                     github: "#",
-                    email: "mailto:Lewisfowler94@gmail.com"
                 }
             },
             experience: [
@@ -1046,7 +1044,6 @@
             const [activeProject, setActiveProject] = useState(null);
             const [isDark, setIsDark] = useState(false);
             const [isBlueprint, setIsBlueprint] = useState(false);
-            const [codeView, setCodeView] = useState(false); // New Code View Toggle
             const [skillFilter, setSkillFilter] = useState("All");
             
             // USE REF FOR ARM STATE (Fixes lag/input dropping)
@@ -1079,9 +1076,7 @@
                                 </span>
                             </div>
                             <div className="flex items-center gap-4">
-                                <button onClick={() => setCodeView(!codeView)} className={`p-2 rounded-full transition-colors ${codeView ? 'bg-emerald-600 text-white' : (isDark ? 'hover:bg-slate-800' : 'hover:bg-slate-200')}`} title="Toggle Code View">
-                                    <FileCode size={20} />
-                                </button>
+                                
                                 <button onClick={() => setIsBlueprint(!isBlueprint)} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'bg-blue-700 text-white' : 'hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500'}`} title="Toggle Blueprint Mode">
                                     <Grid size={20} />
                                 </button>
@@ -1106,19 +1101,7 @@
                                     ))}
                                 </div>
                                 
-                                {codeView ? (
-                                    <div className="font-mono text-sm p-6 rounded-xl bg-slate-900 text-green-400 border border-slate-700 shadow-xl">
-                                        <p>// Project: {activeData.title}</p>
-                                        <p>// Status: Complete</p>
-                                        <p>// Description: {activeData.content.intro}</p>
-                                        <br/>
-                                        <p>void setup() {'{'}</p>
-                                        <p>&nbsp;&nbsp;System.init(Mechanical, Electrical, Software);</p>
-                                        <p>{'}'}</p>
-                                    </div>
-                                ) : (
                                     <p className={`text-xl leading-relaxed max-w-3xl ${styles.textSub}`}>{activeData.content.intro}</p>
-                                )}
                             </div>
 
                             {/* --- FULL WIDTH ROW FOR ROBOT ARM --- */}
@@ -1262,7 +1245,6 @@
                                 <div className="flex justify-center gap-6 mb-8">
                                     <a href={DATA.profile.socialLinks.github} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Github /></a>
                                     <a href={DATA.profile.socialLinks.linkedin} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Linkedin /></a>
-                                    <a href={DATA.profile.socialLinks.email} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Mail /></a>
                                 </div>
                                 <p>© {new Date().getFullYear()} {DATA.profile.name}. Built with React & Three.js.</p>
                             </footer>
