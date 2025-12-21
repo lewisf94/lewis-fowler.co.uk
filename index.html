@@ -292,6 +292,95 @@
                         newLogs.push({ text: `Unknown command: ${cmd}`, color: "text-red-400" });
                     }
                     setLogs(newLogs);
+                        // Lightweight staged meshes for manufacturing timeline
+                        const basePartMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.3, roughness: 0.6, transparent: true });
+                        const torchMat = new THREE.MeshBasicMaterial({ color: 0xffb86b, emissive: 0xff8a50, transparent: true, opacity: 0.0 });
+                        const layerMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.1, roughness: 0.7 });
+                        const drillMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.8, roughness: 0.3 });
+                        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+                        const assembledMat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, metalness: 0.4, roughness: 0.3 });
+
+                        // central part (used for soldering/dissolve/drill)
+                        const part = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.2, 0.8), basePartMat);
+                        part.name = 'hero_part';
+                        part.position.y = 0;
+                        group.add(part);
+
+                        // torch (soldering) - small sphere
+                        const torch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), torchMat);
+                        torch.name = 'hero_torch';
+                        torch.position.set(0.4, 0.15, 0);
+                        group.add(torch);
+
+                        // small point light to accent the soldering torch (start off)
+                        const torchLight = new THREE.PointLight(0xffb86b, 0.0, 2.5);
+                        torchLight.name = 'hero_torchLight';
+                        torchLight.position.copy(torch.position);
+                        group.add(torchLight);
+
+                        // printed layers (stack of thin boxes) - initially scale.y = 0
+                        const printedGroup = new THREE.Group();
+                        printedGroup.name = 'hero_printedGroup';
+                        const layerCount = 12;
+                        const layers = [];
+                        for (let i = 0; i < layerCount; i++) {
+                            const h = 0.02;
+                            const l = new THREE.Mesh(new THREE.BoxGeometry(0.9, h, 0.6), layerMat);
+                            l.position.y = (i * h) - 0.11 + h/2;
+                            l.scale.y = 0.001; // invisible initially
+                            l.name = `hero_layer_${i}`;
+                            printedGroup.add(l);
+                            layers.push(l);
+                        }
+                        printedGroup.position.y = 0;
+                        group.add(printedGroup);
+
+                        // drill (rotating cylinder) and a visual 'hole' marker
+                        const drill = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8), drillMat);
+                        drill.name = 'hero_drill';
+                        drill.rotation.x = Math.PI/2;
+                        drill.position.set(-0.2, 0.5, 0);
+                        group.add(drill);
+                        const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+                        hole.name = 'hero_hole';
+                        hole.rotation.x = Math.PI/2;
+                        hole.position.set(-0.2, 0.01, 0);
+                        hole.visible = false;
+                        group.add(hole);
+
+                        // wood block and cutter for carving
+                        const wood = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.18, 0.6), woodMat);
+                        wood.name = 'hero_wood';
+                        wood.position.set(0, -0.8, 0);
+                        group.add(wood);
+                        const cutter = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.12), drillMat);
+                        cutter.name = 'hero_cutter';
+                        cutter.position.set(0.4, -0.7, 0);
+                        group.add(cutter);
+
+                        // assembled parts for final step
+                        const partA = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
+                        const partB = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
+                        partA.name = 'hero_partA';
+                        partB.name = 'hero_partB';
+                        partA.position.set(-0.6, -0.2, 0);
+                        partB.position.set(0.6, -0.2, 0);
+                        group.add(partA, partB);
+
+                        // Hide/adjust initial visibility
+                        torch.material.opacity = 0.0;
+                        printedGroup.visible = false;
+                        drill.visible = false;
+                        hole.visible = false;
+                        wood.visible = false;
+                        cutter.visible = false;
+                        partA.visible = false;
+                        partB.visible = false;
+
+                        // store references for the animate timeline
+                        if (droneRefs) {
+                            droneRefs.current.heroStages = { part, torch, printedGroup, layers, drill, hole, wood, cutter, partA, partB };
+                        }
                     setInput("");
                 }
             };
@@ -466,33 +555,7 @@
                                         context.fillRect(-70, i*8 - 2, 10, 4);
                                         context.fillRect(60, i*8 - 2, 10, 4);
                                     }
-                                }
-                                else if (type === 'wrench') {
-                                    context.fillStyle = color; 
-                                }
-                                else if (type === 'plus') {
-                                    context.fillStyle = color;
-                                }
-                                else if (type === 'atom') {
-                                    context.fillStyle = color;
-                                    context.beginPath(); context.arc(0,0,25,0,2*Math.PI); context.fill();
-                                    context.strokeStyle = "rgba(255,255,255,0.5)";
-                                    context.lineWidth = 2;
-                                    context.beginPath(); context.ellipse(0,0,45,4, Math.PI/4, 0, 2*Math.PI); context.stroke();
-                                    context.beginPath(); context.ellipse(0,0,45,4, -Math.PI/4, 0, 2*Math.PI); context.stroke();
-                                }
-                                else if (type === 'printer') {
-                                    context.fillStyle = color;
-                                    context.fillRect(-50, -40, 100, 80);
-                                    context.strokeStyle = "rgba(255,255,255,0.3)";
-                                    context.lineWidth = 2;
-                                    context.beginPath();
-                                    context.moveTo(-40, 20); context.lineTo(40, 20);
-                                    context.moveTo(-40, 0); context.lineTo(40, 0);
-                                    context.moveTo(-40, -20); context.lineTo(40, -20);
-                                    context.stroke();
-                                }
-                                else if (type === 'gear') {
+                                } else if (type === 'gear') {
                                     context.fillStyle = color;
                                     context.fillStyle = "#1e293b";
                                     context.beginPath(); context.arc(0, 0, 12, 0, 2 * Math.PI); context.fill();
@@ -587,12 +650,307 @@
             );
         };
 
+        const HeroAnimation = ({ isDark, isBlueprint }) => {
+            const canvasRef = useRef(null);
+            const startTimeRef = useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = rect.height * window.devicePixelRatio;
+                const ctx = canvas.getContext('2d');
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+                const w = rect.width;
+                const h = rect.height;
+                const centerX = w / 2;
+                const centerY = h / 2;
+
+                const colors = {
+                    bg: isBlueprint ? '#1e3a8a' : (isDark ? '#0f172a' : '#f8fafc'),
+                    primary: isBlueprint ? '#06b6d4' : '#0ea5e9',
+                    secondary: isBlueprint ? '#22d3ee' : '#38bdf8',
+                    accent: isBlueprint ? '#ffffff' : '#1e293b',
+                    metal: '#cbd5e1',
+                    metalDark: '#64748b',
+                    wood: '#92400e',
+                    torch: '#fbbf24',
+                    grid: isBlueprint ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
+                };
+
+                const drawGrid = () => {
+                    if (!isBlueprint) return;
+                    ctx.strokeStyle = colors.grid;
+                    ctx.lineWidth = 0.5;
+                    for (let x = 0; x < w; x += 25) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, h);
+                        ctx.stroke();
+                    }
+                    for (let y = 0; y < h; y += 25) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(w, y);
+                        ctx.stroke();
+                    }
+                };
+
+                const drawShadow = (x, y, w, h) => {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+                    ctx.beginPath();
+                    ctx.ellipse(x, y + h / 2 + 8, w * 0.6, 3, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                };
+
+                const drawPart = (x, y, scale = 1, opacity = 1) => {
+                    ctx.globalAlpha = opacity;
+                    // gradient fill
+                    const grad = ctx.createLinearGradient(x - 40 * scale, y, x + 40 * scale, y);
+                    grad.addColorStop(0, colors.metal);
+                    grad.addColorStop(1, colors.metalDark);
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 35 * scale, y - 8 * scale);
+                    ctx.lineTo(x + 35 * scale, y - 8 * scale);
+                    ctx.quadraticCurveTo(x + 40 * scale, y, x + 35 * scale, y + 8 * scale);
+                    ctx.lineTo(x - 35 * scale, y + 8 * scale);
+                    ctx.quadraticCurveTo(x - 40 * scale, y, x - 35 * scale, y - 8 * scale);
+                    ctx.fill();
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    drawShadow(x, y, 60 * scale, 16 * scale);
+                    ctx.globalAlpha = 1;
+                };
+
+                const drawTorch = (x, y, intensity = 1) => {
+                    ctx.fillStyle = `rgba(251, 191, 36, ${0.9 * intensity})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                    // glow
+                    ctx.fillStyle = `rgba(251, 191, 36, ${0.15 * intensity})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    // flame
+                    ctx.fillStyle = `rgba(255, 169, 0, ${0.6 * intensity})`;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 3, y - 5);
+                    ctx.quadraticCurveTo(x - 2, y - 12, x, y - 14);
+                    ctx.quadraticCurveTo(x + 2, y - 12, x + 3, y - 5);
+                    ctx.fill();
+                };
+
+                const drawLayers = (x, y, progress) => {
+                    const layerCount = 8;
+                    const layerHeight = 3.5;
+                    const maxHeight = layerCount * layerHeight;
+                    const visibleLayers = Math.floor(progress * layerCount);
+
+                    for (let i = 0; i < visibleLayers; i++) {
+                        const grad = ctx.createLinearGradient(x - 28, y, x + 28, y);
+                        grad.addColorStop(0, colors.primary);
+                        grad.addColorStop(1, colors.secondary);
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(x - 28, y - maxHeight / 2 + i * layerHeight, 56, layerHeight - 0.5);
+                        ctx.strokeStyle = colors.accent;
+                        ctx.lineWidth = 0.8;
+                        ctx.strokeRect(x - 28, y - maxHeight / 2 + i * layerHeight, 56, layerHeight - 0.5);
+                    }
+                    drawShadow(x, y + maxHeight / 2, 56, 8);
+                };
+
+                const drawDrill = (x, y, progress) => {
+                    const drillY = y - 28 * progress;
+                    // drill bit
+                    ctx.fillStyle = colors.metalDark;
+                    ctx.fillRect(x - 5, drillY - 18, 10, 36);
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(x - 5, drillY - 18, 10, 36);
+                    // rotation effect
+                    ctx.strokeStyle = `rgba(100, 116, 139, ${0.3})`;
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 3; i++) {
+                        ctx.beginPath();
+                        ctx.arc(x, drillY, 7 + i * 3, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+
+                    if (progress > 0.5) {
+                        // hole
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(x, y + 8, 7, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = colors.accent;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                };
+
+                const drawWood = (x, y) => {
+                    const grad = ctx.createLinearGradient(x - 32, y, x + 32, y);
+                    grad.addColorStop(0, colors.wood);
+                    grad.addColorStop(0.5, '#b45309');
+                    grad.addColorStop(1, colors.wood);
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(x - 32, y, 64, 14);
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(x - 32, y, 64, 14);
+                    // wood grain
+                    ctx.strokeStyle = `rgba(139, 60, 0, 0.2)`;
+                    ctx.lineWidth = 0.5;
+                    for (let i = 0; i < 6; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(x - 32, y + 2 + i * 2);
+                        ctx.lineTo(x + 32, y + 2 + i * 2);
+                        ctx.stroke();
+                    }
+                    drawShadow(x, y + 7, 64, 14);
+                };
+
+                const drawCutter = (x, y) => {
+                    ctx.fillStyle = colors.metalDark;
+                    ctx.fillRect(x - 10, y - 5, 20, 10);
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(x - 10, y - 5, 20, 10);
+                    // cutting edge highlight
+                    ctx.strokeStyle = `rgba(255, 255, 255, 0.3)`;
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x - 8, y - 4);
+                    ctx.lineTo(x + 8, y - 4);
+                    ctx.stroke();
+                };
+
+                const drawAssembly = (x1, y1, x2, y2, progress) => {
+                    const p1X = x1 + (x1 - x2) * 0.35 * (1 - progress);
+                    const p2X = x2 - (x1 - x2) * 0.35 * (1 - progress);
+
+                    const grad1 = ctx.createLinearGradient(p1X - 22, y1, p1X + 22, y1);
+                    grad1.addColorStop(0, colors.primary);
+                    grad1.addColorStop(1, colors.secondary);
+                    ctx.fillStyle = grad1;
+                    ctx.fillRect(p1X - 22, y1 - 7, 44, 14);
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(p1X - 22, y1 - 7, 44, 14);
+
+                    const grad2 = ctx.createLinearGradient(p2X - 22, y2, p2X + 22, y2);
+                    grad2.addColorStop(0, colors.secondary);
+                    grad2.addColorStop(1, colors.primary);
+                    ctx.fillStyle = grad2;
+                    ctx.fillRect(p2X - 22, y2 - 7, 44, 14);
+                    ctx.strokeStyle = colors.accent;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(p2X - 22, y2 - 7, 44, 14);
+
+                    drawShadow((p1X + p2X) / 2, y1 + 7, 90, 14);
+                };
+
+                const animate = () => {
+                    if (!startTimeRef.current) startTimeRef.current = performance.now();
+                    const elapsed = (performance.now() - startTimeRef.current) / 1000;
+                    const totalTime = 10.5; // solder 2s, print 3s, drill 1.5s, carve 2s, assemble 2s
+                    const t = elapsed % totalTime;
+
+                    ctx.fillStyle = colors.bg;
+                    ctx.fillRect(0, 0, w, h);
+                    drawGrid();
+
+                    const stages = {
+                        solder: { start: 0, duration: 2.0 },
+                        print: { start: 2.0, duration: 3.0 },
+                        drill: { start: 5.0, duration: 1.5 },
+                        carve: { start: 6.5, duration: 2.0 },
+                        assemble: { start: 8.5, duration: 2.0 },
+                    };
+
+                    const getProgress = (stage) => {
+                        const s = stages[stage];
+                        if (t < s.start || t >= s.start + s.duration) return 0;
+                        return (t - s.start) / s.duration;
+                    };
+
+                    ctx.font = 'bold 13px Inter, sans-serif';
+                    ctx.fillStyle = colors.accent;
+                    ctx.textAlign = 'center';
+
+                    // Soldering
+                    const pSolder = getProgress('solder');
+                    if (pSolder > 0) {
+                        const intensity = 0.5 + 0.5 * Math.sin(pSolder * Math.PI * 8);
+                        drawPart(centerX, centerY - 25, 1, 1);
+                        drawTorch(centerX + 32, centerY - 16, intensity);
+                        ctx.fillText('SOLDERING', centerX, h - 22);
+                    }
+
+                    // Printing (smooth transition from solder)
+                    const pPrint = getProgress('print');
+                    if (pPrint > 0 || (t >= stages.print.start && t < stages.print.start + stages.print.duration)) {
+                        const prevSolderEnd = t >= stages.solder.start + stages.solder.duration ? 1 : 0;
+                        const solderFade = Math.max(0, 1 - pPrint * 2);
+                        drawPart(centerX, centerY - 25, 1 - 0.2 * pPrint, solderFade);
+                        drawLayers(centerX, centerY - 25, pPrint);
+                        ctx.fillText('3D PRINTING', centerX, h - 22);
+                    }
+
+                    // Drilling
+                    const pDrill = getProgress('drill');
+                    if (pDrill > 0) {
+                        drawLayers(centerX, centerY - 25, 1);
+                        drawDrill(centerX, centerY - 5, pDrill);
+                        ctx.fillText('DRILLING', centerX, h - 22);
+                    }
+
+                    // Carving
+                    const pCarve = getProgress('carve');
+                    if (pCarve > 0) {
+                        drawWood(centerX, centerY - 18);
+                        drawCutter(centerX + 38 - 76 * pCarve, centerY - 11);
+                        ctx.fillText('CARVING', centerX, h - 22);
+                    }
+
+                    // Assembly
+                    const pAssemble = getProgress('assemble');
+                    if (pAssemble > 0) {
+                        drawAssembly(centerX - 40, centerY - 30, centerX + 40, centerY - 30, pAssemble);
+                        ctx.fillText('ASSEMBLY', centerX, h - 22);
+                    }
+
+                    requestAnimationFrame(animate);
+                };
+
+                animate();
+            }, [isDark, isBlueprint]);
+
+            return <canvas ref={canvasRef} className="w-full h-full" />;
+        };
+
         const ThreeScene = ({ type, isDark, isBlueprint, scaleOnHover, customSettings, armStateRef, staticCamera }) => {
+            // Hero uses 2D canvas animation instead of 3D
+            if (type === 'hero') {
+                return <HeroAnimation isDark={isDark} isBlueprint={isBlueprint} />;
+            }
+            
+            // All other types use Three.js
             const mountRef = useRef(null);
             const mouseRef = useRef({ x: 0, y: 0 });
             const frameIdRef = useRef(null);
             const modelRef = useRef(null);
             const loadedModelRef = useRef(null); // reference to the currently-loaded GLTF scene/group
+            const heroStartRef = useRef(null);
             const cameraRef = useRef(null);
             const startCameraZRef = useRef(null);
             const [showInternals, setShowInternals] = useState(false);
@@ -811,19 +1169,118 @@
                     frameIdRef.current = requestAnimationFrame(animate);
                     
                     if (type === 'hero') {
-                        const scrollY = window.scrollY;
-                        const maxScroll = 500; 
-                        let progress = Math.min(scrollY / maxScroll, 1);
-                        progress = progress * (2 - progress); 
-                        const sens = DATA.config.heroScrollSensitivity;
-                        droneParts.current.motors.forEach(p => p.position.y = 0.1 + (progress * 0.5 * sens));
-                        droneParts.current.props.forEach((p, i) => {
-                            p.position.y = 0.25 + (progress * 0.8 * sens);
-                            p.rotation.y += 0.2; 
-                        });
-                        if (droneParts.current.camera) droneParts.current.camera.position.y = -0.3 - (progress * 0.3 * sens);
-                        if (modelRef.current) modelRef.current.rotation.y += 0.005;
-                    }
+                            // timeline-based manufacturing animation (~12s loop)
+                            if (!heroStartRef.current) heroStartRef.current = performance.now();
+                            const elapsed = (performance.now() - heroStartRef.current) / 1000; // seconds
+                            const total = 12.0;
+                            const t = (elapsed % total);
+
+                            let stages = droneParts.current && droneParts.current.heroStages ? droneParts.current.heroStages : null;
+                            // fallback: try to autodiscover named hero objects on the group
+                            if (!stages && modelRef.current) {
+                                const g = modelRef.current;
+                                const p = g.getObjectByName && g.getObjectByName('hero_part');
+                                if (p) {
+                                    const discovered = {};
+                                    discovered.part = p;
+                                    discovered.torch = g.getObjectByName('hero_torch') || null;
+                                    discovered.torchLight = g.getObjectByName('hero_torchLight') || null;
+                                    discovered.printedGroup = g.getObjectByName('hero_printedGroup') || null;
+                                    discovered.layers = [];
+                                    for (let i=0;i<16;i++) {
+                                        const ln = g.getObjectByName(`hero_layer_${i}`);
+                                        if (ln) discovered.layers.push(ln);
+                                    }
+                                    discovered.drill = g.getObjectByName('hero_drill') || null;
+                                    discovered.hole = g.getObjectByName('hero_hole') || null;
+                                    discovered.wood = g.getObjectByName('hero_wood') || null;
+                                    discovered.cutter = g.getObjectByName('hero_cutter') || null;
+                                    discovered.partA = g.getObjectByName('hero_partA') || null;
+                                    discovered.partB = g.getObjectByName('hero_partB') || null;
+                                    droneParts.current.heroStages = discovered;
+                                    stages = discovered;
+                                }
+                            }
+
+                            // stage durations (seconds)
+                            const d = { solder: 2.0, dissolve: 2.0, print: 3.0, drill: 1.5, carve: 2.0, assemble: 1.5 };
+                            let cursor = 0;
+
+                            // Soldering
+                            if (t < (cursor += d.solder)) {
+                                const p = (t) / d.solder;
+                                if (stages) {
+                                    stages.torch.material.opacity = 0.8 * (0.5 + 0.5 * Math.sin(p * Math.PI * 6));
+                                    stages.torch.position.x = 0.4 - 0.2 * p;
+                                    stages.part.material.opacity = 1.0;
+                                    stages.part.scale.set(1,1,1);
+                                    stages.printedGroup.visible = false;
+                                    stages.drill.visible = false;
+                                    stages.wood.visible = false;
+                                    stages.partA.visible = false; stages.partB.visible = false;
+                                }
+                            }
+                            // Dissolve
+                            else if (t < (cursor += d.dissolve)) {
+                                const p = (t - (cursor - d.dissolve)) / d.dissolve;
+                                if (stages) {
+                                    stages.torch.material.opacity = 0.0;
+                                    stages.part.material.opacity = 1.0 - p;
+                                    const s = 1 - 0.2 * p;
+                                    stages.part.scale.set(s,s,s);
+                                }
+                            }
+                            // Printing
+                            else if (t < (cursor += d.print)) {
+                                const p = (t - (cursor - d.print)) / d.print;
+                                if (stages) {
+                                    stages.printedGroup.visible = true;
+                                    const totalLayers = stages.layers.length;
+                                    const active = Math.floor(p * totalLayers);
+                                    for (let i=0;i<totalLayers;i++){
+                                        const l = stages.layers[i];
+                                        if (i <= active) l.scale.y = 1.0; else l.scale.y = 0.001;
+                                    }
+                                    stages.part.material.opacity = 0.0;
+                                }
+                            }
+                            // Drilling
+                            else if (t < (cursor += d.drill)) {
+                                const p = (t - (cursor - d.drill)) / d.drill;
+                                if (stages) {
+                                    stages.drill.visible = true;
+                                    stages.drill.rotation.z += 0.6;
+                                    stages.drill.position.y = 0.5 - 0.8 * p;
+                                    stages.hole.visible = p > 0.6;
+                                }
+                            }
+                            // Carving
+                            else if (t < (cursor += d.carve)) {
+                                const p = (t - (cursor - d.carve)) / d.carve;
+                                if (stages) {
+                                    stages.drill.visible = false;
+                                    stages.wood.visible = true;
+                                    stages.cutter.visible = true;
+                                    stages.cutter.position.x = 0.4 - 0.8 * p;
+                                }
+                            }
+                            // Assembly
+                            else {
+                                const p = (t - (cursor - d.assemble)) / d.assemble;
+                                if (stages) {
+                                    stages.wood.visible = false;
+                                    stages.cutter.visible = false;
+                                    stages.partA.visible = true; stages.partB.visible = true;
+                                    stages.partA.position.x = -0.6 + 0.6 * p;
+                                    stages.partB.position.x = 0.6 - 0.6 * p;
+                                    stages.partA.rotation.y = 0.5 * (1-p);
+                                    stages.partB.rotation.y = -0.5 * (1-p);
+                                }
+                            }
+
+                            // keep a subtle overall rotation
+                            if (modelRef.current) modelRef.current.rotation.y += 0.003;
+                        }
                     
                     if (type === 'arm' && armStateRef && armStateRef.current && armParts.current.base) {
                          const s = armStateRef.current;
@@ -986,25 +1443,86 @@
                 head.position.y = 1.2;
                 group.add(body, wheelL, wheelR, head);
             } else if (type === 'hero') {
-                const bodyGeo = new THREE.BoxGeometry(1.0, 0.3, 1.5);
-                const body = new THREE.Mesh(bodyGeo, matMain);
-                group.add(body);
-                const camGeo = new THREE.SphereGeometry(0.2, 16, 16);
-                const cam = new THREE.Mesh(camGeo, matAccent);
-                cam.position.y = -0.3; cam.position.z = 0.6;
-                group.add(cam);
-                if (droneRefs) droneRefs.current.camera = cam;
-                [{x: 1, z: 1}, {x: -1, z: 1}, {x: 1, z: -1}, {x: -1, z: -1}].forEach(pos => {
-                    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.1, 0.2), matMain);
-                    arm.position.set(pos.x/2, 0, pos.z/2); arm.rotation.y = Math.atan2(pos.z, pos.x);
-                    group.add(arm);
-                    const motor = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.3, 16), matAccent);
-                    motor.position.set(pos.x * 1.2, 0.1, pos.z * 1.2); group.add(motor);
-                    if(droneRefs) droneRefs.current.motors.push(motor);
-                    const prop = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.05, 0.15), matWire);
-                    prop.position.set(pos.x * 1.2, 0.25, pos.z * 1.2); group.add(prop);
-                    if(droneRefs) droneRefs.current.props.push(prop);
-                });
+                // Manufacturing animation stages only (no old drone body)
+                const basePartMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.3, roughness: 0.6, transparent: true });
+                const torchMat = new THREE.MeshBasicMaterial({ color: 0xffb86b, emissive: 0xff8a50, transparent: true, opacity: 0.0 });
+                const layerMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.1, roughness: 0.7 });
+                const drillMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.8, roughness: 0.3 });
+                const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
+                const assembledMat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, metalness: 0.4, roughness: 0.3 });
+
+                const part = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.2, 0.8), basePartMat);
+                part.name = 'hero_part';
+                part.position.y = 0;
+                group.add(part);
+
+                const torch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), torchMat);
+                torch.name = 'hero_torch';
+                torch.position.set(0.4, 0.15, 0);
+                group.add(torch);
+
+                const torchLight = new THREE.PointLight(0xffb86b, 0.0, 2.5);
+                torchLight.name = 'hero_torchLight';
+                torchLight.position.copy(torch.position);
+                group.add(torchLight);
+
+                const printedGroup = new THREE.Group();
+                printedGroup.name = 'hero_printedGroup';
+                const layerCount = 12;
+                const layers = [];
+                for (let i = 0; i < layerCount; i++) {
+                    const h = 0.02;
+                    const l = new THREE.Mesh(new THREE.BoxGeometry(0.9, h, 0.6), layerMat);
+                    l.position.y = (i * h) - 0.11 + h/2;
+                    l.scale.y = 0.001;
+                    l.name = `hero_layer_${i}`;
+                    printedGroup.add(l);
+                    layers.push(l);
+                }
+                printedGroup.position.y = 0;
+                group.add(printedGroup);
+
+                const drill = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8), drillMat);
+                drill.name = 'hero_drill';
+                drill.rotation.x = Math.PI/2;
+                drill.position.set(-0.2, 0.5, 0);
+                group.add(drill);
+                const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), new THREE.MeshBasicMaterial({ color: 0x000000 }));
+                hole.name = 'hero_hole';
+                hole.rotation.x = Math.PI/2;
+                hole.position.set(-0.2, 0.01, 0);
+                hole.visible = false;
+                group.add(hole);
+
+                const wood = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.18, 0.6), woodMat);
+                wood.name = 'hero_wood';
+                wood.position.set(0, -0.8, 0);
+                group.add(wood);
+                const cutter = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.12), drillMat);
+                cutter.name = 'hero_cutter';
+                cutter.position.set(0.4, -0.7, 0);
+                group.add(cutter);
+
+                const partA = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
+                const partB = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
+                partA.name = 'hero_partA';
+                partB.name = 'hero_partB';
+                partA.position.set(-0.6, -0.2, 0);
+                partB.position.set(0.6, -0.2, 0);
+                group.add(partA, partB);
+
+                torch.material.opacity = 0.0;
+                printedGroup.visible = false;
+                drill.visible = false;
+                hole.visible = false;
+                wood.visible = false;
+                cutter.visible = false;
+                partA.visible = false;
+                partB.visible = false;
+
+                if (droneRefs) {
+                    droneRefs.current.heroStages = { part, torch, printedGroup, layers, drill, hole, wood, cutter, partA, partB, torchLight };
+                }
             } else if (type === 'remote') {
                 const body = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 2.5), matMain);
                 const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32), matAccent);
@@ -1173,9 +1691,6 @@
                                     <div className="h-[500px] flex items-center justify-center relative">
                                         <div className="w-full h-full">
                                             <ThreeScene type="hero" isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} />
-                                        </div>
-                                        <div className={`absolute bottom-0 left-0 right-0 text-center text-xs font-mono opacity-50 pointer-events-none ${styles.textSub}`}>
-                                            SCROLL TO EXPLODE VIEW
                                         </div>
                                     </div>
                                 </div>
