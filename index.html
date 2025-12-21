@@ -314,6 +314,7 @@
                         <span>$</span>
                         <input className="bg-transparent focus:outline-none flex-1" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} placeholder="Type command..." autoFocus />
                     </div>
+                        
                 </div>
             );
         };
@@ -594,12 +595,17 @@
             const frameIdRef = useRef(null);
             const modelRef = useRef(null);
             const loadedModelRef = useRef(null); // reference to the currently-loaded GLTF scene/group
+            const cameraRef = useRef(null);
+            const startCameraZRef = useRef(null);
             const [showInternals, setShowInternals] = useState(false);
             const [controlMode, setControlMode] = useState(DATA.config.defaultControlMode); 
+            const [zoom, setZoom] = useState(null);
+            const isTouchDevice = (typeof window !== 'undefined') && ('ontouchstart' in window || (navigator && navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
             
             const dragStartPos = useRef({ x: 0, y: 0 });
             const isDragging = useRef(false);
             const hasMoved = useRef(false);
+            const sliderInteractingRef = useRef(false);
             const settings = customSettings || DATA.config.heroSettings;
 
             const droneParts = useRef({ motors: [], props: [], camera: null, arms: [] });
@@ -649,19 +655,17 @@
                     camera.position.z = settings.cameraZ;
                 }
                 camera.position.y = 0.5;
+                // expose camera to outer scope for UI control
+                cameraRef.current = camera;
+                // initialize slider zoom state
+                setZoom(camera.position.z);
+                // remember initial camera z for slider bounds
+                startCameraZRef.current = camera.position.z;
 
                 // Zoom limits (relative to starting camera z)
                 const startCameraZ = camera.position.z;
                 const minZ = startCameraZ * 0.5;
                 const maxZ = startCameraZ * 2.5;
-
-                // Mouse wheel zoom (attach to this scene's canvas only)
-                const handleWheel = (ev) => {
-                    ev.preventDefault();
-                    const delta = ev.deltaY * 0.01 * (DATA.config.mouseSensitivity || 1);
-                    camera.position.z = THREE.MathUtils.clamp(camera.position.z + delta, minZ, maxZ);
-                };
-                if (canvasWrapper) canvasWrapper.addEventListener('wheel', handleWheel, { passive: false });
 
                 // Basic pinch-to-zoom (pointer events)
                 let pointers = {};
@@ -685,6 +689,7 @@
                         const diff = initialPinchDist - dist;
                         const zoomDelta = diff * 0.005 * (DATA.config.mouseSensitivity || 1);
                         camera.position.z = THREE.MathUtils.clamp(camera.position.z + zoomDelta, minZ, maxZ);
+                        setZoom(camera.position.z);
                         initialPinchDist = dist;
                     }
                 };
@@ -694,7 +699,8 @@
                     if (Object.keys(pointers).length < 2) initialPinchDist = null;
                 };
 
-                if (canvasWrapper) {
+                // Only attach pointer-based pinch handlers on touch-capable devices
+                if (isTouchDevice && canvasWrapper) {
                     canvasWrapper.addEventListener('pointerdown', onPointerDown);
                     canvasWrapper.addEventListener('pointermove', onPointerMove);
                     canvasWrapper.addEventListener('pointerup', onPointerUp);
@@ -842,7 +848,8 @@
                         } 
                         
                         if (!staticCamera && !isDragging.current && type !== 'arm') {
-                             modelRef.current.rotation.y += 0.001;
+                            const spinSpeed = isTouchDevice ? 0.02 : 0.001;
+                            modelRef.current.rotation.y += spinSpeed;
                         }
                     }
                     renderer.render(scene, camera);
@@ -853,11 +860,13 @@
                     cancelAnimationFrame(frameIdRef.current);
                     window.removeEventListener('mouseup', handleMouseUp);
                     if (canvasWrapper) {
-                        canvasWrapper.removeEventListener('wheel', handleWheel);
-                        canvasWrapper.removeEventListener('pointerdown', onPointerDown);
-                        canvasWrapper.removeEventListener('pointermove', onPointerMove);
-                        canvasWrapper.removeEventListener('pointerup', onPointerUp);
-                        canvasWrapper.removeEventListener('pointercancel', onPointerUp);
+                        // We only attached pointer handlers for touch-capable devices
+                        if (isTouchDevice) {
+                            canvasWrapper.removeEventListener('pointerdown', onPointerDown);
+                            canvasWrapper.removeEventListener('pointermove', onPointerMove);
+                            canvasWrapper.removeEventListener('pointerup', onPointerUp);
+                            canvasWrapper.removeEventListener('pointercancel', onPointerUp);
+                        }
                     }
                     resizeObserver.disconnect();
                     if (canvasWrapper && mountRef.current && mountRef.current.contains(canvasWrapper)) {
@@ -868,6 +877,9 @@
             }, [type, isDark, controlMode, settings, isBlueprint, staticCamera, showInternals]);
 
             const onMouseMove = (e) => {
+                // Ignore manual mouse interactions on touch devices
+                if (isTouchDevice) return;
+
                 if (controlMode === 'hover') {
                     const rect = mountRef.current.getBoundingClientRect();
                     mouseRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
@@ -885,6 +897,9 @@
             };
 
             const onMouseDown = (e) => {
+                // No manual mouse/drag activation on touch devices
+                if (isTouchDevice) return;
+
                 dragStartPos.current = { x: e.clientX, y: e.clientY };
                 hasMoved.current = false; 
                 if (controlMode === 'drag' || staticCamera) {
@@ -893,26 +908,36 @@
                 }
             }
 
+            // Slider range values (used to invert slider mapping: right = zoom in)
+            const sliderMin = (startCameraZRef.current || settings.cameraZ) * 0.5;
+            const sliderMax = (startCameraZRef.current || settings.cameraZ) * 2.5;
+            const sliderValueDisplay = (sliderMin + sliderMax) - (zoom ?? (startCameraZRef.current || settings.cameraZ));
+
                 return (
                 <div 
                     ref={mountRef} 
                     onMouseMove={onMouseMove}
                     onMouseDown={onMouseDown}
-                    onClick={(e) => { if (hasMoved.current) { e.stopPropagation(); e.preventDefault(); hasMoved.current = false; } }}
+                    onClick={(e) => {
+                        if (hasMoved.current) { e.stopPropagation(); e.preventDefault(); hasMoved.current = false; return; }
+                        if (sliderInteractingRef.current) { e.stopPropagation(); e.preventDefault(); return; }
+                    }}
                     className={`relative w-full h-full flex items-center justify-center group/canvas overflow-hidden ${controlMode === 'drag' || staticCamera ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                 >
                     {!staticCamera && (
                         <div className="absolute top-4 left-4 z-10 flex gap-2">
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setControlMode(controlMode === 'hover' ? 'drag' : 'hover'); }}
-                                className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
-                                    isBlueprint ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 
-                                    (isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white')
-                                }`}
-                                title={controlMode === 'hover' ? "Switch to Manual (CAD) Control" : "Switch to Auto (Hover) Control"}
-                            >
-                                {controlMode === 'hover' ? <MousePointer2 size={16} /> : <Move3d size={16} className={isBlueprint ? "text-cyan-300" : "text-blue-500"} />}
-                            </button>
+                            {!isTouchDevice && (
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); setControlMode(controlMode === 'hover' ? 'drag' : 'hover'); }}
+                                    className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
+                                        isBlueprint ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 
+                                        (isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white')
+                                    }`}
+                                    title={controlMode === 'hover' ? "Switch to Click-and-Drag Control" : "Switch to Auto (Hover) Control"}
+                                >
+                                    {controlMode === 'hover' ? <MousePointer2 size={16} /> : <Move3d size={16} className={isBlueprint ? "text-cyan-300" : "text-blue-500"} />}
+                                </button>
+                            )}
 
                             {customSettings && customSettings.internalsModelPath && (
                                 <button
@@ -926,6 +951,27 @@
                                     <Layers size={16} className={showInternals ? (isBlueprint ? "text-cyan-300" : "text-blue-600") : ""} />
                                 </button>
                             )}
+                        </div>
+                    )}
+                    {/* Zoom slider (desktop + mobile) */}
+                    {startCameraZRef.current && (
+                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-2/3 md:w-1/3 px-4">
+                            <input
+                                type="range"
+                                min={sliderMin}
+                                max={sliderMax}
+                                step="0.01"
+                                value={sliderValueDisplay}
+                                onPointerDown={() => { sliderInteractingRef.current = true; }}
+                                onPointerUp={() => { setTimeout(() => { sliderInteractingRef.current = false; }, 50); }}
+                                onInput={(e) => {
+                                    const v = parseFloat(e.target.value);
+                                    const newCamZ = (sliderMin + sliderMax) - v; // invert mapping
+                                    setZoom(newCamZ);
+                                    if (cameraRef.current) cameraRef.current.position.z = newCamZ;
+                                }}
+                                className="w-full h-2 appearance-none bg-slate-300 dark:bg-slate-700 rounded-lg"
+                            />
                         </div>
                     )}
                 </div>
