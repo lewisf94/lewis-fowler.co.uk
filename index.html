@@ -94,6 +94,24 @@
         .dark input[type=range]::-webkit-slider-runnable-track {
             background: #475569;
         }
+        /* --- HERO: Modern Engineering Hero styles (from user) --- */
+        .hero-container { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; transform: translate3d(0,0,0); }
+        .grid-layer { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%); pointer-events: none; }
+        .gradient-background { position: absolute; inset: 0; z-index: 0; background: #000; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; animation: float 20s infinite ease-in-out alternate; }
+        .blob-1 { width: 50vw; height: 50vw; background: #2563eb; top: -10%; left: -10%; animation-duration: 25s; }
+        .blob-2 { width: 40vw; height: 40vw; background: #7c3aed; bottom: -10%; right: -10%; animation-duration: 30s; animation-direction: reverse; }
+        .blob-3 { width: 30vw; height: 30vw; background: #06b6d4; top: 40%; left: 40%; animation-duration: 22s; opacity: 0.4; }
+        .noise-overlay { position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%; width: 200%; height: 200vh; background: transparent url('http://assets.iceable.com/img/noise-transparent.png') repeat 0 0; animation: bg-animation .2s infinite; opacity: 0.07; pointer-events: none; z-index: 2; }
+        @keyframes bg-animation { 0% { transform: translate(0,0) } 10% { transform: translate(-5%,-5%) } 20% { transform: translate(-10%,5%) } 30% { transform: translate(5%,-10%) } 40% { transform: translate(-5%,15%) } 50% { transform: translate(-10%,5%) } 60% { transform: translate(15%,0) } 70% { transform: translate(0,10%) } 80% { transform: translate(-15%,0) } 90% { transform: translate(10%,5%) } 100% { transform: translate(5%,0) } }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
+        .hero-content { position: relative; z-index: 10; text-align: center; max-width: 800px; padding: 0 20px; }
+        .hero-content h1 { font-size: 4rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1.1; margin-bottom: 1.5rem; background: linear-gradient(to right, #ffffff, #94a3b8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 40px rgba(255,255,255,0.1); }
+        .hero-content p { font-size: 1.25rem; color: #94a3b8; margin-bottom: 2rem; font-weight: 400; line-height: 1.6; }
+        .btn { display: inline-block; padding: 12px 32px; background: rgba(255,255,255,0.1); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; }
+        .btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.3); }
+        .mouse-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); z-index: 3; transition: opacity 0.3s ease; }
+        @media (max-width: 768px) { .hero-content h1 { font-size: 2.5rem; } .blob { filter: blur(50px); } }
     </style>
 </head>
 <body class="transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
@@ -406,6 +424,72 @@
             );
         };
 
+        // --- Modern HTML/CSS Hero Component (user-supplied) ---
+        const ModernHero = ({ profile, isDark, isBlueprint, textSub }) => {
+            const containerRef = useRef(null);
+            const glowRef = useRef(null);
+
+            useEffect(() => {
+                const container = containerRef.current;
+                const glow = glowRef.current;
+                if (!container || !glow) return;
+
+                let raf = null;
+                let pos = { x: container.clientWidth / 2, y: container.clientHeight / 2 };
+
+                const updateGlow = () => {
+                    glow.style.left = `${pos.x}px`;
+                    glow.style.top = `${pos.y}px`;
+                    raf = null;
+                };
+
+                const onMove = (e) => {
+                    const rect = container.getBoundingClientRect();
+                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                    pos = { x: cx - rect.left, y: cy - rect.top };
+                    glow.style.opacity = '1';
+                    if (!raf) raf = requestAnimationFrame(updateGlow);
+                };
+
+                const onLeave = () => { glow.style.opacity = '0'; };
+
+                container.addEventListener('mousemove', onMove);
+                container.addEventListener('touchmove', onMove, { passive: true });
+                container.addEventListener('mouseleave', onLeave);
+                container.addEventListener('touchend', onLeave);
+
+                return () => {
+                    container.removeEventListener('mousemove', onMove);
+                    container.removeEventListener('touchmove', onMove);
+                    container.removeEventListener('mouseleave', onLeave);
+                    container.removeEventListener('touchend', onLeave);
+                    if (raf) cancelAnimationFrame(raf);
+                };
+            }, []);
+
+            return (
+                <div ref={containerRef} className="hero-container">
+                    <div className="gradient-background"></div>
+                    <div className="blob blob-1"></div>
+                    <div className="blob blob-2"></div>
+                    <div className="blob blob-3"></div>
+                    <div className="grid-layer"></div>
+                    <div ref={glowRef} className="mouse-glow" style={{ opacity: 0 }}></div>
+                    <div className="noise-overlay"></div>
+                    <div className="hero-content">
+                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
+                            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${isBlueprint ? 'from-cyan-300 to-blue-100' : 'from-blue-600 to-purple-600'}`}>{profile.name}</span>
+                        </h1>
+                        <p className={`text-xl max-w-lg leading-relaxed ${textSub}`}>{profile.bio}</p>
+                        <div className="flex gap-4">
+                            <a href="#projects" className={`px-8 py-4 rounded-xl font-bold shadow-lg transition-all ${isBlueprint ? 'bg-white text-blue-900 hover:bg-blue-100' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'}`}>View Projects</a>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const PhysicsSkills = ({ skills, isDark, isBlueprint }) => {
             const sceneRef = useRef(null);
             const engineRef = useRef(null);
@@ -702,161 +786,153 @@
                 const drawShadow = (x, y, w, h) => {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
                     ctx.beginPath();
-                    ctx.ellipse(x, y + h / 2 + 8, w * 0.6, 3, 0, 0, Math.PI * 2);
+                    ctx.ellipse(x, y + h / 2 + 18, w * 0.65, 6, 0, 0, Math.PI * 2);
                     ctx.fill();
                 };
 
                 const drawPart = (x, y, scale = 1, opacity = 1) => {
                     ctx.globalAlpha = opacity;
-                    // gradient fill
-                    const grad = ctx.createLinearGradient(x - 40 * scale, y, x + 40 * scale, y);
+                    const grad = ctx.createLinearGradient(x - 84 * scale, y, x + 84 * scale, y);
                     grad.addColorStop(0, colors.metal);
                     grad.addColorStop(1, colors.metalDark);
                     ctx.fillStyle = grad;
                     ctx.beginPath();
-                    ctx.moveTo(x - 35 * scale, y - 8 * scale);
-                    ctx.lineTo(x + 35 * scale, y - 8 * scale);
-                    ctx.quadraticCurveTo(x + 40 * scale, y, x + 35 * scale, y + 8 * scale);
-                    ctx.lineTo(x - 35 * scale, y + 8 * scale);
-                    ctx.quadraticCurveTo(x - 40 * scale, y, x - 35 * scale, y - 8 * scale);
+                    ctx.moveTo(x - 72 * scale, y - 16.5 * scale);
+                    ctx.lineTo(x + 72 * scale, y - 16.5 * scale);
+                    ctx.quadraticCurveTo(x + 84 * scale, y, x + 72 * scale, y + 16.5 * scale);
+                    ctx.lineTo(x - 72 * scale, y + 16.5 * scale);
+                    ctx.quadraticCurveTo(x - 84 * scale, y, x - 72 * scale, y - 16.5 * scale);
                     ctx.fill();
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
+                    ctx.lineWidth = 3;
                     ctx.stroke();
-                    drawShadow(x, y, 60 * scale, 16 * scale);
+                    drawShadow(x, y, 144 * scale, 33 * scale);
                     ctx.globalAlpha = 1;
                 };
 
                 const drawTorch = (x, y, intensity = 1) => {
                     ctx.fillStyle = `rgba(251, 191, 36, ${0.9 * intensity})`;
                     ctx.beginPath();
-                    ctx.arc(x, y, 7, 0, Math.PI * 2);
+                    ctx.arc(x, y, 15, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
+                    ctx.lineWidth = 3;
                     ctx.stroke();
-                    // glow
                     ctx.fillStyle = `rgba(251, 191, 36, ${0.15 * intensity})`;
                     ctx.beginPath();
-                    ctx.arc(x, y, 18, 0, Math.PI * 2);
+                    ctx.arc(x, y, 36, 0, Math.PI * 2);
                     ctx.fill();
-                    // flame
                     ctx.fillStyle = `rgba(255, 169, 0, ${0.6 * intensity})`;
                     ctx.beginPath();
-                    ctx.moveTo(x - 3, y - 5);
-                    ctx.quadraticCurveTo(x - 2, y - 12, x, y - 14);
-                    ctx.quadraticCurveTo(x + 2, y - 12, x + 3, y - 5);
+                    ctx.moveTo(x - 6, y - 10.5);
+                    ctx.quadraticCurveTo(x - 3, y - 24, x, y - 28.5);
+                    ctx.quadraticCurveTo(x + 3, y - 24, x + 6, y - 10.5);
                     ctx.fill();
                 };
 
                 const drawLayers = (x, y, progress) => {
-                    const layerCount = 8;
-                    const layerHeight = 3.5;
+                    const layerCount = 10;
+                    const layerHeight = 6;
                     const maxHeight = layerCount * layerHeight;
                     const visibleLayers = Math.floor(progress * layerCount);
 
                     for (let i = 0; i < visibleLayers; i++) {
-                        const grad = ctx.createLinearGradient(x - 28, y, x + 28, y);
+                        const grad = ctx.createLinearGradient(x - 57, y, x + 57, y);
                         grad.addColorStop(0, colors.primary);
                         grad.addColorStop(1, colors.secondary);
                         ctx.fillStyle = grad;
-                        ctx.fillRect(x - 28, y - maxHeight / 2 + i * layerHeight, 56, layerHeight - 0.5);
+                        ctx.fillRect(x - 57, y - maxHeight / 2 + i * layerHeight, 114, layerHeight - 0.75);
                         ctx.strokeStyle = colors.accent;
-                        ctx.lineWidth = 0.8;
-                        ctx.strokeRect(x - 28, y - maxHeight / 2 + i * layerHeight, 56, layerHeight - 0.5);
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeRect(x - 57, y - maxHeight / 2 + i * layerHeight, 114, layerHeight - 0.75);
                     }
-                    drawShadow(x, y + maxHeight / 2, 56, 8);
+                    drawShadow(x, y + maxHeight / 2, 114, 15);
                 };
 
                 const drawDrill = (x, y, progress) => {
-                    const drillY = y - 28 * progress;
-                    // drill bit
+                    const drillY = y - 52.5 * progress;
                     ctx.fillStyle = colors.metalDark;
-                    ctx.fillRect(x - 5, drillY - 18, 10, 36);
+                    ctx.fillRect(x - 10.5, drillY - 36, 21, 72);
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(x - 5, drillY - 18, 10, 36);
-                    // rotation effect
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x - 10.5, drillY - 36, 21, 72);
                     ctx.strokeStyle = `rgba(100, 116, 139, ${0.3})`;
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 2;
                     for (let i = 0; i < 3; i++) {
                         ctx.beginPath();
-                        ctx.arc(x, drillY, 7 + i * 3, 0, Math.PI * 2);
+                        ctx.arc(x, drillY, 15 + i * 6, 0, Math.PI * 2);
                         ctx.stroke();
                     }
 
                     if (progress > 0.5) {
-                        // hole
                         ctx.fillStyle = '#000000';
                         ctx.beginPath();
-                        ctx.arc(x, y + 8, 7, 0, Math.PI * 2);
+                        ctx.arc(x, y + 15, 15, 0, Math.PI * 2);
                         ctx.fill();
                         ctx.strokeStyle = colors.accent;
-                        ctx.lineWidth = 1;
+                        ctx.lineWidth = 2;
                         ctx.stroke();
                     }
                 };
 
                 const drawWood = (x, y) => {
-                    const grad = ctx.createLinearGradient(x - 32, y, x + 32, y);
+                    const grad = ctx.createLinearGradient(x - 66, y, x + 66, y);
                     grad.addColorStop(0, colors.wood);
                     grad.addColorStop(0.5, '#b45309');
                     grad.addColorStop(1, colors.wood);
                     ctx.fillStyle = grad;
-                    ctx.fillRect(x - 32, y, 64, 14);
+                    ctx.fillRect(x - 66, y, 132, 27);
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(x - 32, y, 64, 14);
-                    // wood grain
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x - 66, y, 132, 27);
                     ctx.strokeStyle = `rgba(139, 60, 0, 0.2)`;
-                    ctx.lineWidth = 0.5;
-                    for (let i = 0; i < 6; i++) {
+                    ctx.lineWidth = 0.75;
+                    for (let i = 0; i < 12; i++) {
                         ctx.beginPath();
-                        ctx.moveTo(x - 32, y + 2 + i * 2);
-                        ctx.lineTo(x + 32, y + 2 + i * 2);
+                        ctx.moveTo(x - 66, y + 3 + i * 2);
+                        ctx.lineTo(x + 66, y + 3 + i * 2);
                         ctx.stroke();
                     }
-                    drawShadow(x, y + 7, 64, 14);
+                    drawShadow(x, y + 13.5, 132, 27);
                 };
 
                 const drawCutter = (x, y) => {
                     ctx.fillStyle = colors.metalDark;
-                    ctx.fillRect(x - 10, y - 5, 20, 10);
+                    ctx.fillRect(x - 19.5, y - 9, 39, 18);
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(x - 10, y - 5, 20, 10);
-                    // cutting edge highlight
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x - 19.5, y - 9, 39, 18);
                     ctx.strokeStyle = `rgba(255, 255, 255, 0.3)`;
-                    ctx.lineWidth = 1;
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.moveTo(x - 8, y - 4);
-                    ctx.lineTo(x + 8, y - 4);
+                    ctx.moveTo(x - 16.5, y - 7.5);
+                    ctx.lineTo(x + 16.5, y - 7.5);
                     ctx.stroke();
                 };
 
                 const drawAssembly = (x1, y1, x2, y2, progress) => {
-                    const p1X = x1 + (x1 - x2) * 0.35 * (1 - progress);
-                    const p2X = x2 - (x1 - x2) * 0.35 * (1 - progress);
+                    const p1X = x1 + (x1 - x2) * 0.4 * (1 - progress);
+                    const p2X = x2 - (x1 - x2) * 0.4 * (1 - progress);
 
-                    const grad1 = ctx.createLinearGradient(p1X - 22, y1, p1X + 22, y1);
+                    const grad1 = ctx.createLinearGradient(p1X - 45, y1, p1X + 45, y1);
                     grad1.addColorStop(0, colors.primary);
                     grad1.addColorStop(1, colors.secondary);
                     ctx.fillStyle = grad1;
-                    ctx.fillRect(p1X - 22, y1 - 7, 44, 14);
+                    ctx.fillRect(p1X - 45, y1 - 13.5, 90, 27);
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(p1X - 22, y1 - 7, 44, 14);
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(p1X - 45, y1 - 13.5, 90, 27);
 
-                    const grad2 = ctx.createLinearGradient(p2X - 22, y2, p2X + 22, y2);
+                    const grad2 = ctx.createLinearGradient(p2X - 45, y2, p2X + 45, y2);
                     grad2.addColorStop(0, colors.secondary);
                     grad2.addColorStop(1, colors.primary);
                     ctx.fillStyle = grad2;
-                    ctx.fillRect(p2X - 22, y2 - 7, 44, 14);
+                    ctx.fillRect(p2X - 45, y2 - 13.5, 90, 27);
                     ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 1.5;
-                    ctx.strokeRect(p2X - 22, y2 - 7, 44, 14);
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(p2X - 45, y2 - 13.5, 90, 27);
 
-                    drawShadow((p1X + p2X) / 2, y1 + 7, 90, 14);
+                    drawShadow((p1X + p2X) / 2, Math.max(y1, y2) + 13.5, 180, 27);
                 };
 
                 const animate = () => {
@@ -887,45 +963,40 @@
                     ctx.fillStyle = colors.accent;
                     ctx.textAlign = 'center';
 
-                    // Soldering
+                    // Soldering (only during solder phase)
                     const pSolder = getProgress('solder');
-                    if (pSolder > 0) {
+                    if (t >= stages.solder.start && t < stages.solder.start + stages.solder.duration) {
                         const intensity = 0.5 + 0.5 * Math.sin(pSolder * Math.PI * 8);
-                        drawPart(centerX, centerY - 25, 1, 1);
-                        drawTorch(centerX + 32, centerY - 16, intensity);
+                        drawPart(centerX, centerY - 45, 1, 1);
+                        drawTorch(centerX + 63, centerY - 27, intensity);
                         ctx.fillText('SOLDERING', centerX, h - 22);
                     }
-
-                    // Printing (smooth transition from solder)
-                    const pPrint = getProgress('print');
-                    if (pPrint > 0 || (t >= stages.print.start && t < stages.print.start + stages.print.duration)) {
-                        const prevSolderEnd = t >= stages.solder.start + stages.solder.duration ? 1 : 0;
-                        const solderFade = Math.max(0, 1 - pPrint * 2);
-                        drawPart(centerX, centerY - 25, 1 - 0.2 * pPrint, solderFade);
-                        drawLayers(centerX, centerY - 25, pPrint);
+                    // Printing (only during print phase)
+                    else if (t >= stages.print.start && t < stages.print.start + stages.print.duration) {
+                        const pPrint = getProgress('print');
+                        const solderFade = Math.max(0, 1 - pPrint * 1.5);
+                        drawPart(centerX, centerY - 45, 1 - 0.15 * pPrint, solderFade);
+                        drawLayers(centerX, centerY - 45, pPrint);
                         ctx.fillText('3D PRINTING', centerX, h - 22);
                     }
-
-                    // Drilling
-                    const pDrill = getProgress('drill');
-                    if (pDrill > 0) {
-                        drawLayers(centerX, centerY - 25, 1);
-                        drawDrill(centerX, centerY - 5, pDrill);
+                    // Drilling (only during drill phase)
+                    else if (t >= stages.drill.start && t < stages.drill.start + stages.drill.duration) {
+                        const pDrill = getProgress('drill');
+                        drawLayers(centerX, centerY - 45, 1 - pDrill * 0.3);
+                        drawDrill(centerX, centerY - 7.5, pDrill);
                         ctx.fillText('DRILLING', centerX, h - 22);
                     }
-
-                    // Carving
-                    const pCarve = getProgress('carve');
-                    if (pCarve > 0) {
-                        drawWood(centerX, centerY - 18);
-                        drawCutter(centerX + 38 - 76 * pCarve, centerY - 11);
+                    // Carving (only during carve phase)
+                    else if (t >= stages.carve.start && t < stages.carve.start + stages.carve.duration) {
+                        const pCarve = getProgress('carve');
+                        drawWood(centerX, centerY - 27);
+                        drawCutter(centerX + 75 - 150 * pCarve, centerY - 13.5);
                         ctx.fillText('CARVING', centerX, h - 22);
                     }
-
-                    // Assembly
-                    const pAssemble = getProgress('assemble');
-                    if (pAssemble > 0) {
-                        drawAssembly(centerX - 40, centerY - 30, centerX + 40, centerY - 30, pAssemble);
+                    // Assembly (only during assemble phase)
+                    else if (t >= stages.assemble.start && t < stages.assemble.start + stages.assemble.duration) {
+                        const pAssemble = getProgress('assemble');
+                        drawAssembly(centerX - 75, centerY - 52.5, centerX + 75, centerY - 52.5, pAssemble);
                         ctx.fillText('ASSEMBLY', centerX, h - 22);
                     }
 
@@ -1674,23 +1745,10 @@
                     ) : (
                         <>
                             <section className="relative pt-32 pb-20 px-6">
-                                <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center">
-                                    <div className="z-10 space-y-8">
-                                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium border ${isBlueprint ? 'bg-emerald-900/50 border-emerald-700 text-emerald-300' : (isDark ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-emerald-50 border-emerald-200 text-emerald-700')}`}>
-                                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> {DATA.profile.availability}
-                                        </div>
-                                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-                                            {DATA.profile.role} <br/>
-                                            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${isBlueprint ? 'from-cyan-300 to-blue-100' : 'from-blue-600 to-purple-600'}`}> & Innovator</span>
-                                        </h1>
-                                        <p className={`text-xl max-w-lg leading-relaxed ${styles.textSub}`}>{DATA.profile.bio}</p>
-                                        <div className="flex gap-4">
-                                            <a href="#projects" className={`px-8 py-4 rounded-xl font-bold shadow-lg transition-all ${isBlueprint ? 'bg-white text-blue-900 hover:bg-blue-100' : 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20'}`}>View Projects</a>
-                                        </div>
-                                    </div>
-                                    <div className="h-[500px] flex items-center justify-center relative">
+                                <div className="max-w-7xl mx-auto flex items-center justify-center">
+                                    <div className="w-full h-[500px] flex items-center justify-center relative">
                                         <div className="w-full h-full">
-                                            <ThreeScene type="hero" isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} />
+                                            <ModernHero profile={DATA.profile} isDark={isDark} isBlueprint={isBlueprint} textSub={styles.textSub} />
                                         </div>
                                     </div>
                                 </div>
