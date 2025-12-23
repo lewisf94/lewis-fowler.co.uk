@@ -202,9 +202,9 @@
             ],
             // Types: 'chip', 'snake', 'printer', 'gear', 'wrench', 'plus', 'atom'
             skills: [
-                { category: "Mechanical", name: "SolidWorks", type: "gear" },
-                { category: "Mechanical", name: "Fusion 360", type: "gear" },
-                { category: "Mechanical", name: "CFD / Fluent", type: "atom" },
+                { category: "Software", name: "SolidWorks", type: "gear" },
+                { category: "Software", name: "Fusion 360", type: "gear" },
+                { category: "Software", name: "CFD / Fluent", type: "atom" },
                 { category: "Mechanical", name: "Fabrication", type: "wrench" },
                 { category: "Mechanical", name: "3D Printing", type: "printer" },
                 { category: "Embedded", name: "Arduino", type: "chip" },
@@ -679,73 +679,44 @@
                         'Software': isBlueprint ? '#a855f7' : '#a855f7'    
                     };
 
+                    const toSkillKey = (name) => String(name || '')
+                        .toLowerCase()
+                        .replace(/\s*\/\s*/g, '-')  // CFD / Fluent -> cfd-fluent
+                        .replace(/\s+/g, '-')
+                        .replace(/\+\+/g, 'pp')     // C++ -> cpp (before removing other chars)
+                        .replace(/[^a-z0-9\-]/g, '')
+                        .replace(/-+/g, '-');       // collapse multiple dashes
+
+                    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
                     skills.forEach((skill, i) => {
                         const x = Math.random() * (width - 150) + 75;
                         const y = -Math.random() * 500 - 100; 
-                        let body;
 
-                        const commonProps = {
-                            restitution: 0.5,
-                            friction: 0.5,
-                            label: skill.name,
-                            plugin: { type: skill.type } 
-                        };
-                        
                         const color = categoryColors[skill.category] || '#64748b';
-                        const stroke = isBlueprint ? '#ffffff' : 'transparent';
+                        const skillKey = toSkillKey(skill.name);
 
-                        if (skill.type === 'snake') {
-                            // Compound Body: Sinuous "S" shape for Snake
-                            // Circles offset in X and Y to make a wave
-                            const c1 = Bodies.circle(-20, -10, 15);
-                            const c2 = Bodies.circle(-10, -5, 15);
-                            const c3 = Bodies.circle(0, 0, 15);
-                            const c4 = Bodies.circle(10, 5, 15);
-                            const c5 = Bodies.circle(20, 10, 15);
-                            
-                            body = Matter.Body.create({
-                                parts: [c1, c2, c3, c4, c5],
-                                ...commonProps
-                            });
-                        } else if (skill.type === 'chip') {
-                            // Chip body
-                            body = Bodies.rectangle(x, y, 120, 60, { 
-                                ...commonProps, 
-                                chamfer: { radius: 2 } 
-                            });
-                        } else if (skill.type === 'plus') {
-                            // C++ Plus Shape
-                            const partV = Bodies.rectangle(0, 0, 25, 80);
-                            const partH = Bodies.rectangle(0, 0, 80, 25);
-                            body = Matter.Body.create({ parts: [partV, partH], ...commonProps });
-                        } else if (skill.type === 'wrench') {
-                            // Wrench: Handle + U-Jaw
-                            const handle = Bodies.rectangle(0, 20, 15, 90);
-                            // Jaw made of 3 parts to form a 'C'
-                            const jawBack = Bodies.rectangle(0, -30, 40, 15);
-                            const jawL = Bodies.rectangle(-15, -45, 10, 30, { angle: -0.2 });
-                            const jawR = Bodies.rectangle(15, -45, 10, 30, { angle: 0.2 });
-                            
-                            body = Matter.Body.create({ parts: [handle, jawBack, jawL, jawR], ...commonProps });
-                        } else if (skill.type === 'atom') {
-                            // Central + Orbital
-                            const center = Bodies.circle(0, 0, 25);
-                            const orbit1 = Bodies.rectangle(0, 0, 90, 8, { angle: Math.PI/4 });
-                            const orbit2 = Bodies.rectangle(0, 0, 90, 8, { angle: -Math.PI/4 });
-                            body = Matter.Body.create({ parts: [center, orbit1, orbit2], ...commonProps });
-                        } else if (skill.type === 'printer') {
-                            body = Bodies.rectangle(x, y, 100, 80, commonProps);
-                        } else {
-                            // Gear
-                            body = Bodies.polygon(x, y, 6, 40, commonProps);
-                        }
-                        
-                        if(body) {
-                            Matter.Body.setPosition(body, { x, y });
-                            body.plugin.renderType = skill.type; 
-                            body.plugin.color = color;
-                            World.add(engine.world, body);
-                        }
+                        // Make every skill its own "block" (unique via icon + slightly varied sizing).
+                        const baseW = 120 + (String(skill.name || '').length * 6);
+                        const w = clamp(baseW, 120, 190);
+                        const h = 56 + ((i % 3) * 6);
+                        const corner = 10 + ((i % 4) * 2);
+
+                        const body = Bodies.rectangle(x, y, w, h, {
+                            restitution: 0.55,
+                            friction: 0.45,
+                            chamfer: { radius: corner },
+                            label: skill.name,
+                            plugin: {
+                                skillKey,
+                                category: skill.category,
+                                color,
+                                w,
+                                h
+                            }
+                        });
+
+                        World.add(engine.world, body);
                     });
 
                     const mouse = Mouse.create(render.canvas);
@@ -762,51 +733,366 @@
                         const context = render.context;
                         context.textAlign = "center";
                         context.textBaseline = "middle";
+
+                        const drawRoundedRect = (ctx, x, y, w, h, r) => {
+                            const rr = Math.min(r, w / 2, h / 2);
+                            ctx.beginPath();
+                            ctx.moveTo(x + rr, y);
+                            ctx.lineTo(x + w - rr, y);
+                            ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
+                            ctx.lineTo(x + w, y + h - rr);
+                            ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
+                            ctx.lineTo(x + rr, y + h);
+                            ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
+                            ctx.lineTo(x, y + rr);
+                            ctx.quadraticCurveTo(x, y, x + rr, y);
+                            ctx.closePath();
+                        };
+
+                        const iconStroke = isBlueprint ? '#ffffff' : (isDark ? '#e2e8f0' : '#0f172a');
+                        const textColor = isBlueprint ? '#ffffff' : (isDark ? '#ffffff' : '#0f172a');
+                        const baseFill = isBlueprint ? '#1e3a8a' : (isDark ? '#0f172a' : '#ffffff');
+                        const subtleFill = isBlueprint ? 'rgba(255,255,255,0.08)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)');
+
+                        const drawSkillIcon = (ctx, skillKey) => {
+                            ctx.save();
+                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = iconStroke;
+                            ctx.fillStyle = iconStroke;
+
+                            switch (skillKey) {
+                                case 'solidworks': {
+                                    // isometric cube - SolidWorks red
+                                    ctx.strokeStyle = '#dc2626';
+                                    ctx.fillStyle = '#dc2626';
+                                    ctx.lineWidth = 2;
+                                    // top face
+                                    ctx.beginPath();
+                                    ctx.moveTo(-10, -6); ctx.lineTo(0, -12); ctx.lineTo(10, -6); ctx.lineTo(0, 0); ctx.closePath();
+                                    ctx.fillStyle = '#fca5a5';
+                                    ctx.fill();
+                                    ctx.strokeStyle = '#dc2626';
+                                    ctx.stroke();
+                                    // left face
+                                    ctx.beginPath();
+                                    ctx.moveTo(-10, -6); ctx.lineTo(-10, 6); ctx.lineTo(0, 12); ctx.lineTo(0, 0); ctx.closePath();
+                                    ctx.fillStyle = '#ef4444';
+                                    ctx.fill();
+                                    ctx.stroke();
+                                    // right face
+                                    ctx.beginPath();
+                                    ctx.moveTo(10, -6); ctx.lineTo(10, 6); ctx.lineTo(0, 12); ctx.lineTo(0, 0); ctx.closePath();
+                                    ctx.fillStyle = '#dc2626';
+                                    ctx.fill();
+                                    ctx.stroke();
+                                    break;
+                                }
+                                case 'fusion-360': {
+                                    // 3D orbit/rotation ring - Autodesk orange
+                                    ctx.strokeStyle = '#f97316';
+                                    ctx.fillStyle = '#f97316';
+                                    ctx.lineWidth = 2;
+                                    ctx.beginPath();
+                                    ctx.ellipse(0, 0, 12, 5, 0, 0, Math.PI * 2);
+                                    ctx.stroke();
+                                    ctx.strokeStyle = '#fb923c';
+                                    ctx.beginPath();
+                                    ctx.ellipse(0, 0, 12, 5, Math.PI / 3, 0, Math.PI * 2);
+                                    ctx.stroke();
+                                    ctx.fillStyle = '#ea580c';
+                                    ctx.beginPath();
+                                    ctx.arc(0, 0, 4, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    break;
+                                }
+                                case 'cfd-fluent': {
+                                    // flowing water waves - blue
+                                    ctx.lineWidth = 2.5;
+                                    ctx.lineCap = 'round';
+                                    // three flowing wave lines in water blue
+                                    ctx.strokeStyle = '#38bdf8';
+                                    ctx.beginPath();
+                                    ctx.moveTo(-14, -8);
+                                    ctx.quadraticCurveTo(-4, -14, 6, -8);
+                                    ctx.quadraticCurveTo(10, -5, 14, -8);
+                                    ctx.stroke();
+                                    ctx.strokeStyle = '#0ea5e9';
+                                    ctx.beginPath();
+                                    ctx.moveTo(-14, 0);
+                                    ctx.quadraticCurveTo(-4, -6, 6, 0);
+                                    ctx.quadraticCurveTo(10, 3, 14, 0);
+                                    ctx.stroke();
+                                    ctx.strokeStyle = '#0284c7';
+                                    ctx.beginPath();
+                                    ctx.moveTo(-14, 8);
+                                    ctx.quadraticCurveTo(-4, 2, 6, 8);
+                                    ctx.quadraticCurveTo(10, 11, 14, 8);
+                                    ctx.stroke();
+                                    break;
+                                }
+                                case 'fabrication': {
+                                    // hammer with wood handle and metal head
+                                    ctx.lineWidth = 2;
+                                    // wood handle (brown)
+                                    ctx.fillStyle = '#92400e';
+                                    ctx.fillRect(-2, -2, 4, 14);
+                                    ctx.strokeStyle = '#78350f';
+                                    ctx.strokeRect(-2, -2, 4, 14);
+                                    // metal head (gray)
+                                    ctx.fillStyle = '#6b7280';
+                                    ctx.fillRect(-10, -12, 20, 10);
+                                    // metallic shine
+                                    ctx.fillStyle = '#9ca3af';
+                                    ctx.fillRect(-10, -12, 20, 3);
+                                    ctx.strokeStyle = '#4b5563';
+                                    ctx.strokeRect(-10, -12, 20, 10);
+                                    break;
+                                }
+                                case '3d-printing': {
+                                    // nozzle + layers - with orange filament
+                                    ctx.lineWidth = 2;
+                                    // nozzle (metallic)
+                                    ctx.fillStyle = '#6b7280';
+                                    ctx.beginPath();
+                                    ctx.moveTo(-8, -10); ctx.lineTo(8, -10); ctx.lineTo(2, -2); ctx.lineTo(-2, -2); ctx.closePath();
+                                    ctx.fill();
+                                    ctx.strokeStyle = '#4b5563';
+                                    ctx.stroke();
+                                    // filament coming out
+                                    ctx.strokeStyle = '#f97316';
+                                    ctx.lineWidth = 3;
+                                    ctx.beginPath();
+                                    ctx.moveTo(0, -2); ctx.lineTo(0, 4);
+                                    ctx.stroke();
+                                    // printed layers (orange gradient)
+                                    ctx.lineWidth = 2.5;
+                                    const layerColors = ['#ea580c', '#f97316', '#fb923c'];
+                                    for (let i = 0; i < 3; i++) {
+                                        ctx.strokeStyle = layerColors[i];
+                                        ctx.beginPath();
+                                        ctx.moveTo(-10, 6 + i * 3); ctx.lineTo(10, 6 + i * 3);
+                                        ctx.stroke();
+                                    }
+                                    break;
+                                }
+                                case 'arduino': {
+                                    // PCB board
+                                    ctx.lineWidth = 1.5;
+                                    // green board background
+                                    ctx.fillStyle = '#22c55e';
+                                    ctx.fillRect(-14, -10, 28, 20);
+                                    // board outline
+                                    ctx.strokeStyle = iconStroke;
+                                    ctx.strokeRect(-14, -10, 28, 20);
+                                    // chip in center (black)
+                                    ctx.fillStyle = '#1f2937';
+                                    ctx.fillRect(-6, -5, 12, 10);
+                                    // copper traces
+                                    ctx.strokeStyle = '#fbbf24';
+                                    ctx.lineWidth = 1.5;
+                                    ctx.beginPath();
+                                    ctx.moveTo(-14, -6); ctx.lineTo(-6, -6);
+                                    ctx.moveTo(-14, 0); ctx.lineTo(-6, 0);
+                                    ctx.moveTo(-14, 6); ctx.lineTo(-6, 6);
+                                    ctx.moveTo(6, -6); ctx.lineTo(14, -6);
+                                    ctx.moveTo(6, 0); ctx.lineTo(14, 0);
+                                    ctx.moveTo(6, 6); ctx.lineTo(14, 6);
+                                    ctx.stroke();
+                                    // pin headers on edges
+                                    ctx.fillStyle = iconStroke;
+                                    for (let px = -10; px <= 10; px += 5) {
+                                        ctx.fillRect(px - 1, -12, 2, 3);
+                                        ctx.fillRect(px - 1, 9, 2, 3);
+                                    }
+                                    break;
+                                }
+                                case 'ros-2': {
+                                    // robot arm - industrial blue/gray
+                                    ctx.lineWidth = 3;
+                                    // base (dark gray)
+                                    ctx.fillStyle = '#374151';
+                                    ctx.fillRect(-8, 8, 16, 5);
+                                    // arm segments (blue)
+                                    ctx.strokeStyle = '#3b82f6';
+                                    ctx.lineCap = 'round';
+                                    // lower arm
+                                    ctx.beginPath();
+                                    ctx.moveTo(0, 8);
+                                    ctx.lineTo(-6, -2);
+                                    ctx.stroke();
+                                    // upper arm
+                                    ctx.beginPath();
+                                    ctx.moveTo(-6, -2);
+                                    ctx.lineTo(4, -10);
+                                    ctx.stroke();
+                                    // joints (orange accent)
+                                    ctx.fillStyle = '#f97316';
+                                    ctx.beginPath();
+                                    ctx.arc(0, 8, 3, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    ctx.beginPath();
+                                    ctx.arc(-6, -2, 2.5, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    // gripper (gray)
+                                    ctx.strokeStyle = '#6b7280';
+                                    ctx.lineWidth = 2;
+                                    ctx.beginPath();
+                                    ctx.moveTo(4, -10); ctx.lineTo(8, -14);
+                                    ctx.moveTo(4, -10); ctx.lineTo(8, -8);
+                                    ctx.stroke();
+                                    break;
+                                }
+                                case 'matlab': {
+                                    // sigma Σ - MATLAB orange
+                                    ctx.strokeStyle = '#f97316';
+                                    ctx.fillStyle = '#f97316';
+                                    ctx.lineWidth = 3;
+                                    ctx.lineCap = 'round';
+                                    ctx.lineJoin = 'round';
+                                    ctx.beginPath();
+                                    ctx.moveTo(10, -12);
+                                    ctx.lineTo(-8, -12);
+                                    ctx.lineTo(2, 0);
+                                    ctx.lineTo(-8, 12);
+                                    ctx.lineTo(10, 12);
+                                    ctx.stroke();
+                                    break;
+                                }
+                                case 'python': {
+                                    // snake - Python green/yellow
+                                    ctx.lineWidth = 5;
+                                    ctx.lineCap = 'round';
+                                    ctx.lineJoin = 'round';
+                                    // body - smooth S curve (green)
+                                    ctx.strokeStyle = '#22c55e';
+                                    ctx.beginPath();
+                                    ctx.moveTo(-10, 12);
+                                    ctx.quadraticCurveTo(-10, 4, 0, 4);
+                                    ctx.quadraticCurveTo(8, 4, 8, -4);
+                                    ctx.quadraticCurveTo(8, -10, 0, -10);
+                                    ctx.lineTo(-4, -10);
+                                    ctx.stroke();
+                                    // head (triangular - darker green)
+                                    ctx.fillStyle = '#16a34a';
+                                    ctx.lineWidth = 1;
+                                    ctx.beginPath();
+                                    ctx.moveTo(-4, -14);
+                                    ctx.lineTo(-12, -10);
+                                    ctx.lineTo(-4, -6);
+                                    ctx.closePath();
+                                    ctx.fill();
+                                    // eye (yellow)
+                                    ctx.fillStyle = '#fbbf24';
+                                    ctx.beginPath();
+                                    ctx.arc(-7, -10, 1.5, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    // tongue (red)
+                                    ctx.strokeStyle = '#ef4444';
+                                    ctx.lineWidth = 1;
+                                    ctx.beginPath();
+                                    ctx.moveTo(-12, -10);
+                                    ctx.lineTo(-15, -12);
+                                    ctx.moveTo(-12, -10);
+                                    ctx.lineTo(-15, -8);
+                                    ctx.stroke();
+                                    break;
+                                }
+                                case 'cpp': {
+                                    // code brackets { } - C++ blue
+                                    ctx.strokeStyle = '#3b82f6';
+                                    ctx.fillStyle = '#3b82f6';
+                                    ctx.lineWidth = 2.5;
+                                    ctx.lineCap = 'round';
+                                    // left brace {
+                                    ctx.beginPath();
+                                    ctx.moveTo(-6, -10);
+                                    ctx.quadraticCurveTo(-10, -10, -10, -5);
+                                    ctx.lineTo(-10, -2);
+                                    ctx.quadraticCurveTo(-10, 0, -13, 0);
+                                    ctx.quadraticCurveTo(-10, 0, -10, 2);
+                                    ctx.lineTo(-10, 5);
+                                    ctx.quadraticCurveTo(-10, 10, -6, 10);
+                                    ctx.stroke();
+                                    // right brace }
+                                    ctx.strokeStyle = '#60a5fa';
+                                    ctx.beginPath();
+                                    ctx.moveTo(6, -10);
+                                    ctx.quadraticCurveTo(10, -10, 10, -5);
+                                    ctx.lineTo(10, -2);
+                                    ctx.quadraticCurveTo(10, 0, 13, 0);
+                                    ctx.quadraticCurveTo(10, 0, 10, 2);
+                                    ctx.lineTo(10, 5);
+                                    ctx.quadraticCurveTo(10, 10, 6, 10);
+                                    ctx.stroke();
+                                    // code dots (purple accent)
+                                    ctx.fillStyle = '#a855f7';
+                                    ctx.beginPath();
+                                    ctx.arc(-2, 0, 2, 0, Math.PI * 2);
+                                    ctx.arc(2, 0, 2, 0, Math.PI * 2);
+                                    ctx.fill();
+                                    break;
+                                }
+                                default: {
+                                    // fallback: small dots
+                                    ctx.beginPath();
+                                    ctx.arc(-6, 0, 2, 0, Math.PI * 2);
+                                    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+                                    ctx.arc(6, 0, 2, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
+                            }
+
+                            ctx.restore();
+                        };
                         
                         engine.world.bodies.forEach(body => {
                             if (!body.isStatic) {
                                 const { x, y } = body.position;
-                                const type = body.plugin.renderType || 'default';
-                                const color = body.plugin.color || '#64748b';
+                                const skillKey = body.plugin && body.plugin.skillKey ? body.plugin.skillKey : 'default';
+                                const color = body.plugin && body.plugin.color ? body.plugin.color : '#64748b';
+                                const w = body.plugin && body.plugin.w ? body.plugin.w : 140;
+                                const h = body.plugin && body.plugin.h ? body.plugin.h : 60;
+                                const corner = 12;
                                 
                                 context.save();
                                 context.translate(x, y);
                                 context.rotate(body.angle);
 
-                                context.fillStyle = color;
-                                
-                                // --- DRAWING BASED ON TYPE ---
-                                if (type === 'snake') {
-                                    // Body is drawn by parts mostly, let's add eyes/tongue to the "head" area
-                                    // Assuming head is at top right due to creation order
-                                    context.fillStyle = "white";
-                                    context.beginPath(); context.arc(25, 8, 3, 0, 2*Math.PI); context.fill(); 
-                                    context.beginPath(); context.arc(15, 12, 3, 0, 2*Math.PI); context.fill();
-                                    context.fillStyle = "red"; 
-                                    context.fillRect(28, 8, 8, 2);
-                                } 
-                                else if (type === 'chip') {
-                                    context.fillStyle = '#1f2937'; 
-                                    context.fillRect(-60, -30, 120, 60);
-                                    context.fillStyle = "#fbbf24"; 
-                                    for(let i=-3; i<=3; i++) {
-                                        context.fillRect(-70, i*8 - 2, 10, 4);
-                                        context.fillRect(60, i*8 - 2, 10, 4);
-                                    }
-                                } else if (type === 'gear') {
-                                    context.fillStyle = color;
-                                    context.fillStyle = "#1e293b";
-                                    context.beginPath(); context.arc(0, 0, 12, 0, 2 * Math.PI); context.fill();
-                                }
+                                // Base block
+                                context.fillStyle = baseFill;
+                                drawRoundedRect(context, -w / 2, -h / 2, w, h, corner);
+                                context.fill();
 
-                                // LABEL
+                                // Category accent stripe
+                                context.fillStyle = color;
+                                drawRoundedRect(context, -w / 2 + 6, -h / 2 + 6, 10, h - 12, 6);
+                                context.fill();
+
+                                // Subtle inner panel
+                                context.fillStyle = subtleFill;
+                                drawRoundedRect(context, -w / 2 + 22, -h / 2 + 8, w - 30, h - 16, 10);
+                                context.fill();
+
+                                // Outline (blueprint looks more "technical")
+                                context.strokeStyle = isBlueprint ? '#ffffff' : (isDark ? 'rgba(226,232,240,0.22)' : 'rgba(15,23,42,0.18)');
+                                context.lineWidth = 1.5;
+                                drawRoundedRect(context, -w / 2, -h / 2, w, h, corner);
+                                context.stroke();
+
+                                // Icon on left
+                                context.save();
+                                context.translate(-w / 2 + 44, 0);
+                                drawSkillIcon(context, skillKey);
+                                context.restore();
+
+                                // Label
                                 if (body.label) {
-                                    context.font = "bold 11px 'Inter', sans-serif";
-                                    context.fillStyle = "#ffffff";
-                                    // Offset text for complex shapes
-                                    if(type === 'wrench') context.fillText(body.label, 0, 20);
-                                    else if(type === 'snake') context.fillText(body.label, -5, -5);
-                                    else context.fillText(body.label, 0, 0);
+                                    context.font = "700 11px Inter, sans-serif";
+                                    context.fillStyle = textColor;
+                                    // Left-align label within the inner panel
+                                    context.textAlign = 'left';
+                                    context.fillText(body.label, -w / 2 + 66, 0);
+                                    context.textAlign = 'center';
                                 }
                                 
                                 context.restore();
@@ -1949,6 +2235,21 @@
                                             <h2 className={`text-3xl font-bold flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Layers className={isBlueprint ? "text-cyan-300" : "text-blue-600"}/> Skills & Tools</h2>
                                         </div>
                                         <p className={`mb-4 ${styles.textSub}`}>Drag and throw the blocks below!</p>
+                                        {/* Color Legend */}
+                                        <div className="flex gap-4 text-xs font-medium mb-4">
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
+                                                <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Mechanical</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                                                <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Embedded</span>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-3 h-3 rounded-sm bg-purple-500"></div>
+                                                <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Software</span>
+                                            </div>
+                                        </div>
                                         <PhysicsSkills skills={DATA.skills} isDark={isDark} isBlueprint={isBlueprint} />
                                     </div>
                                     <div>
