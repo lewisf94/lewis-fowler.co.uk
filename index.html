@@ -623,27 +623,27 @@
             return (
                 <div ref={containerRef} className="hero-container" style={heroVars}>
                     <div className="gradient-background"></div>
-                    <div className="absolute top-4 left-6 right-6 z-30 flex items-center justify-between">
+                    <div className="absolute top-6 left-6 right-6 z-30 flex items-center justify-between">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={onHomeClick}>
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
+                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
                                 <img
                                     src="assets/icons/favicon-32x32.png"
                                     srcSet="assets/icons/favicon-32x32.png 32w, assets/icons/favicon-128x128.png 128w, assets/icons/favicon-192x192.png 192w"
-                                    sizes="32px"
+                                    sizes="40px"
                                     alt="Lewis Fowler logo"
-                                    className="w-8 h-8 block object-contain"
+                                    className="w-10 h-10 block object-contain"
                                 />
                             </div>
-                            <span className={`font-bold text-lg tracking-tight ${isBlueprint || isDark ? 'text-white/90' : 'text-slate-900'}`}>
+                            <span className={`font-bold text-xl tracking-tight ${isBlueprint || isDark ? 'text-white/90' : 'text-slate-900'}`}>
                                 {profile.name.split(' ')[0]} <span className={isBlueprint ? "text-cyan-300" : (isDark ? "text-blue-200" : "text-blue-700")}>{profile.name.split(' ')[1]}</span>
                             </span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={onToggleBlueprint} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'bg-blue-700 text-white' : 'hover:bg-white/10 text-white/80'}`} title="Toggle Blueprint Mode">
-                                <Grid size={20} />
+                            <button onClick={onToggleBlueprint} className={`p-3 rounded-full transition-colors ${isBlueprint ? 'bg-blue-700 text-white' : 'hover:bg-white/10 text-white/80'}`} title="Toggle Blueprint Mode">
+                                <Grid size={24} />
                             </button>
-                            <button onClick={onToggleDark} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'opacity-50 cursor-not-allowed' : (isDark ? 'hover:bg-white/10 text-white/80' : 'hover:bg-slate-900/5 text-slate-700')}`}>
-                                {isDark ? <Sun size={20} /> : <Moon size={20} />}
+                            <button onClick={onToggleDark} className={`p-3 rounded-full transition-colors ${isBlueprint ? 'opacity-50 cursor-not-allowed' : (isDark ? 'hover:bg-white/10 text-white/80' : 'hover:bg-slate-900/5 text-slate-700')}`}>
+                                {isDark ? <Sun size={24} /> : <Moon size={24} />}
                             </button>
                         </div>
                     </div>
