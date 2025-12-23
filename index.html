@@ -96,21 +96,21 @@
         }
         /* --- HERO: Modern Engineering Hero styles (from user) --- */
         .hero-container { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; transform: translate3d(0,0,0); }
-        .grid-layer { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%); pointer-events: none; }
-        .gradient-background { position: absolute; inset: 0; z-index: 0; background: #000; }
+        .grid-layer { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background-image: linear-gradient(var(--hero-grid-line, rgba(255,255,255,0.03)) 1px, transparent 1px), linear-gradient(90deg, var(--hero-grid-line, rgba(255,255,255,0.03)) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%); pointer-events: none; }
+        .gradient-background { position: absolute; inset: 0; z-index: 0; background: var(--hero-bg, #000); }
         .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; will-change: transform; transform: translate3d(0,0,0); backface-visibility: hidden; }
-        .blob-1 { width: 50vw; height: 50vw; background: #2563eb; top: -10%; left: -10%; }
-        .blob-2 { width: 40vw; height: 40vw; background: #7c3aed; bottom: -10%; right: -10%; }
-        .blob-3 { width: 30vw; height: 30vw; background: #06b6d4; top: 40%; left: 40%; opacity: 0.4; }
+        .blob-1 { width: 50vw; height: 50vw; background: var(--hero-blob-1, #2563eb); top: -10%; left: -10%; }
+        .blob-2 { width: 40vw; height: 40vw; background: var(--hero-blob-2, #7c3aed); bottom: -10%; right: -10%; }
+        .blob-3 { width: 30vw; height: 30vw; background: var(--hero-blob-3, #06b6d4); top: 40%; left: 40%; opacity: 0.4; }
         .noise-overlay { position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%; width: 200%; height: 200vh; background: transparent url('http://assets.iceable.com/img/noise-transparent.png') repeat 0 0; animation: bg-animation .2s infinite; opacity: 0.07; pointer-events: none; z-index: 2; }
         @keyframes bg-animation { 0% { transform: translate(0,0) } 10% { transform: translate(-5%,-5%) } 20% { transform: translate(-10%,5%) } 30% { transform: translate(5%,-10%) } 40% { transform: translate(-5%,15%) } 50% { transform: translate(-10%,5%) } 60% { transform: translate(15%,0) } 70% { transform: translate(0,10%) } 80% { transform: translate(-15%,0) } 90% { transform: translate(10%,5%) } 100% { transform: translate(5%,0) } }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
         .hero-content { position: relative; z-index: 10; text-align: center; max-width: 800px; padding: 0 20px; }
         .hero-content h1 { font-size: 4rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1.1; margin-bottom: 1.5rem; text-shadow: 0 0 40px rgba(255,255,255,0.1); }
-        .hero-content p { font-size: 1.25rem; color: #94a3b8; margin-bottom: 2rem; font-weight: 400; line-height: 1.6; }
+        .hero-content p { font-size: 1.25rem; margin-bottom: 2rem; font-weight: 400; line-height: 1.6; }
         .btn { display: inline-block; padding: 12px 32px; background: rgba(255,255,255,0.1); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; }
         .btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.3); }
-        .mouse-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); z-index: 3; transition: opacity 0.3s ease; }
+        .mouse-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, var(--hero-glow, rgba(255,255,255,0.08)) 0%, transparent 70%); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); z-index: 3; transition: opacity 0.3s ease; }
         @media (max-width: 768px) { .hero-content h1 { font-size: 2.5rem; } .blob { filter: blur(50px); } }
     </style>
 </head>
@@ -600,21 +600,32 @@
                 };
             }, []);
 
+            const heroVars = {
+                '--hero-bg': isBlueprint ? '#1e3a8a' : (isDark ? '#0f172a' : '#f8fafc'),
+                '--hero-grid-line': isBlueprint ? 'rgba(255,255,255,0.08)' : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.06)'),
+                '--hero-glow': isBlueprint ? 'rgba(255,255,255,0.10)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)'),
+                '--hero-blob-1': isBlueprint ? '#0ea5e9' : '#2563eb',
+                '--hero-blob-2': isBlueprint ? '#22d3ee' : '#7c3aed',
+                '--hero-blob-3': isBlueprint ? '#ffffff' : '#06b6d4'
+            };
+
             return (
-                <div ref={containerRef} className="hero-container">
+                <div ref={containerRef} className="hero-container" style={heroVars}>
                     <div className="gradient-background"></div>
                     <div className="absolute top-4 left-6 right-6 z-30 flex items-center justify-between">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={onHomeClick}>
                             <div className={`p-2 rounded-lg ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
                                 <Cpu className={isBlueprint ? "text-white" : "text-blue-600"} size={20} />
                             </div>
-                            <span className="font-bold text-lg tracking-tight text-white/90">{profile.name.split(' ')[0]} <span className={isBlueprint ? "text-cyan-300" : "text-blue-200"}>{profile.name.split(' ')[1]}</span></span>
+                            <span className={`font-bold text-lg tracking-tight ${isBlueprint || isDark ? 'text-white/90' : 'text-slate-900'}`}>
+                                {profile.name.split(' ')[0]} <span className={isBlueprint ? "text-cyan-300" : (isDark ? "text-blue-200" : "text-blue-700")}>{profile.name.split(' ')[1]}</span>
+                            </span>
                         </div>
                         <div className="flex items-center gap-2">
                             <button onClick={onToggleBlueprint} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'bg-blue-700 text-white' : 'hover:bg-white/10 text-white/80'}`} title="Toggle Blueprint Mode">
                                 <Grid size={20} />
                             </button>
-                            <button onClick={onToggleDark} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white/10 text-white/80'}`}>
+                            <button onClick={onToggleDark} className={`p-2 rounded-full transition-colors ${isBlueprint ? 'opacity-50 cursor-not-allowed' : (isDark ? 'hover:bg-white/10 text-white/80' : 'hover:bg-slate-900/5 text-slate-700')}`}>
                                 {isDark ? <Sun size={20} /> : <Moon size={20} />}
                             </button>
                         </div>
