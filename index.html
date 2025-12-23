@@ -4,9 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lewis Fowler - Engineering Portfolio</title>
+
+    <!-- Favicon (clean + conservative) -->
+    <link rel="icon" href="assets/icons/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Anime.js (subtle UI motion) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     
     <!-- Tailwind Config -->
     <script>
@@ -157,7 +168,7 @@
                 brandName: "LEWIS",
                 role: "Design Engineer",
                 subRoles: ["Thermal Management", "CFD Analysis", "Robotics"],
-                bio: "Design Engineer based in Newcastle upon Tyne, working with clients in automotive and space industries. Specializing in bespoke cold plate solutions, 3D CAD design, and CFD analysis with a strong background in robotics and fabrication.",
+                bio: "Design Engineer based in Newcastle upon Tyne, working with clients in automotive and space industries. Specializing in bespoke cold plate solutions, 3D CAD design, and CFD analysis with a background in robotics and fabrication.",
                 availability: "Design Engineer @ Boyd",
                 linkedin: "linkedin.com/in/lewisfowler", 
                 github: "github.com/lewisfowler",
@@ -217,12 +228,12 @@
                 {
                     id: 'balance',
                     title: 'Self-Balancing Robot',
-                    shortDesc: 'Formula Student Motion & Control Project.',
+                    shortDesc: 'Two-wheeled .',
                     type: 'robot',
-                    tags: ['C++', 'ROS 2', 'Control Theory'],
+                    tags: ['Robotics', 'Control Theory', '3D Printing', 'Fusion 360'],
                     modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0, modelPath: 'assets/models/Self-Balancing-Robot.glb', modelScaleMultiplier: 2.0, internalsModelPath: 'assets/models/Self-Balancing-Robot-Internals.glb' }, 
                     content: {
-                        intro: "Part of the Formula Student Motion and Control sub-team investigation. A classic engineering challenge: keeping an inherently unstable system upright.",
+                        intro: "One of the fundamentals of control engineering is keeping an inherently unstable system in control. ",
                         tech: "Investigated implementing a PID controller and Extended Kalman Filter (EKF) for state estimation. This project developed my knowledge of robotics software such as ROS 2.",
                         math: "PID Output = Kp * e(t) + Ki * ∫e(t)dt + Kd * de/dt. EKF used for sensor fusion to determine accurate tilt angle.",
                         challenges: "Sensor noise was a major issue. The raw accelerometer data was too noisy for the D-term, requiring a moving average filter."
@@ -234,7 +245,7 @@
                     shortDesc: 'Inverse Kinematics & Precision Control.',
                     type: 'arm',
                     tags: ['Robotics', 'MATLAB', 'Mechanical'],
-                    modelSettings: { cameraZ: 9.0, yOffset: -0.8, scale: 0.85, modelScaleMultiplier: 1.0 },
+                    modelSettings: { cameraZ: 9.0, yOffset: 0.0, scale: 1.15, modelScaleMultiplier: 1.0 },
                     content: {
                         intro: "Exploration into robotics control systems. A desktop-scale manipulator designed to understand coordinate systems and actuator control.",
                         tech: "Uses inverse kinematics to map cartesian coordinates to joint angles. Control logic implemented to ensure smooth path planning.",
@@ -614,8 +625,14 @@
                     <div className="gradient-background"></div>
                     <div className="absolute top-4 left-6 right-6 z-30 flex items-center justify-between">
                         <div className="flex items-center gap-2 cursor-pointer" onClick={onHomeClick}>
-                            <div className={`p-2 rounded-lg ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
-                                <Cpu className={isBlueprint ? "text-white" : "text-blue-600"} size={20} />
+                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
+                                <img
+                                    src="assets/icons/favicon-32x32.png"
+                                    srcSet="assets/icons/favicon-32x32.png 32w, assets/icons/favicon-128x128.png 128w, assets/icons/favicon-192x192.png 192w"
+                                    sizes="32px"
+                                    alt="Lewis Fowler logo"
+                                    className="w-8 h-8 block object-contain"
+                                />
                             </div>
                             <span className={`font-bold text-lg tracking-tight ${isBlueprint || isDark ? 'text-white/90' : 'text-slate-900'}`}>
                                 {profile.name.split(' ')[0]} <span className={isBlueprint ? "text-cyan-300" : (isDark ? "text-blue-200" : "text-blue-700")}>{profile.name.split(' ')[1]}</span>
@@ -1485,7 +1502,8 @@
             const isDragging = useRef(false);
             const hasMoved = useRef(false);
             const sliderInteractingRef = useRef(false);
-            const settings = customSettings || DATA.config.heroSettings;
+            const defaultSettings = (type === 'arm' && DATA.config.armSettings) ? DATA.config.armSettings : DATA.config.heroSettings;
+            const settings = customSettings || defaultSettings;
 
             const droneParts = useRef({ motors: [], props: [], camera: null, arms: [] });
             const armParts = useRef({ base: null, shoulder: null, elbow: null, wrist: null });
@@ -1541,11 +1559,7 @@
                 });
                 if(mountRef.current) resizeObserver.observe(mountRef.current);
 
-                if (type === 'arm' && DATA.config.armSettings) {
-                    camera.position.z = DATA.config.armSettings.cameraZ;
-                } else {
-                    camera.position.z = settings.cameraZ;
-                }
+                camera.position.z = settings.cameraZ;
                 camera.position.y = 0.5;
                 // expose camera to outer scope for UI control
                 cameraRef.current = camera;
@@ -1628,16 +1642,10 @@
                 const projectScaleMultiplier = (customSettings && typeof customSettings.modelScaleMultiplier === 'number') ? customSettings.modelScaleMultiplier : 1.0;
                 const combinedScaleMultiplier = globalScaleMultiplier * projectScaleMultiplier;
 
-                if (type === 'arm' && DATA.config.armSettings) {
-                    group.position.y = DATA.config.armSettings.yOffset;
-                    group.position.x = DATA.config.armSettings.xOffset;
-                    const s = DATA.config.armSettings.scale * combinedScaleMultiplier;
-                    group.scale.set(s, s, s);
-                } else {
-                    group.position.y = settings.yOffset;
-                    const s = settings.scale * combinedScaleMultiplier;
-                    group.scale.set(s, s, s);
-                }
+                group.position.y = settings.yOffset;
+                group.position.x = (typeof settings.xOffset === 'number') ? settings.xOffset : 0;
+                const s = settings.scale * combinedScaleMultiplier;
+                group.scale.set(s, s, s);
 
                 // If a custom model path is provided (e.g. a GLB), load it; otherwise use procedural model
                 const baseModelPath = customSettings && customSettings.modelPath ? customSettings.modelPath : null;
@@ -2123,6 +2131,57 @@
 
             useEffect(() => { window.scrollTo(0,0); }, [activeProject]);
 
+            // Subtle, professional scroll-reveal animations (DOM only; does not touch Three.js or Matter.js)
+            useEffect(() => {
+                const reduceMotion = typeof window !== 'undefined'
+                    && window.matchMedia
+                    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const anime = (typeof window !== 'undefined') ? window.anime : null;
+                if (reduceMotion || !anime) return;
+
+                const els = Array.from(document.querySelectorAll('[data-reveal="true"]'));
+                if (!els.length) return;
+
+                // Set initial state at runtime so content isn't hidden if JS fails.
+                els.forEach((el) => {
+                    if (el.dataset.revealed === 'true') return;
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(12px)';
+                    el.style.willChange = 'transform, opacity';
+                });
+
+                const io = new IntersectionObserver((entries) => {
+                    entries.forEach((entry) => {
+                        if (!entry.isIntersecting) return;
+                        const el = entry.target;
+                        if (el.dataset.revealed === 'true') {
+                            io.unobserve(el);
+                            return;
+                        }
+
+                        const order = Number.parseInt(el.getAttribute('data-reveal-order') || '0', 10);
+                        anime({
+                            targets: el,
+                            opacity: [0, 1],
+                            translateY: [12, 0],
+                            duration: 650,
+                            easing: 'easeOutCubic',
+                            delay: Math.max(0, Number.isFinite(order) ? order : 0) * 80,
+                            complete: () => {
+                                el.dataset.revealed = 'true';
+                                el.style.opacity = '';
+                                el.style.transform = '';
+                                el.style.willChange = '';
+                            }
+                        });
+                        io.unobserve(el);
+                    });
+                }, { threshold: 0.15, rootMargin: '0px 0px -5% 0px' });
+
+                els.forEach((el) => io.observe(el));
+                return () => io.disconnect();
+            }, [activeProject]);
+
             const styles = {
                 bg: isBlueprint ? "blueprint-grid" : (isDark ? "bg-slate-950" : "bg-slate-50"),
                 text: isBlueprint ? "text-blue-100" : (isDark ? "text-slate-200" : "text-slate-800"),
@@ -2215,10 +2274,16 @@
                             </section>
 
                             <section id="projects" className="py-20 max-w-7xl mx-auto px-6">
-                                <h2 className="text-3xl font-bold mb-12">Selected Projects</h2>
+                                <h2 data-reveal="true" className="text-3xl font-bold mb-12">Selected Projects</h2>
                                 <div className="grid md:grid-cols-2 gap-8">
-                                    {DATA.projects.map(project => (
-                                        <div key={project.id} onClick={() => setActiveProject(project.id)} className={`group rounded-3xl overflow-hidden border cursor-pointer hover:shadow-2xl transition-all duration-300 ${styles.card} ${isBlueprint ? 'hover:border-cyan-500/50' : (isDark ? 'hover:border-blue-500/50' : 'hover:border-blue-400')}`}>
+                                    {DATA.projects.map((project, i) => (
+                                        <div
+                                            key={project.id}
+                                            data-reveal="true"
+                                            data-reveal-order={i}
+                                            onClick={() => setActiveProject(project.id)}
+                                            className={`project-card group rounded-3xl overflow-hidden border cursor-pointer hover:shadow-2xl transition-all duration-300 ${styles.card} ${isBlueprint ? 'hover:border-cyan-500/50' : (isDark ? 'hover:border-blue-500/50' : 'hover:border-blue-400')}`}
+                                        >
                                             <div className={`h-72 relative overflow-hidden ${isBlueprint ? 'bg-blue-950/50' : (isDark ? 'bg-slate-900' : 'bg-slate-50')}`}>
                                                 <div className="w-full h-full">
                                                     <ThreeScene type={project.type} isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={true} customSettings={project.modelSettings} />
@@ -2243,11 +2308,11 @@
                                 <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20">
                                     <div>
                                         <div className="flex items-center justify-between mb-6">
-                                            <h2 className={`text-3xl font-bold flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Layers className={isBlueprint ? "text-cyan-300" : "text-blue-600"}/> Skills & Tools</h2>
+                                            <h2 data-reveal="true" className={`text-3xl font-bold flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Layers className={isBlueprint ? "text-cyan-300" : "text-blue-600"}/> Skills & Tools</h2>
                                         </div>
-                                        <p className={`mb-4 ${styles.textSub}`}>Drag and throw the blocks below!</p>
+                                        <p data-reveal="true" className={`mb-4 ${styles.textSub}`}>Drag and throw the blocks below!</p>
                                         {/* Color Legend */}
-                                        <div className="flex gap-4 text-xs font-medium mb-4">
+                                        <div data-reveal="true" className="flex gap-4 text-xs font-medium mb-4">
                                             <div className="flex items-center gap-1.5">
                                                 <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
                                                 <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Mechanical</span>
@@ -2264,10 +2329,10 @@
                                         <PhysicsSkills skills={DATA.skills} isDark={isDark} isBlueprint={isBlueprint} />
                                     </div>
                                     <div>
-                                        <h2 className={`text-3xl font-bold mb-8 flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Briefcase className={isBlueprint ? "text-purple-300" : "text-purple-600"}/> Experience</h2>
+                                        <h2 data-reveal="true" className={`text-3xl font-bold mb-8 flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Briefcase className={isBlueprint ? "text-purple-300" : "text-purple-600"}/> Experience</h2>
                                         <div className={`space-y-8 border-l-2 ml-3 pl-8 relative ${isBlueprint ? 'border-blue-800' : (isDark ? 'border-slate-800' : 'border-slate-200')}`}>
-                                            {DATA.experience.map(item => (
-                                                <div key={item.id} className="relative group">
+                                            {DATA.experience.map((item, i) => (
+                                                <div key={item.id} data-reveal="true" data-reveal-order={i} className="relative group">
                                                     <span className={`absolute -left-[41px] top-6 w-4 h-4 rounded-full border-2 transition-all duration-300 
                                                         ${isBlueprint ? 'bg-blue-950 border-cyan-500 group-hover:bg-cyan-500' : (isDark ? 'bg-slate-950 border-blue-500 group-hover:bg-blue-500' : 'bg-white border-blue-600 group-hover:bg-blue-600')}
                                                     `}></span>

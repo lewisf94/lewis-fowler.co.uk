@@ -1,0 +1,14 @@
+{
+  "name": "Lewis Fowler - Engineering Portfolio",
+  "short_name": "Lewis Fowler",
+  "icons": [
+    {
+      "src": "assets/icons/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0a4cff",
+  "background_color": "#ffffff",
+  "display": "standalone"
+}
