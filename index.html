@@ -98,10 +98,10 @@
         .hero-container { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; transform: translate3d(0,0,0); }
         .grid-layer { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%); pointer-events: none; }
         .gradient-background { position: absolute; inset: 0; z-index: 0; background: #000; }
-        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; animation: float 20s infinite ease-in-out alternate; }
-        .blob-1 { width: 50vw; height: 50vw; background: #2563eb; top: -10%; left: -10%; animation-duration: 25s; }
-        .blob-2 { width: 40vw; height: 40vw; background: #7c3aed; bottom: -10%; right: -10%; animation-duration: 30s; animation-direction: reverse; }
-        .blob-3 { width: 30vw; height: 30vw; background: #06b6d4; top: 40%; left: 40%; animation-duration: 22s; opacity: 0.4; }
+        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; will-change: transform; }
+        .blob-1 { width: 50vw; height: 50vw; background: #2563eb; top: -10%; left: -10%; }
+        .blob-2 { width: 40vw; height: 40vw; background: #7c3aed; bottom: -10%; right: -10%; }
+        .blob-3 { width: 30vw; height: 30vw; background: #06b6d4; top: 40%; left: 40%; opacity: 0.4; }
         .noise-overlay { position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%; width: 200%; height: 200vh; background: transparent url('http://assets.iceable.com/img/noise-transparent.png') repeat 0 0; animation: bg-animation .2s infinite; opacity: 0.07; pointer-events: none; z-index: 2; }
         @keyframes bg-animation { 0% { transform: translate(0,0) } 10% { transform: translate(-5%,-5%) } 20% { transform: translate(-10%,5%) } 30% { transform: translate(5%,-10%) } 40% { transform: translate(-5%,15%) } 50% { transform: translate(-10%,5%) } 60% { transform: translate(15%,0) } 70% { transform: translate(0,10%) } 80% { transform: translate(-15%,0) } 90% { transform: translate(10%,5%) } 100% { transform: translate(5%,0) } }
         @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
@@ -428,18 +428,137 @@
         const ModernHero = ({ profile, isDark, isBlueprint, textSub, onHomeClick, onToggleBlueprint, onToggleDark }) => {
             const containerRef = useRef(null);
             const glowRef = useRef(null);
+            const blob1Ref = useRef(null);
+            const blob2Ref = useRef(null);
+            const blob3Ref = useRef(null);
 
             useEffect(() => {
                 const container = containerRef.current;
                 const glow = glowRef.current;
-                if (!container || !glow) return;
+                const blob1 = blob1Ref.current;
+                const blob2 = blob2Ref.current;
+                const blob3 = blob3Ref.current;
+                if (!container || !glow || !blob1 || !blob2 || !blob3) return;
 
                 let raf = null;
-                let pos = { x: container.clientWidth / 2, y: container.clientHeight / 2 };
+                let animationRaf = null;
+                let mousePos = { x: container.clientWidth / 2, y: container.clientHeight / 2 };
+                let hover = false;
+
+                // Compute each blob's initial visual center relative to the container
+                let initialCenters = [];
+                const computeCenters = () => {
+                    initialCenters = [blob1, blob2, blob3].map((b) => ({
+                        x: b.offsetLeft + b.offsetWidth / 2,
+                        y: b.offsetTop + b.offsetHeight / 2,
+                        radius: b.offsetWidth / 2
+                    }));
+                };
+                computeCenters();
+                window.addEventListener('resize', computeCenters);
+
+                // Fluid simulation parameters: viscous drag, momentum preservation
+                const blobs = [
+                    { el: blob1, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, max: 180, acceleration: 0.25, damping: 0.97, wiggle: { ax: 12, ay: 10, fx: 0.18, fy: 0.15, phase: 0.0 } },
+                    { el: blob2, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, max: 220, acceleration: 0.22, damping: 0.97, wiggle: { ax: 16, ay: 12, fx: 0.14, fy: 0.11, phase: 1.3 } },
+                    { el: blob3, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, max: 140, acceleration: 0.28, damping: 0.97, wiggle: { ax: 10, ay: 14, fx: 0.22, fy: 0.20, phase: 2.1 } },
+                ];
+
+                let lastTime = 0;
+                const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+
+                const animate = (ts) => {
+                    const t = ts || performance.now();
+                    const dt = lastTime ? (t - lastTime) / 1000 : 0;
+                    lastTime = t;
+
+                    // Sigma defines how far the mouse influence reaches
+                    const sigma = Math.max(container.clientWidth, container.clientHeight) * 0.5;
+
+                    blobs.forEach((b, i) => {
+                        const init = initialCenters[i] || { x: 0, y: 0, radius: 0 };
+                        
+                        // Calculate CURRENT center of the blob
+                        const currentX = init.x + b.pos.x;
+                        const currentY = init.y + b.pos.y;
+                        
+                        const dx = mousePos.x - currentX;
+                        const dy = mousePos.y - currentY;
+
+                        // Influence decays with distance from the blob's CURRENT center
+                        const d2 = dx * dx + dy * dy;
+                        const influence = Math.exp(-d2 / (2 * sigma * sigma)); // 1 near, 0 far
+
+                        // Normalize direction (unit vector toward cursor)
+                        const dist = Math.sqrt(d2) || 1;
+                        const dirX = dx / dist;
+                        const dirY = dy / dist;
+                        
+                        // Fluid drag force: push blob AWAY from cursor (repulsion)
+                        const pushStrength = hover ? -1.2 : 0.0;
+                        const forceX = dirX * influence * pushStrength;
+                        const forceY = dirY * influence * pushStrength;
+                        
+                        // Apply acceleration
+                        b.vel.x += forceX * b.acceleration;
+                        b.vel.y += forceY * b.acceleration;
+                        
+                        // Clamp velocity magnitude
+                        const speed = Math.sqrt(b.vel.x * b.vel.x + b.vel.y * b.vel.y);
+                        const maxSpeed = 4.5;
+                        if (speed > maxSpeed) {
+                            const scale = maxSpeed / speed;
+                            b.vel.x *= scale;
+                            b.vel.y *= scale;
+                        }
+                        
+                        // Viscous damping
+                        b.vel.x *= b.damping;
+                        b.vel.y *= b.damping;
+                        
+                        // Velocity integration
+                        b.pos.x += b.vel.x;
+                        b.pos.y += b.vel.y;
+                        
+                        // Dynamic boundary constraints based on blob size and container
+                        // We want the blob center to stay within the container (with some padding)
+                        const margin = init.radius * 0.5; // Allow half the blob to go off-screen
+                        const minX = -init.x + margin;
+                        const maxX = container.clientWidth - init.x - margin;
+                        const minY = -init.y + margin;
+                        const maxY = container.clientHeight - init.y - margin;
+                        
+                        // Bounce off edges
+                        if (b.pos.x < minX) {
+                            b.pos.x = minX;
+                            b.vel.x *= -0.5;
+                        } else if (b.pos.x > maxX) {
+                            b.pos.x = maxX;
+                            b.vel.x *= -0.5;
+                        }
+                        
+                        if (b.pos.y < minY) {
+                            b.pos.y = minY;
+                            b.vel.y *= -0.5;
+                        } else if (b.pos.y > maxY) {
+                            b.pos.y = maxY;
+                            b.vel.y *= -0.5;
+                        }
+
+                        // Idle wiggle (reduced when hovering)
+                        const idleMix = hover ? 0.2 : 0.8;
+                        const wx = Math.sin(t * b.wiggle.fx + b.wiggle.phase) * b.wiggle.ax * idleMix;
+                        const wy = Math.cos(t * b.wiggle.fy + b.wiggle.phase) * b.wiggle.ay * idleMix;
+
+                        b.el.style.transform = `translate(${(b.pos.x + wx).toFixed(2)}px, ${(b.pos.y + wy).toFixed(2)}px)`;
+                    });
+
+                    animationRaf = requestAnimationFrame(animate);
+                };
 
                 const updateGlow = () => {
-                    glow.style.left = `${pos.x}px`;
-                    glow.style.top = `${pos.y}px`;
+                    glow.style.left = `${mousePos.x}px`;
+                    glow.style.top = `${mousePos.y}px`;
                     raf = null;
                 };
 
@@ -447,24 +566,30 @@
                     const rect = container.getBoundingClientRect();
                     const cx = e.touches ? e.touches[0].clientX : e.clientX;
                     const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                    pos = { x: cx - rect.left, y: cy - rect.top };
+                    mousePos = { x: cx - rect.left, y: cy - rect.top };
                     glow.style.opacity = '1';
+                    hover = true;
                     if (!raf) raf = requestAnimationFrame(updateGlow);
                 };
 
-                const onLeave = () => { glow.style.opacity = '0'; };
+                const onLeave = () => { glow.style.opacity = '0'; hover = false; };
 
                 container.addEventListener('mousemove', onMove);
                 container.addEventListener('touchmove', onMove, { passive: true });
                 container.addEventListener('mouseleave', onLeave);
                 container.addEventListener('touchend', onLeave);
 
+                // Start the animation loop
+                animationRaf = requestAnimationFrame(animate);
+
                 return () => {
                     container.removeEventListener('mousemove', onMove);
                     container.removeEventListener('touchmove', onMove);
                     container.removeEventListener('mouseleave', onLeave);
                     container.removeEventListener('touchend', onLeave);
+                    window.removeEventListener('resize', computeCenters);
                     if (raf) cancelAnimationFrame(raf);
+                    if (animationRaf) cancelAnimationFrame(animationRaf);
                 };
             }, []);
 
@@ -487,15 +612,18 @@
                             </button>
                         </div>
                     </div>
-                    <div className="blob blob-1"></div>
-                    <div className="blob blob-2"></div>
-                    <div className="blob blob-3"></div>
+                    <div ref={blob1Ref} className="blob blob-1"></div>
+                    <div ref={blob2Ref} className="blob blob-2"></div>
+                    <div ref={blob3Ref} className="blob blob-3"></div>
                     <div className="grid-layer"></div>
                     <div ref={glowRef} className="mouse-glow" style={{ opacity: 0 }}></div>
                     <div className="noise-overlay"></div>
                     <div className="hero-content">
                         <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-                            <span className={`text-transparent bg-clip-text bg-gradient-to-r ${isBlueprint ? 'from-cyan-300 to-blue-100' : 'from-blue-600 to-purple-600'}`}>{profile.name}</span>
+                            <span
+                                className={`text-transparent bg-clip-text bg-gradient-to-r ${isBlueprint ? 'from-cyan-300 to-blue-100' : 'from-blue-600 to-purple-600'}`}
+                                style={{ backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat' }}
+                            >{profile.name}</span>
                         </h1>
                         <p className={`text-xl max-w-lg leading-relaxed ${textSub}`}>{profile.bio}</p>
                         
