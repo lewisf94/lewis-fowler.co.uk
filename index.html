@@ -1,2399 +1,914 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lewis Fowler - Engineering Portfolio</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Lewis Fowler — Design Engineer specialising in thermal management, CFD, and robotics. Based in Newcastle upon Tyne.">
+<meta name="theme-color" content="#f4efe6">
+<title>Lewis Fowler — Design Engineer</title>
 
-    <!-- Favicon (clean + conservative) -->
-    <link rel="icon" href="assets/icons/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+<link rel="icon" href="assets/icons/favicon.ico">
+<link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 
-    <!-- Anime.js (subtle UI motion) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
-    
-    <!-- Tailwind Config -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['Fira Code', 'monospace'],
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-out forwards',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&family=DM+Serif+Display&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
 
-    <!-- Import Map -->
-    <script type="importmap">
-        {
-            "imports": {
-                "react": "https://esm.sh/react@18.2.0",
-                "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
-                "three": "https://esm.sh/three@0.160.0",
-                "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/",
-                "lucide-react": "https://esm.sh/lucide-react@0.300.0",
-                "matter-js": "https://esm.sh/matter-js@0.19.0"
-            }
-        }
-    </script>
-    
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <style>
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        body { font-family: 'Inter', sans-serif; }
-        
-        .blueprint-grid {
-            background-color: #1e3a8a;
-            background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-        
-        /* Range Slider Styling */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #3b82f6;
-            margin-top: -8px;
-            cursor: grab;
-            border: 2px solid white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        input[type=range]::-webkit-slider-thumb:active {
-            cursor: grabbing;
-            transform: scale(1.2);
-            background: #2563eb;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 6px;
-            cursor: pointer;
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        .dark input[type=range]::-webkit-slider-runnable-track {
-            background: #475569;
-        }
-        /* --- HERO: Modern Engineering Hero styles (from user) --- */
-        .hero-container { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; transform: translate3d(0,0,0); }
-        .grid-layer { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; background-image: linear-gradient(var(--hero-grid-line, rgba(255,255,255,0.03)) 1px, transparent 1px), linear-gradient(90deg, var(--hero-grid-line, rgba(255,255,255,0.03)) 1px, transparent 1px); background-size: 40px 40px; mask-image: radial-gradient(circle at center, black 40%, transparent 80%); -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 80%); pointer-events: none; }
-        .gradient-background { position: absolute; inset: 0; z-index: 0; background: var(--hero-bg, #000); }
-        .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.6; will-change: transform; transform: translate3d(0,0,0); backface-visibility: hidden; }
-        .blob-1 { width: 50vw; height: 50vw; background: var(--hero-blob-1, #2563eb); top: -10%; left: -10%; }
-        .blob-2 { width: 40vw; height: 40vw; background: var(--hero-blob-2, #7c3aed); bottom: -10%; right: -10%; }
-        .blob-3 { width: 30vw; height: 30vw; background: var(--hero-blob-3, #06b6d4); top: 40%; left: 40%; opacity: 0.4; }
-        .noise-overlay { position: absolute; top: -50%; left: -50%; right: -50%; bottom: -50%; width: 200%; height: 200vh; background: transparent url('http://assets.iceable.com/img/noise-transparent.png') repeat 0 0; animation: bg-animation .2s infinite; opacity: 0.07; pointer-events: none; z-index: 2; }
-        @keyframes bg-animation { 0% { transform: translate(0,0) } 10% { transform: translate(-5%,-5%) } 20% { transform: translate(-10%,5%) } 30% { transform: translate(5%,-10%) } 40% { transform: translate(-5%,15%) } 50% { transform: translate(-10%,5%) } 60% { transform: translate(15%,0) } 70% { transform: translate(0,10%) } 80% { transform: translate(-15%,0) } 90% { transform: translate(10%,5%) } 100% { transform: translate(5%,0) } }
-        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 33% { transform: translate(30px, -50px) scale(1.1); } 66% { transform: translate(-20px, 20px) scale(0.9); } 100% { transform: translate(0, 0) scale(1); } }
-        .hero-content { position: relative; z-index: 10; text-align: center; max-width: 800px; padding: 0 20px; }
-        .hero-content h1 { font-size: 4rem; font-weight: 800; letter-spacing: -0.05em; line-height: 1.1; margin-bottom: 1.5rem; text-shadow: 0 0 40px rgba(255,255,255,0.1); }
-        .hero-content p { font-size: 1.25rem; margin-bottom: 2rem; font-weight: 400; line-height: 1.6; }
-        .btn { display: inline-block; padding: 12px 32px; background: rgba(255,255,255,0.1); color: white; text-decoration: none; border-radius: 50px; font-weight: 600; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(10px); transition: all 0.3s ease; }
-        .btn:hover { background: rgba(255,255,255,0.2); transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.3); }
-        .mouse-glow { position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, var(--hero-glow, rgba(255,255,255,0.08)) 0%, transparent 70%); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); z-index: 3; transition: opacity 0.3s ease; }
-        @media (max-width: 768px) { .hero-content h1 { font-size: 2.5rem; } .blob { filter: blur(50px); } }
-    </style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://esm.sh/three@0.160.0",
+    "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<style>
+/* ── RESET ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { overflow-x: hidden; line-height: 1; }
+
+/* ── DESIGN TOKENS ──────────────────────────────────── */
+:root {
+  --bg:#f4efe6; --bg2:#ece6db; --bg3:rgba(184,50,50,.06); --bg4:#e8e1d4;
+  --fg:#1a1208; --fg2:#6b5e52; --fg3:rgba(26,18,8,.3);
+  --accent:#b83232; --border:rgba(26,18,8,.12); --border2:rgba(26,18,8,.06);
+  --grid:rgba(26,18,8,.04); --glow:rgba(184,50,50,.09);
+  --fh:'DM Serif Display',serif; --fb:'DM Sans',sans-serif; --fm:'Fira Code',monospace;
+  --r:1px; --sh:0 2px 20px rgba(26,18,8,.08);
+  --skill-a:#b83232; --skill-b:#16a34a; --skill-c:#1e3a5f;
+}
+
+/* ── BASE ───────────────────────────────────────────── */
+body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:background .4s,color .4s; }
+::selection { background:var(--accent); color:var(--bg); }
+::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* ── LOGO ───────────────────────────────────────────── */
+.logo-img { width:28px; height:28px; flex-shrink:0; display:block; }
+
+/* ── NAV ────────────────────────────────────────────── */
+.nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 52px; transition:background .3s,border-color .3s,backdrop-filter .3s;
+}
+.nav.scrolled {
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter:blur(16px); border-bottom:1px solid var(--border2);
+}
+.nav-logo {
+  font-family:var(--fh); font-size:17px; font-weight:700;
+  letter-spacing:-0.02em; color:var(--fg); text-decoration:none;
+  word-spacing:-3px;
+}
+.nav-logo span { color:var(--accent); }
+.nav-links { display:flex; gap:40px; }
+.nav-links a {
+  color:var(--fg2); font-size:12px; text-decoration:none;
+  letter-spacing:.08em; text-transform:uppercase; font-family:var(--fm);
+  transition:color .2s;
+}
+.nav-links a:hover { color:var(--accent); }
+
+
+/* ── HERO ───────────────────────────────────────────── */
+.hero {
+  position:relative; width:100%; height:100vh;
+  display:flex; align-items:center; overflow:hidden; background:var(--bg);
+}
+.hero-grid {
+  position:absolute; inset:0; z-index:0;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:52px 52px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
+}
+.hero-glow {
+  position:absolute; z-index:1; width:560px; height:560px; border-radius:50%;
+  background:radial-gradient(circle,var(--glow) 0%,transparent 70%);
+  pointer-events:none; transform:translate(-50%,-50%);
+  transition:opacity .4s; opacity:0;
+}
+.hero-inner {
+  position:relative; z-index:2; padding:0 52px; padding-top:80px;
+  width:100%; max-width:1200px; margin:0 auto;
+}
+.hero-eyebrow {
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--fm); font-size:11px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:28px;
+}
+.hero-eyebrow::before { content:''; width:36px; height:1px; background:var(--accent); }
+.hero-h1 {
+  font-family:var(--fh); font-weight:700; line-height:.95;
+  letter-spacing:-0.04em; color:var(--fg); margin-bottom:28px;
+  font-size:clamp(56px,9vw,120px);
+}
+.hero-h1 .accent { color:var(--accent); }
+.hero-bio {
+  font-family:var(--fb); font-size:17px; line-height:1.65;
+  color:var(--fg2); max-width:480px; margin-bottom:52px; font-weight:400;
+}
+.hero-ctas { display:flex; gap:14px; flex-wrap:wrap; }
+.btn-p {
+  font-family:var(--fm); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  background:var(--accent); color:var(--bg); border:none; padding:15px 36px;
+  cursor:pointer; font-weight:600; border-radius:var(--r); text-decoration:none;
+  display:inline-block; transition:opacity .2s,transform .2s;
+}
+.btn-p:hover { opacity:.85; transform:translateY(-2px); }
+.btn-g {
+  font-family:var(--fm); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  background:transparent; color:var(--fg); border:1px solid var(--border); padding:15px 36px;
+  cursor:pointer; border-radius:var(--r); text-decoration:none; display:inline-block;
+  transition:border-color .2s,color .2s;
+}
+.btn-g:hover { border-color:var(--accent); color:var(--accent); }
+.hero-meta {
+  position:absolute; right:52px; bottom:0; top:80px;
+  display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:52px;
+  gap:32px; z-index:2;
+}
+.hero-stat { text-align:right; }
+.hero-stat-n { font-family:var(--fh); font-size:36px; font-weight:700; color:var(--fg); letter-spacing:-0.04em; }
+.hero-stat-l { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--fg2); margin-top:4px; }
+.scroll-cue {
+  position:absolute; bottom:36px; left:52px; z-index:2;
+  display:flex; align-items:center; gap:14px;
+  font-family:var(--fm); font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--fg3);
+}
+.scroll-line { width:48px; height:1px; background:var(--accent); animation:scrollPulse 2.4s ease-in-out infinite; transform-origin:left; }
+@keyframes scrollPulse { 0%,100%{transform:scaleX(.4);opacity:.4} 50%{transform:scaleX(1);opacity:1} }
+
+
+
+/* ── SECTIONS ───────────────────────────────────────── */
+.wrap { max-width:1200px; margin:0 auto; padding:0 52px; }
+.sec { padding:120px 0; border-top:1px solid var(--border2); }
+.sec-label {
+  display:flex; align-items:center; gap:12px;
+  font-family:var(--fm); font-size:10px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:18px;
+}
+.sec-label::before { content:attr(data-n); opacity:.45; }
+.sec-title {
+  font-family:var(--fh); font-size:clamp(34px,4.5vw,56px);
+  font-weight:700; letter-spacing:-0.035em; color:var(--fg);
+  margin-bottom:64px; line-height:1.05;
+}
+
+/* ── PROJECTS ───────────────────────────────────────── */
+.proj-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; background:var(--border2); border:1px solid var(--border2); }
+.proj-card {
+  background:var(--bg); padding:44px; cursor:pointer;
+  transition:background .25s; position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+.proj-card:hover { background:var(--bg2); }
+.proj-card::after {
+  content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
+  background:var(--accent); transform:scaleY(0); transform-origin:bottom;
+  transition:transform .3s ease;
+}
+.proj-card:hover::after { transform:scaleY(1); }
+.proj-badge {
+  display:inline-flex; align-items:center;
+  font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--accent); border:1px solid var(--border); padding:5px 12px;
+  margin-bottom:28px; border-radius:var(--r); width:fit-content;
+}
+.proj-placeholder {
+  width:100%; height:180px; margin-bottom:28px;
+  background:repeating-linear-gradient(135deg,var(--bg2) 0,var(--bg2) 8px,var(--bg4) 8px,var(--bg4) 16px);
+  border:1px solid var(--border2); border-radius:var(--r);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--fm); font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg3); flex-shrink:0;
+}
+.proj-title { font-family:var(--fh); font-size:22px; font-weight:700; letter-spacing:-0.025em; color:var(--fg); margin-bottom:10px; }
+.proj-short { font-size:14px; color:var(--fg2); line-height:1.6; margin-bottom:24px; flex:1; }
+.proj-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.proj-tag {
+  font-family:var(--fm); font-size:10px; color:var(--fg2);
+  padding:4px 9px; background:var(--bg3); border:1px solid var(--border2);
+  border-radius:var(--r); letter-spacing:.04em;
+}
+.proj-arrow { position:absolute; bottom:32px; right:36px; color:var(--accent); font-size:22px; opacity:0; transition:opacity .2s,transform .2s; }
+.proj-card:hover .proj-arrow { opacity:1; transform:translate(3px,-3px); }
+
+/* ── 3D MODEL VIEWER ────────────────────────────────── */
+.model-viewer {
+  width:100%; height:180px; margin-bottom:28px;
+  background:repeating-linear-gradient(135deg,var(--bg2) 0,var(--bg2) 8px,var(--bg4) 8px,var(--bg4) 16px);
+  border:1px solid var(--border2); border-radius:var(--r);
+  position:relative; overflow:hidden; flex-shrink:0;
+}
+.model-viewer canvas { display:block; width:100% !important; height:100% !important; }
+.model-viewer.loading::after {
+  content:'Loading 3D model…'; position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--fm); font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg3);
+}
+.modal-viewer { height:320px; margin-bottom:40px; }
+.viewer-toggle {
+  position:absolute; bottom:12px; right:12px; z-index:2;
+  font-family:var(--fm); font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg2);
+  background:color-mix(in srgb, var(--bg) 90%, transparent);
+  border:1px solid var(--border); padding:6px 12px;
+  border-radius:var(--r); cursor:pointer;
+  transition:color .2s,border-color .2s;
+}
+.viewer-toggle:hover { color:var(--accent); border-color:var(--accent); }
+
+/* ── MODAL ──────────────────────────────────────────── */
+.overlay {
+  position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,.65); backdrop-filter:blur(10px);
+  display:flex; align-items:center; justify-content:center;
+  padding:24px; animation:fadeIn .2s ease;
+}
+.modal {
+  background:var(--bg2); border:1px solid var(--border);
+  width:100%; max-width:740px; max-height:88vh; overflow-y:auto;
+  padding:52px; border-radius:calc(var(--r)*3);
+  box-shadow:var(--sh); animation:slideUp .28s ease;
+}
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+.modal-close {
+  float:right; margin-left:16px; background:none; border:1px solid var(--border);
+  color:var(--fg2); padding:8px 18px; cursor:pointer; font-family:var(--fm);
+  font-size:11px; letter-spacing:.1em; text-transform:uppercase; border-radius:var(--r);
+  transition:color .2s,border-color .2s;
+}
+.modal-close:hover { color:var(--accent); border-color:var(--accent); }
+.modal-tag { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
+.modal-h { font-family:var(--fh); font-size:30px; font-weight:700; letter-spacing:-0.03em; color:var(--fg); margin-bottom:8px; }
+.modal-sub { font-size:14px; color:var(--fg2); margin-bottom:36px; }
+.modal-placeholder {
+  width:100%; height:220px; margin-bottom:40px;
+  background:repeating-linear-gradient(135deg,var(--bg) 0,var(--bg) 8px,var(--bg2) 8px,var(--bg2) 16px);
+  border:1px solid var(--border2); border-radius:var(--r);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--fm); font-size:11px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg3);
+}
+.modal-sh { font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; margin-top:32px; }
+.modal-p { font-size:15px; line-height:1.75; color:var(--fg2); }
+.modal-code {
+  background:var(--bg4); border:1px solid var(--border2); padding:18px 22px;
+  font-family:var(--fm); font-size:13px; color:var(--accent);
+  border-radius:var(--r); margin:12px 0; overflow-x:auto; white-space:nowrap;
+}
+.modal-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:32px; }
+
+/* ── SKILLS ─────────────────────────────────────────── */
+.skills-wrap {
+  width:100%; height:460px; position:relative;
+  border-top:1px solid var(--border2); border-bottom:1px solid var(--border2);
+  overflow:hidden; background:var(--bg2);
+}
+.skills-hint {
+  position:absolute; bottom:16px; right:24px; z-index:1; pointer-events:none;
+  font-family:var(--fm); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--fg3);
+}
+
+/* ── EXPERIENCE ─────────────────────────────────────── */
+.timeline { display:flex; flex-direction:column; }
+.tl-item {
+  display:grid; grid-template-columns:180px 1px 1fr;
+  column-gap:36px; align-items:start; padding-bottom:52px;
+}
+.tl-item:last-child { padding-bottom:0; }
+.tl-date { font-family:var(--fm); font-size:11px; color:var(--fg2); letter-spacing:.05em; padding-top:2px; text-align:right; line-height:1.6; }
+.tl-line { background:var(--border2); position:relative; }
+.tl-dot {
+  position:absolute; top:4px; left:50%; transform:translateX(-50%);
+  width:9px; height:9px; border-radius:50%;
+  background:var(--accent); border:2px solid var(--bg);
+}
+.tl-place { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+.tl-title { font-family:var(--fh); font-size:20px; font-weight:600; letter-spacing:-0.02em; color:var(--fg); margin-bottom:10px; }
+.tl-desc { font-size:14px; color:var(--fg2); line-height:1.75; }
+
+/* ── CONTACT ────────────────────────────────────────── */
+.contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--border2); border:1px solid var(--border2); margin-top:64px; }
+.contact-cell { background:var(--bg); padding:44px; }
+.contact-cell.accent-bg { background:var(--accent); }
+.contact-label { font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--fg2); margin-bottom:12px; }
+.contact-cell.accent-bg .contact-label { color:var(--bg); opacity:.7; }
+.contact-value { font-family:var(--fh); font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--fg); text-decoration:none; display:block; transition:opacity .2s; }
+.contact-value:hover { opacity:.7; }
+.contact-cell.accent-bg .contact-value { color:var(--bg); }
+.contact-big { font-family:var(--fh); font-size:clamp(40px,6vw,72px); font-weight:700; letter-spacing:-0.04em; color:var(--fg); line-height:1; margin-bottom:24px; }
+.contact-sub { font-family:var(--fb); font-size:15px; color:var(--fg2); line-height:1.6; max-width:360px; }
+.contact-cta { display:inline-flex; align-items:center; gap:10px; margin-top:32px; }
+
+/* ── FOOTER ─────────────────────────────────────────── */
+.footer-inner {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:40px 52px;
+}
+.footer-name { font-family:var(--fh); font-size:18px; font-weight:700; letter-spacing:-0.02em; }
+.footer-name span { color:var(--accent); }
+.footer-links { display:flex; gap:28px; }
+.footer-links a { font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--fg2); text-decoration:none; transition:color .2s; }
+.footer-links a:hover { color:var(--accent); }
+.footer-copy { font-family:var(--fm); font-size:10px; color:var(--fg3); letter-spacing:.06em; }
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:900px){
+  .nav{padding:18px 24px;} .nav-links{display:none;}
+  .hero-inner{padding:0 24px; padding-top:80px;}
+  .hero-meta{display:none;}
+  .scroll-cue{left:24px;}
+  .wrap{padding:0 24px;}
+  .proj-grid{grid-template-columns:1fr;}
+  .tl-item{grid-template-columns:100px 1px 1fr; column-gap:20px;}
+  .footer-inner{flex-direction:column;gap:24px;text-align:center;padding:32px 24px;}
+  .modal{padding:32px 24px;}
+}
+</style>
 </head>
-<body class="transition-colors duration-300 bg-slate-50 dark:bg-slate-950">
-    <div id="root"></div>
-
-    <!-- MAIN APP SCRIPT -->
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import * as THREE from 'three';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import Matter from 'matter-js';
-        import { 
-            Cpu, Code, Wrench, Radio, ChevronRight, ArrowLeft, 
-            Github, Linkedin, Mail, MapPin, Zap, Sun, Moon, 
-            Briefcase, GraduationCap, Layers, ExternalLink, 
-            MousePointer2, Move3d, Grid, Terminal, Play, RotateCw, Sliders, FileCode
-        } from 'lucide-react';
-
-        // ==========================================
-        //      USER CONFIGURATION
-        // ==========================================
-        
-        const DATA = {
-            config: {
-                mouseSensitivity: 2.0,
-                damping: 0.05,
-                defaultControlMode: 'hover',
-                heroScrollSensitivity: 2.5, 
-                heroSettings: { cameraZ: 6.0, yOffset: -0.5, scale: 1.0 },
-                armSettings: {
-                    cameraZ: 8.0,   
-                    yOffset: -1.5,  
-                    xOffset: 0.0,   
-                    scale: 1.2      
-                }
-                ,
-                // Global multiplier to tweak model size across all viewers
-                modelScaleMultiplier: 1.0
-            },
-            profile: {
-                name: "Lewis Fowler",
-                brandName: "LEWIS",
-                role: "Design Engineer",
-                subRoles: ["Thermal Management", "CFD Analysis", "Robotics"],
-                bio: "Design Engineer based in Newcastle upon Tyne, working with clients in automotive and space industries. Specializing in bespoke cold plate solutions, 3D CAD design, and CFD analysis with a background in robotics and fabrication.",
-                availability: "Design Engineer @ Boyd",
-                linkedin: "linkedin.com/in/lewisfowler", 
-                github: "github.com/lewisfowler",
-                socialLinks: {
-                    linkedin: "#",
-                    github: "#",
-                }
-            },
-            experience: [
-                {
-                    id: 1,
-                    type: "work",
-                    title: "Design Engineer",
-                    place: "Boyd",
-                    date: "Jan 2025 – Present",
-                    desc: "Designing bespoke cold plate solutions for thermal management in automotive and space sectors. Managing projects from concept to delivery, utilizing 3D CAD, CFD analysis, and DFM."
-                },
-                {
-                    id: 2,
-                    type: "work",
-                    title: "Data Engineer",
-                    place: "ROSEN (UK)",
-                    date: "Sep 2023 – Dec 2024",
-                    desc: "Authored technical reports and analyzed In-Line Inspection Data. Liaised with engineering disciplines on technical calculations and standards."
-                },
-                {
-                    id: 3,
-                    type: "education",
-                    title: "University of Glasgow",
-                    place: "MEng",
-                    date: "2018 – 2023",
-                    desc: "Formula Student: Aerodynamics (CFD) & Control Teams. Final Year: Rolls-Royce placement designing high-performance heat exchangers."
-                },
-                {
-                    id: 4,
-                    type: "work",
-                    title: "External Placement",
-                    place: "Rolls-Royce",
-                    date: "May 2022 – Jan 2023",
-                    desc: "Developed designs for novel high-performance heat exchangers to improve aircraft system efficiency. Conducted risk assessments and regular presentations."
-                }
-            ],
-            // Types: 'chip', 'snake', 'printer', 'gear', 'wrench', 'plus', 'atom'
-            skills: [
-                { category: "Software", name: "SolidWorks", type: "gear" },
-                { category: "Software", name: "Fusion 360", type: "gear" },
-                { category: "Software", name: "CFD / Fluent", type: "atom" },
-                { category: "Mechanical", name: "Fabrication", type: "wrench" },
-                { category: "Mechanical", name: "3D Printing", type: "printer" },
-                { category: "Embedded", name: "Arduino", type: "chip" },
-                { category: "Embedded", name: "ROS 2", type: "chip" },
-                { category: "Software", name: "MATLAB", type: "chip" },
-                { category: "Software", name: "Python", type: "snake" },
-                { category: "Software", name: "C++", type: "plus" },
-            ],
-            projects: [
-                {
-                    id: 'balance',
-                    title: 'Self-Balancing Robot',
-                    shortDesc: 'Two-wheeled .',
-                    type: 'robot',
-                    tags: ['Robotics', 'Control Theory', '3D Printing', 'Fusion 360'],
-                    modelSettings: { cameraZ: 6.5, yOffset: 0.0, scale: 1.0, modelPath: 'assets/models/Self-Balancing-Robot.glb', modelScaleMultiplier: 2.0, internalsModelPath: 'assets/models/Self-Balancing-Robot-Internals.glb' }, 
-                    content: {
-                        intro: "One of the fundamentals of control engineering is keeping an inherently unstable system in control. ",
-                        tech: "Investigated implementing a PID controller and Extended Kalman Filter (EKF) for state estimation. This project developed my knowledge of robotics software such as ROS 2.",
-                        math: "PID Output = Kp * e(t) + Ki * ∫e(t)dt + Kd * de/dt. EKF used for sensor fusion to determine accurate tilt angle.",
-                        challenges: "Sensor noise was a major issue. The raw accelerometer data was too noisy for the D-term, requiring a moving average filter."
-                    }
-                },
-                {
-                    id: 'arm',
-                    title: 'Robotic Arm Control',
-                    shortDesc: 'Inverse Kinematics & Precision Control.',
-                    type: 'arm',
-                    tags: ['Robotics', 'MATLAB', 'Mechanical'],
-                    modelSettings: { cameraZ: 9.0, yOffset: 0.0, scale: 1.15, modelScaleMultiplier: 1.0 },
-                    content: {
-                        intro: "Exploration into robotics control systems. A desktop-scale manipulator designed to understand coordinate systems and actuator control.",
-                        tech: "Uses inverse kinematics to map cartesian coordinates to joint angles. Control logic implemented to ensure smooth path planning.",
-                        math: "Inverse Kinematics (IK) using Jacobian Transpose method to solve joint angles (θ1, θ2, θ3) for a given (x,y,z) target.",
-                        challenges: "Mitigating mechanical backlash in gears and ensuring mathematical solutions remained within physical joint constraints."
-                    }
-                },
-                {
-                    id: 'sonos',
-                    title: 'ESP32 SONOS Remote',
-                    shortDesc: 'Tactile smart home interface with Deep Sleep optimizations.',
-                    type: 'remote',
-                    tags: ['IoT', 'PCB Design', 'SolidWorks'],
-                    modelSettings: { cameraZ: 7.0, yOffset: 0.0, scale: 1.0, modelScaleMultiplier: 1.0 },
-                    content: {
-                        intro: "A physical volume knob for Sonos systems. Focus on low power consumption and sleek industrial design.",
-                        tech: "ESP32-C3 Deep Sleep architecture. Wakes on interrupt, connects, sends, sleeps. Battery life > 6 months.",
-                        math: "Implemented an exponential volume mapping curve (Logarithmic Potentiometer simulation) to match human hearing perception.",
-                        challenges: "Latency reduction. Optimistic UI updates were implemented to give instant LED feedback before network confirmation."
-                    }
-                },
-                {
-                    id: 'convoy',
-                    title: 'ConvoyLink',
-                    shortDesc: 'Off-grid LoRa Voice Comm & GPS Tracking.',
-                    type: 'convoy',
-                    tags: ['RF', 'Hardware', 'React Native'],
-                    modelSettings: { cameraZ: 6.0, yOffset: 0.0, scale: 1.1, modelScaleMultiplier: 1.0 },
-                    content: {
-                        intro: "Mesh network for vehicle tracking outside cell service areas.",
-                        tech: "LoRa (915MHz) for telemetry. Bluetooth bridge to mobile app. ESP32-S3 processor.",
-                        math: "Haversine formula used to calculate distance and bearing between nodes on the curved earth surface.",
-                        challenges: "Bandwidth limitations. Implemented Codec2 voice compression to fit audio data into small LoRa packets."
-                    }
-                }
-            ]
-        };
-
-        // ==========================================
-        //      APP COMPONENTS
-        // ==========================================
-
-        const RobotTerminal = () => {
-            const [input, setInput] = useState("");
-            const [logs, setLogs] = useState([
-                { text: "Connecting to Serial Port /dev/ttyUSB0...", color: "text-slate-400" },
-                { text: "Connection Established (115200 baud)", color: "text-emerald-400" },
-                { text: "Ready. Type 'help' for commands.", color: "text-blue-400" }
-            ]);
-            const endRef = useRef(null);
-
-            const handleCommand = (e) => {
-                if (e.key === 'Enter') {
-                    const cmd = input.trim().toLowerCase();
-                    const newLogs = [...logs, { text: `> ${input}`, color: "text-white" }];
-                    if (cmd === 'help') {
-                        newLogs.push({ text: "Available Commands:", color: "text-yellow-400" });
-                        newLogs.push({ text: "  status    - Check battery & tilt angle", color: "text-slate-300" });
-                        newLogs.push({ text: "  tune pid  - Start auto-tune sequence", color: "text-slate-300" });
-                        newLogs.push({ text: "  clear     - Clear screen", color: "text-slate-300" });
-                    } else if (cmd === 'status') {
-                        newLogs.push({ text: "BATTERY: 84% | TILT: -0.4° | MOTOR: IDLE", color: "text-emerald-400" });
-                    } else if (cmd === 'tune pid') {
-                         newLogs.push({ text: "Starting Zig-Nichols tuning...", color: "text-yellow-400" });
-                         newLogs.push({ text: "Oscillation detected at Kp=12.5", color: "text-slate-400" });
-                         newLogs.push({ text: "Calculated: Kp=7.5, Ki=10.2, Kd=0.4", color: "text-emerald-400" });
-                         newLogs.push({ text: "Values saved to EEPROM.", color: "text-blue-400" });
-                    } else if (cmd === 'clear') {
-                        setLogs([{ text: "Console Cleared.", color: "text-slate-500" }]);
-                        setInput("");
-                        return;
-                    } else {
-                        newLogs.push({ text: `Unknown command: ${cmd}`, color: "text-red-400" });
-                    }
-                    setLogs(newLogs);
-                        // Lightweight staged meshes for manufacturing timeline
-                        const basePartMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.3, roughness: 0.6, transparent: true });
-                        const torchMat = new THREE.MeshBasicMaterial({ color: 0xffb86b, emissive: 0xff8a50, transparent: true, opacity: 0.0 });
-                        const layerMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.1, roughness: 0.7 });
-                        const drillMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.8, roughness: 0.3 });
-                        const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
-                        const assembledMat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, metalness: 0.4, roughness: 0.3 });
-
-                        // central part (used for soldering/dissolve/drill)
-                        const part = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.2, 0.8), basePartMat);
-                        part.name = 'hero_part';
-                        part.position.y = 0;
-                        group.add(part);
-
-                        // torch (soldering) - small sphere
-                        const torch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), torchMat);
-                        torch.name = 'hero_torch';
-                        torch.position.set(0.4, 0.15, 0);
-                        group.add(torch);
-
-                        // small point light to accent the soldering torch (start off)
-                        const torchLight = new THREE.PointLight(0xffb86b, 0.0, 2.5);
-                        torchLight.name = 'hero_torchLight';
-                        torchLight.position.copy(torch.position);
-                        group.add(torchLight);
-
-                        // printed layers (stack of thin boxes) - initially scale.y = 0
-                        const printedGroup = new THREE.Group();
-                        printedGroup.name = 'hero_printedGroup';
-                        const layerCount = 12;
-                        const layers = [];
-                        for (let i = 0; i < layerCount; i++) {
-                            const h = 0.02;
-                            const l = new THREE.Mesh(new THREE.BoxGeometry(0.9, h, 0.6), layerMat);
-                            l.position.y = (i * h) - 0.11 + h/2;
-                            l.scale.y = 0.001; // invisible initially
-                            l.name = `hero_layer_${i}`;
-                            printedGroup.add(l);
-                            layers.push(l);
-                        }
-                        printedGroup.position.y = 0;
-                        group.add(printedGroup);
-
-                        // drill (rotating cylinder) and a visual 'hole' marker
-                        const drill = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8), drillMat);
-                        drill.name = 'hero_drill';
-                        drill.rotation.x = Math.PI/2;
-                        drill.position.set(-0.2, 0.5, 0);
-                        group.add(drill);
-                        const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-                        hole.name = 'hero_hole';
-                        hole.rotation.x = Math.PI/2;
-                        hole.position.set(-0.2, 0.01, 0);
-                        hole.visible = false;
-                        group.add(hole);
-
-                        // wood block and cutter for carving
-                        const wood = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.18, 0.6), woodMat);
-                        wood.name = 'hero_wood';
-                        wood.position.set(0, -0.8, 0);
-                        group.add(wood);
-                        const cutter = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.12), drillMat);
-                        cutter.name = 'hero_cutter';
-                        cutter.position.set(0.4, -0.7, 0);
-                        group.add(cutter);
-
-                        // assembled parts for final step
-                        const partA = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
-                        const partB = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
-                        partA.name = 'hero_partA';
-                        partB.name = 'hero_partB';
-                        partA.position.set(-0.6, -0.2, 0);
-                        partB.position.set(0.6, -0.2, 0);
-                        group.add(partA, partB);
-
-                        // Hide/adjust initial visibility
-                        torch.material.opacity = 0.0;
-                        printedGroup.visible = false;
-                        drill.visible = false;
-                        hole.visible = false;
-                        wood.visible = false;
-                        cutter.visible = false;
-                        partA.visible = false;
-                        partB.visible = false;
-
-                        // store references for the animate timeline
-                        if (droneRefs) {
-                            droneRefs.current.heroStages = { part, torch, printedGroup, layers, drill, hole, wood, cutter, partA, partB };
-                        }
-                    setInput("");
-                }
-            };
-            useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [logs]);
-            return (
-                <div className="w-full h-64 bg-black rounded-xl border border-slate-700 p-4 font-mono text-sm flex flex-col shadow-2xl">
-                    <div className="flex gap-2 mb-2 border-b border-slate-800 pb-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                        <span className="text-xs text-slate-500 ml-2">Serial Monitor (COM3)</span>
-                    </div>
-                    <div className="flex-1 overflow-y-auto space-y-1">
-                        {logs.map((log, i) => <div key={i} className={`${log.color}`}>{log.text}</div>)}
-                        <div ref={endRef}></div>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-300 mt-2 border-t border-slate-800 pt-2">
-                        <span>$</span>
-                        <input className="bg-transparent focus:outline-none flex-1" value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleCommand} placeholder="Type command..." autoFocus />
-                    </div>
-                        
-                </div>
-            );
-        };
-
-        // --- Modern HTML/CSS Hero Component (user-supplied) ---
-        const ModernHero = ({ profile, isDark, isBlueprint, textSub, onHomeClick, onToggleBlueprint, onToggleDark }) => {
-            const containerRef = useRef(null);
-            const glowRef = useRef(null);
-            const blob1Ref = useRef(null);
-            const blob2Ref = useRef(null);
-            const blob3Ref = useRef(null);
-
-            useEffect(() => {
-                const container = containerRef.current;
-                const glow = glowRef.current;
-                const blob1 = blob1Ref.current;
-                const blob2 = blob2Ref.current;
-                const blob3 = blob3Ref.current;
-                if (!container || !glow || !blob1 || !blob2 || !blob3) return;
-
-                let raf = null;
-                let animationRaf = null;
-                let mousePos = { x: container.clientWidth / 2, y: container.clientHeight / 2 };
-                let hover = false;
-
-                // Compute each blob's initial visual center relative to the container
-                let initialCenters = [];
-                const computeCenters = () => {
-                    initialCenters = [blob1, blob2, blob3].map((b) => ({
-                        x: b.offsetLeft + b.offsetWidth / 2,
-                        y: b.offsetTop + b.offsetHeight / 2,
-                        radius: b.offsetWidth / 2
-                    }));
-                };
-                computeCenters();
-                window.addEventListener('resize', computeCenters);
-
-                // Fluid simulation parameters: viscous drag, momentum preservation
-                const blobs = [
-                    { el: blob1, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, max: 180, acceleration: 0.25, damping: 0.97, idleMix: 0.8, wiggle: { ax: 12, ay: 10, fx: 0.18, fy: 0.15, phase: 0.0 } },
-                    { el: blob2, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, max: 220, acceleration: 0.22, damping: 0.97, idleMix: 0.8, wiggle: { ax: 16, ay: 12, fx: 0.14, fy: 0.11, phase: 1.3 } },
-                    { el: blob3, pos: { x: 0, y: 0 }, vel: { x: 0, y: 0 }, max: 140, acceleration: 0.28, damping: 0.97, idleMix: 0.8, wiggle: { ax: 10, ay: 14, fx: 0.22, fy: 0.20, phase: 2.1 } },
-                ];
-
-                let lastTime = 0;
-                const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-                const animate = (ts) => {
-                    const t = ts || performance.now();
-                    const dt = lastTime ? (t - lastTime) / 1000 : 0;
-                    lastTime = t;
-
-                    // Use seconds for smooth procedural motion (prevents high-frequency jitter)
-                    const time = t * 0.001;
-
-                    // Sigma defines how far the mouse influence reaches
-                    const sigma = Math.max(container.clientWidth, container.clientHeight) * 0.5;
-
-                    blobs.forEach((b, i) => {
-                        const init = initialCenters[i] || { x: 0, y: 0, radius: 0 };
-                        
-                        // Calculate CURRENT center of the blob
-                        const currentX = init.x + b.pos.x;
-                        const currentY = init.y + b.pos.y;
-                        
-                        const dx = mousePos.x - currentX;
-                        const dy = mousePos.y - currentY;
-
-                        // Influence decays with distance from the blob's CURRENT center
-                        const d2 = dx * dx + dy * dy;
-                        const influence = Math.exp(-d2 / (2 * sigma * sigma)); // 1 near, 0 far
-
-                        // Normalize direction (unit vector toward cursor)
-                        const dist = Math.sqrt(d2) || 1;
-                        const dirX = dx / dist;
-                        const dirY = dy / dist;
-                        
-                        // Fluid drag force: push blob AWAY from cursor (repulsion)
-                        const pushStrength = hover ? -1.2 : 0.0;
-                        const forceX = dirX * influence * pushStrength;
-                        const forceY = dirY * influence * pushStrength;
-                        
-                        // Apply acceleration
-                        b.vel.x += forceX * b.acceleration;
-                        b.vel.y += forceY * b.acceleration;
-                        
-                        // Clamp velocity magnitude
-                        const speed = Math.sqrt(b.vel.x * b.vel.x + b.vel.y * b.vel.y);
-                        const maxSpeed = 4.5;
-                        if (speed > maxSpeed) {
-                            const scale = maxSpeed / speed;
-                            b.vel.x *= scale;
-                            b.vel.y *= scale;
-                        }
-                        
-                        // Viscous damping
-                        b.vel.x *= b.damping;
-                        b.vel.y *= b.damping;
-                        
-                        // Velocity integration
-                        b.pos.x += b.vel.x;
-                        b.pos.y += b.vel.y;
-                        
-                        // Dynamic boundary constraints based on blob size and container
-                        // We want the blob center to stay within the container (with some padding)
-                        const margin = init.radius * 0.5; // Allow half the blob to go off-screen
-                        const minX = -init.x + margin;
-                        const maxX = container.clientWidth - init.x - margin;
-                        const minY = -init.y + margin;
-                        const maxY = container.clientHeight - init.y - margin;
-                        
-                        // Bounce off edges
-                        if (b.pos.x < minX) {
-                            b.pos.x = minX;
-                            b.vel.x *= -0.5;
-                        } else if (b.pos.x > maxX) {
-                            b.pos.x = maxX;
-                            b.vel.x *= -0.5;
-                        }
-                        
-                        if (b.pos.y < minY) {
-                            b.pos.y = minY;
-                            b.vel.y *= -0.5;
-                        } else if (b.pos.y > maxY) {
-                            b.pos.y = maxY;
-                            b.vel.y *= -0.5;
-                        }
-
-                        // Idle wiggle (reduced when hovering)
-                        // Smooth transition between idle and hover states to prevent flicker
-                        const idleTarget = hover ? 0.2 : 0.8;
-                        b.idleMix += (idleTarget - b.idleMix) * 0.05; // Slower, smoother lerp
-                        
-                        // Treat fx/fy as Hz (cycles/sec)
-                        const wx = Math.sin(time * (b.wiggle.fx * Math.PI * 2) + b.wiggle.phase) * b.wiggle.ax * b.idleMix;
-                        const wy = Math.cos(time * (b.wiggle.fy * Math.PI * 2) + b.wiggle.phase) * b.wiggle.ay * b.idleMix;
-
-                        b.el.style.transform = `translate3d(${(b.pos.x + wx).toFixed(2)}px, ${(b.pos.y + wy).toFixed(2)}px, 0)`;
-                    });
-
-                    animationRaf = requestAnimationFrame(animate);
-                };
-
-                const updateGlow = () => {
-                    glow.style.left = `${mousePos.x}px`;
-                    glow.style.top = `${mousePos.y}px`;
-                    raf = null;
-                };
-
-                const onMove = (e) => {
-                    const rect = container.getBoundingClientRect();
-                    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                    mousePos = { x: cx - rect.left, y: cy - rect.top };
-                    glow.style.opacity = '1';
-                    hover = true;
-                    if (!raf) raf = requestAnimationFrame(updateGlow);
-                };
-
-                const onLeave = () => { glow.style.opacity = '0'; hover = false; };
-
-                container.addEventListener('mousemove', onMove);
-                container.addEventListener('touchmove', onMove, { passive: true });
-                container.addEventListener('mouseleave', onLeave);
-                container.addEventListener('touchend', onLeave);
-
-                // Start the animation loop
-                animationRaf = requestAnimationFrame(animate);
-
-                return () => {
-                    container.removeEventListener('mousemove', onMove);
-                    container.removeEventListener('touchmove', onMove);
-                    container.removeEventListener('mouseleave', onLeave);
-                    container.removeEventListener('touchend', onLeave);
-                    window.removeEventListener('resize', computeCenters);
-                    if (raf) cancelAnimationFrame(raf);
-                    if (animationRaf) cancelAnimationFrame(animationRaf);
-                };
-            }, []);
-
-            const heroVars = {
-                '--hero-bg': isBlueprint ? '#1e3a8a' : (isDark ? '#0f172a' : '#f8fafc'),
-                '--hero-grid-line': isBlueprint ? 'rgba(255,255,255,0.08)' : (isDark ? 'rgba(255,255,255,0.04)' : 'rgba(15,23,42,0.06)'),
-                '--hero-glow': isBlueprint ? 'rgba(255,255,255,0.10)' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(15,23,42,0.08)'),
-                '--hero-blob-1': isBlueprint ? '#0ea5e9' : '#2563eb',
-                '--hero-blob-2': isBlueprint ? '#22d3ee' : '#7c3aed',
-                '--hero-blob-3': isBlueprint ? '#ffffff' : '#06b6d4'
-            };
-
-            return (
-                <div ref={containerRef} className="hero-container" style={heroVars}>
-                    <div className="gradient-background"></div>
-                    <div className="absolute top-8 left-8 right-6 z-30 flex items-center justify-between">
-                        <div className="flex items-center gap-2 cursor-pointer" onClick={onHomeClick}>
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${isBlueprint ? 'bg-blue-800 text-white' : (isDark ? 'bg-blue-500/10' : 'bg-blue-100')}`}>
-                                <img
-                                    src="assets/icons/favicon-32x32.png"
-                                    srcSet="assets/icons/favicon-32x32.png 32w, assets/icons/favicon-128x128.png 128w, assets/icons/favicon-192x192.png 192w"
-                                    sizes="48px"
-                                    alt="Lewis Fowler logo"
-                                    className="w-12 h-12 block object-contain"
-                                />
-                            </div>
-                            <span className={`hidden sm:inline font-bold text-2xl tracking-tight ${isBlueprint || isDark ? 'text-white/90' : 'text-slate-900'}`}>
-                                {profile.name.split(' ')[0]} <span className={isBlueprint ? "text-cyan-300" : (isDark ? "text-blue-200" : "text-blue-700")}>{profile.name.split(' ')[1]}</span>
-                            </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={onToggleBlueprint}
-                                className={`px-3 py-2 rounded-xl transition-colors ${
-                                    isBlueprint
-                                        ? 'bg-blue-700/60 text-white'
-                                        : (isDark
-                                            ? 'bg-white/0 text-white/80 hover:bg-white/10'
-                                            : 'bg-transparent text-slate-900 hover:bg-black/5'
-                                        )
-                                }`}
-                                title="Toggle Blueprint Mode"
-                            >
-                                <Grid size={28} />
-                            </button>
-                            <button
-                                onClick={onToggleDark}
-                                className={`px-3 py-2 rounded-xl transition-colors ${
-                                    isBlueprint
-                                        ? 'bg-white/10 text-white hover:bg-white/20'
-                                        : (isDark
-                                            ? 'bg-white/0 text-white/80 hover:bg-white/10'
-                                            : 'bg-transparent text-slate-700 hover:bg-black/5'
-                                        )
-                                }`}
-                                title={isBlueprint ? 'Exit Blueprint (restore theme)' : 'Toggle Dark Mode'}
-                            >
-                                {isDark ? <Sun size={28} /> : <Moon size={28} />}
-                            </button>
-                        </div>
-                    </div>
-                    <div ref={blob1Ref} className="blob blob-1"></div>
-                    <div ref={blob2Ref} className="blob blob-2"></div>
-                    <div ref={blob3Ref} className="blob blob-3"></div>
-                    <div className="grid-layer"></div>
-                    <div ref={glowRef} className="mouse-glow" style={{ opacity: 0 }}></div>
-                    <div className="noise-overlay"></div>
-                    <div className="hero-content">
-                        <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-tight">
-                            <span
-                                className={`text-transparent bg-clip-text bg-gradient-to-r ${isBlueprint ? 'from-cyan-300 to-blue-100' : 'from-blue-600 to-purple-600'}`}
-                                style={{
-                                    display: 'inline-block',
-                                    WebkitTextFillColor: 'transparent',
-                                    backgroundRepeat: 'no-repeat',
-                                    paddingRight: '0.03em'
-                                }}
-                            >{profile.name}</span>
-                        </h1>
-                        <p className={`text-xl max-w-lg leading-relaxed ${textSub}`}>{profile.bio}</p>
-                        
-                    </div>
-                </div>
-            );
-        };
-
-        const PhysicsSkills = ({ skills, isDark, isBlueprint }) => {
-            const sceneRef = useRef(null);
-            const engineRef = useRef(null);
-            const [resetKey, setResetKey] = useState(0);
-
-            useEffect(() => {
-                if (!sceneRef.current) return;
-
-                const timer = setTimeout(() => {
-                    const width = sceneRef.current.clientWidth || 600;
-                    const height = 450; 
-                    const Engine = Matter.Engine, Render = Matter.Render, World = Matter.World, Bodies = Matter.Bodies, Mouse = Matter.Mouse, MouseConstraint = Matter.MouseConstraint, Runner = Matter.Runner;
-
-                    const engine = Engine.create();
-                    engineRef.current = engine;
-
-                    const render = Render.create({
-                        element: sceneRef.current,
-                        engine: engine,
-                        options: { width, height, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio }
-                    });
-
-                    const wallOptions = { isStatic: true, render: { fillStyle: isBlueprint ? '#1e3a8a' : (isDark ? '#1e293b' : '#e2e8f0'), visible: true } };
-                    World.add(engine.world, [
-                        Bodies.rectangle(width / 2, height + 25, width, 50, wallOptions), 
-                        Bodies.rectangle(-25, height / 2, 50, height, wallOptions),      
-                        Bodies.rectangle(width + 25, height / 2, 50, height, wallOptions) 
-                    ]);
-
-                    const categoryColors = {
-                        'Mechanical': isBlueprint ? '#3b82f6' : '#3b82f6', 
-                        'Embedded': isBlueprint ? '#10b981' : '#10b981',   
-                        'Software': isBlueprint ? '#a855f7' : '#a855f7'    
-                    };
-
-                    const toSkillKey = (name) => String(name || '')
-                        .toLowerCase()
-                        .replace(/\s*\/\s*/g, '-')  // CFD / Fluent -> cfd-fluent
-                        .replace(/\s+/g, '-')
-                        .replace(/\+\+/g, 'pp')     // C++ -> cpp (before removing other chars)
-                        .replace(/[^a-z0-9\-]/g, '')
-                        .replace(/-+/g, '-');       // collapse multiple dashes
-
-                    const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-
-                    skills.forEach((skill, i) => {
-                        const x = Math.random() * (width - 150) + 75;
-                        const y = -Math.random() * 500 - 100; 
-
-                        const color = categoryColors[skill.category] || '#64748b';
-                        const skillKey = toSkillKey(skill.name);
-
-                        // Make every skill its own "block" (unique via icon + slightly varied sizing).
-                        const baseW = 120 + (String(skill.name || '').length * 6);
-                        const w = clamp(baseW, 120, 190);
-                        const h = 56 + ((i % 3) * 6);
-                        const corner = 10 + ((i % 4) * 2);
-
-                        const body = Bodies.rectangle(x, y, w, h, {
-                            restitution: 0.55,
-                            friction: 0.45,
-                            chamfer: { radius: corner },
-                            label: skill.name,
-                            plugin: {
-                                skillKey,
-                                category: skill.category,
-                                color,
-                                w,
-                                h
-                            }
-                        });
-
-                        World.add(engine.world, body);
-                    });
-
-                    const mouse = Mouse.create(render.canvas);
-                    mouse.pixelRatio = window.devicePixelRatio;
-                    const mouseConstraint = MouseConstraint.create(engine, {
-                        mouse: mouse,
-                        constraint: { stiffness: 0.2, render: { visible: false } }
-                    });
-                    World.add(engine.world, mouseConstraint);
-                    render.mouse = mouse;
-
-                    // --- CUSTOM RENDERER ---
-                    Matter.Events.on(render, 'afterRender', function() {
-                        const context = render.context;
-                        context.textAlign = "center";
-                        context.textBaseline = "middle";
-
-                        const drawRoundedRect = (ctx, x, y, w, h, r) => {
-                            const rr = Math.min(r, w / 2, h / 2);
-                            ctx.beginPath();
-                            ctx.moveTo(x + rr, y);
-                            ctx.lineTo(x + w - rr, y);
-                            ctx.quadraticCurveTo(x + w, y, x + w, y + rr);
-                            ctx.lineTo(x + w, y + h - rr);
-                            ctx.quadraticCurveTo(x + w, y + h, x + w - rr, y + h);
-                            ctx.lineTo(x + rr, y + h);
-                            ctx.quadraticCurveTo(x, y + h, x, y + h - rr);
-                            ctx.lineTo(x, y + rr);
-                            ctx.quadraticCurveTo(x, y, x + rr, y);
-                            ctx.closePath();
-                        };
-
-                        const iconStroke = isBlueprint ? '#ffffff' : (isDark ? '#e2e8f0' : '#0f172a');
-                        const textColor = isBlueprint ? '#ffffff' : (isDark ? '#ffffff' : '#0f172a');
-                        const baseFill = isBlueprint ? '#1e3a8a' : (isDark ? '#0f172a' : '#ffffff');
-                        const subtleFill = isBlueprint ? 'rgba(255,255,255,0.08)' : (isDark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.04)');
-
-                        const drawSkillIcon = (ctx, skillKey) => {
-                            ctx.save();
-                            ctx.lineWidth = 2;
-                            ctx.strokeStyle = iconStroke;
-                            ctx.fillStyle = iconStroke;
-
-                            switch (skillKey) {
-                                case 'solidworks': {
-                                    // isometric cube - SolidWorks red
-                                    ctx.strokeStyle = '#dc2626';
-                                    ctx.fillStyle = '#dc2626';
-                                    ctx.lineWidth = 2;
-                                    // top face
-                                    ctx.beginPath();
-                                    ctx.moveTo(-10, -6); ctx.lineTo(0, -12); ctx.lineTo(10, -6); ctx.lineTo(0, 0); ctx.closePath();
-                                    ctx.fillStyle = '#fca5a5';
-                                    ctx.fill();
-                                    ctx.strokeStyle = '#dc2626';
-                                    ctx.stroke();
-                                    // left face
-                                    ctx.beginPath();
-                                    ctx.moveTo(-10, -6); ctx.lineTo(-10, 6); ctx.lineTo(0, 12); ctx.lineTo(0, 0); ctx.closePath();
-                                    ctx.fillStyle = '#ef4444';
-                                    ctx.fill();
-                                    ctx.stroke();
-                                    // right face
-                                    ctx.beginPath();
-                                    ctx.moveTo(10, -6); ctx.lineTo(10, 6); ctx.lineTo(0, 12); ctx.lineTo(0, 0); ctx.closePath();
-                                    ctx.fillStyle = '#dc2626';
-                                    ctx.fill();
-                                    ctx.stroke();
-                                    break;
-                                }
-                                case 'fusion-360': {
-                                    // 3D orbit/rotation ring - Autodesk orange
-                                    ctx.strokeStyle = '#f97316';
-                                    ctx.fillStyle = '#f97316';
-                                    ctx.lineWidth = 2;
-                                    ctx.beginPath();
-                                    ctx.ellipse(0, 0, 12, 5, 0, 0, Math.PI * 2);
-                                    ctx.stroke();
-                                    ctx.strokeStyle = '#fb923c';
-                                    ctx.beginPath();
-                                    ctx.ellipse(0, 0, 12, 5, Math.PI / 3, 0, Math.PI * 2);
-                                    ctx.stroke();
-                                    ctx.fillStyle = '#ea580c';
-                                    ctx.beginPath();
-                                    ctx.arc(0, 0, 4, 0, Math.PI * 2);
-                                    ctx.fill();
-                                    break;
-                                }
-                                case 'cfd-fluent': {
-                                    // flowing water waves - blue
-                                    ctx.lineWidth = 2.5;
-                                    ctx.lineCap = 'round';
-                                    // three flowing wave lines in water blue
-                                    ctx.strokeStyle = '#38bdf8';
-                                    ctx.beginPath();
-                                    ctx.moveTo(-14, -8);
-                                    ctx.quadraticCurveTo(-4, -14, 6, -8);
-                                    ctx.quadraticCurveTo(10, -5, 14, -8);
-                                    ctx.stroke();
-                                    ctx.strokeStyle = '#0ea5e9';
-                                    ctx.beginPath();
-                                    ctx.moveTo(-14, 0);
-                                    ctx.quadraticCurveTo(-4, -6, 6, 0);
-                                    ctx.quadraticCurveTo(10, 3, 14, 0);
-                                    ctx.stroke();
-                                    ctx.strokeStyle = '#0284c7';
-                                    ctx.beginPath();
-                                    ctx.moveTo(-14, 8);
-                                    ctx.quadraticCurveTo(-4, 2, 6, 8);
-                                    ctx.quadraticCurveTo(10, 11, 14, 8);
-                                    ctx.stroke();
-                                    break;
-                                }
-                                case 'fabrication': {
-                                    // hammer with wood handle and metal head
-                                    ctx.lineWidth = 2;
-                                    // wood handle (brown)
-                                    ctx.fillStyle = '#92400e';
-                                    ctx.fillRect(-2, -2, 4, 14);
-                                    ctx.strokeStyle = '#78350f';
-                                    ctx.strokeRect(-2, -2, 4, 14);
-                                    // metal head (gray)
-                                    ctx.fillStyle = '#6b7280';
-                                    ctx.fillRect(-10, -12, 20, 10);
-                                    // metallic shine
-                                    ctx.fillStyle = '#9ca3af';
-                                    ctx.fillRect(-10, -12, 20, 3);
-                                    ctx.strokeStyle = '#4b5563';
-                                    ctx.strokeRect(-10, -12, 20, 10);
-                                    break;
-                                }
-                                case '3d-printing': {
-                                    // nozzle + layers - with orange filament
-                                    ctx.lineWidth = 2;
-                                    // nozzle (metallic)
-                                    ctx.fillStyle = '#6b7280';
-                                    ctx.beginPath();
-                                    ctx.moveTo(-8, -10); ctx.lineTo(8, -10); ctx.lineTo(2, -2); ctx.lineTo(-2, -2); ctx.closePath();
-                                    ctx.fill();
-                                    ctx.strokeStyle = '#4b5563';
-                                    ctx.stroke();
-                                    // filament coming out
-                                    ctx.strokeStyle = '#f97316';
-                                    ctx.lineWidth = 3;
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, -2); ctx.lineTo(0, 4);
-                                    ctx.stroke();
-                                    // printed layers (orange gradient)
-                                    ctx.lineWidth = 2.5;
-                                    const layerColors = ['#ea580c', '#f97316', '#fb923c'];
-                                    for (let i = 0; i < 3; i++) {
-                                        ctx.strokeStyle = layerColors[i];
-                                        ctx.beginPath();
-                                        ctx.moveTo(-10, 6 + i * 3); ctx.lineTo(10, 6 + i * 3);
-                                        ctx.stroke();
-                                    }
-                                    break;
-                                }
-                                case 'arduino': {
-                                    // PCB board
-                                    ctx.lineWidth = 1.5;
-                                    // green board background
-                                    ctx.fillStyle = '#22c55e';
-                                    ctx.fillRect(-14, -10, 28, 20);
-                                    // board outline
-                                    ctx.strokeStyle = iconStroke;
-                                    ctx.strokeRect(-14, -10, 28, 20);
-                                    // chip in center (black)
-                                    ctx.fillStyle = '#1f2937';
-                                    ctx.fillRect(-6, -5, 12, 10);
-                                    // copper traces
-                                    ctx.strokeStyle = '#fbbf24';
-                                    ctx.lineWidth = 1.5;
-                                    ctx.beginPath();
-                                    ctx.moveTo(-14, -6); ctx.lineTo(-6, -6);
-                                    ctx.moveTo(-14, 0); ctx.lineTo(-6, 0);
-                                    ctx.moveTo(-14, 6); ctx.lineTo(-6, 6);
-                                    ctx.moveTo(6, -6); ctx.lineTo(14, -6);
-                                    ctx.moveTo(6, 0); ctx.lineTo(14, 0);
-                                    ctx.moveTo(6, 6); ctx.lineTo(14, 6);
-                                    ctx.stroke();
-                                    // pin headers on edges
-                                    ctx.fillStyle = iconStroke;
-                                    for (let px = -10; px <= 10; px += 5) {
-                                        ctx.fillRect(px - 1, -12, 2, 3);
-                                        ctx.fillRect(px - 1, 9, 2, 3);
-                                    }
-                                    break;
-                                }
-                                case 'ros-2': {
-                                    // robot arm - industrial blue/gray
-                                    ctx.lineWidth = 3;
-                                    // base (dark gray)
-                                    ctx.fillStyle = '#374151';
-                                    ctx.fillRect(-8, 8, 16, 5);
-                                    // arm segments (blue)
-                                    ctx.strokeStyle = '#3b82f6';
-                                    ctx.lineCap = 'round';
-                                    // lower arm
-                                    ctx.beginPath();
-                                    ctx.moveTo(0, 8);
-                                    ctx.lineTo(-6, -2);
-                                    ctx.stroke();
-                                    // upper arm
-                                    ctx.beginPath();
-                                    ctx.moveTo(-6, -2);
-                                    ctx.lineTo(4, -10);
-                                    ctx.stroke();
-                                    // joints (orange accent)
-                                    ctx.fillStyle = '#f97316';
-                                    ctx.beginPath();
-                                    ctx.arc(0, 8, 3, 0, Math.PI * 2);
-                                    ctx.fill();
-                                    ctx.beginPath();
-                                    ctx.arc(-6, -2, 2.5, 0, Math.PI * 2);
-                                    ctx.fill();
-                                    // gripper (gray)
-                                    ctx.strokeStyle = '#6b7280';
-                                    ctx.lineWidth = 2;
-                                    ctx.beginPath();
-                                    ctx.moveTo(4, -10); ctx.lineTo(8, -14);
-                                    ctx.moveTo(4, -10); ctx.lineTo(8, -8);
-                                    ctx.stroke();
-                                    break;
-                                }
-                                case 'matlab': {
-                                    // sigma Σ - MATLAB orange
-                                    ctx.strokeStyle = '#f97316';
-                                    ctx.fillStyle = '#f97316';
-                                    ctx.lineWidth = 3;
-                                    ctx.lineCap = 'round';
-                                    ctx.lineJoin = 'round';
-                                    ctx.beginPath();
-                                    ctx.moveTo(10, -12);
-                                    ctx.lineTo(-8, -12);
-                                    ctx.lineTo(2, 0);
-                                    ctx.lineTo(-8, 12);
-                                    ctx.lineTo(10, 12);
-                                    ctx.stroke();
-                                    break;
-                                }
-                                case 'python': {
-                                    // snake - Python green/yellow
-                                    ctx.lineWidth = 5;
-                                    ctx.lineCap = 'round';
-                                    ctx.lineJoin = 'round';
-                                    // body - smooth S curve (green)
-                                    ctx.strokeStyle = '#22c55e';
-                                    ctx.beginPath();
-                                    ctx.moveTo(-10, 12);
-                                    ctx.quadraticCurveTo(-10, 4, 0, 4);
-                                    ctx.quadraticCurveTo(8, 4, 8, -4);
-                                    ctx.quadraticCurveTo(8, -10, 0, -10);
-                                    ctx.lineTo(-4, -10);
-                                    ctx.stroke();
-                                    // head (triangular - darker green)
-                                    ctx.fillStyle = '#16a34a';
-                                    ctx.lineWidth = 1;
-                                    ctx.beginPath();
-                                    ctx.moveTo(-4, -14);
-                                    ctx.lineTo(-12, -10);
-                                    ctx.lineTo(-4, -6);
-                                    ctx.closePath();
-                                    ctx.fill();
-                                    // eye (yellow)
-                                    ctx.fillStyle = '#fbbf24';
-                                    ctx.beginPath();
-                                    ctx.arc(-7, -10, 1.5, 0, Math.PI * 2);
-                                    ctx.fill();
-                                    // tongue (red)
-                                    ctx.strokeStyle = '#ef4444';
-                                    ctx.lineWidth = 1;
-                                    ctx.beginPath();
-                                    ctx.moveTo(-12, -10);
-                                    ctx.lineTo(-15, -12);
-                                    ctx.moveTo(-12, -10);
-                                    ctx.lineTo(-15, -8);
-                                    ctx.stroke();
-                                    break;
-                                }
-                                case 'cpp': {
-                                    // code brackets { } - C++ blue
-                                    ctx.strokeStyle = '#3b82f6';
-                                    ctx.fillStyle = '#3b82f6';
-                                    ctx.lineWidth = 2.5;
-                                    ctx.lineCap = 'round';
-                                    // left brace {
-                                    ctx.beginPath();
-                                    ctx.moveTo(-6, -10);
-                                    ctx.quadraticCurveTo(-10, -10, -10, -5);
-                                    ctx.lineTo(-10, -2);
-                                    ctx.quadraticCurveTo(-10, 0, -13, 0);
-                                    ctx.quadraticCurveTo(-10, 0, -10, 2);
-                                    ctx.lineTo(-10, 5);
-                                    ctx.quadraticCurveTo(-10, 10, -6, 10);
-                                    ctx.stroke();
-                                    // right brace }
-                                    ctx.strokeStyle = '#60a5fa';
-                                    ctx.beginPath();
-                                    ctx.moveTo(6, -10);
-                                    ctx.quadraticCurveTo(10, -10, 10, -5);
-                                    ctx.lineTo(10, -2);
-                                    ctx.quadraticCurveTo(10, 0, 13, 0);
-                                    ctx.quadraticCurveTo(10, 0, 10, 2);
-                                    ctx.lineTo(10, 5);
-                                    ctx.quadraticCurveTo(10, 10, 6, 10);
-                                    ctx.stroke();
-                                    // code dots (purple accent)
-                                    ctx.fillStyle = '#a855f7';
-                                    ctx.beginPath();
-                                    ctx.arc(-2, 0, 2, 0, Math.PI * 2);
-                                    ctx.arc(2, 0, 2, 0, Math.PI * 2);
-                                    ctx.fill();
-                                    break;
-                                }
-                                default: {
-                                    // fallback: small dots
-                                    ctx.beginPath();
-                                    ctx.arc(-6, 0, 2, 0, Math.PI * 2);
-                                    ctx.arc(0, 0, 2, 0, Math.PI * 2);
-                                    ctx.arc(6, 0, 2, 0, Math.PI * 2);
-                                    ctx.fill();
-                                }
-                            }
-
-                            ctx.restore();
-                        };
-                        
-                        engine.world.bodies.forEach(body => {
-                            if (!body.isStatic) {
-                                const { x, y } = body.position;
-                                const skillKey = body.plugin && body.plugin.skillKey ? body.plugin.skillKey : 'default';
-                                const color = body.plugin && body.plugin.color ? body.plugin.color : '#64748b';
-                                const w = body.plugin && body.plugin.w ? body.plugin.w : 140;
-                                const h = body.plugin && body.plugin.h ? body.plugin.h : 60;
-                                const corner = 12;
-                                
-                                context.save();
-                                context.translate(x, y);
-                                context.rotate(body.angle);
-
-                                // Base block
-                                context.fillStyle = baseFill;
-                                drawRoundedRect(context, -w / 2, -h / 2, w, h, corner);
-                                context.fill();
-
-                                // Category accent stripe
-                                context.fillStyle = color;
-                                drawRoundedRect(context, -w / 2 + 6, -h / 2 + 6, 10, h - 12, 6);
-                                context.fill();
-
-                                // Subtle inner panel
-                                context.fillStyle = subtleFill;
-                                drawRoundedRect(context, -w / 2 + 22, -h / 2 + 8, w - 30, h - 16, 10);
-                                context.fill();
-
-                                // Outline (blueprint looks more "technical")
-                                context.strokeStyle = isBlueprint ? '#ffffff' : (isDark ? 'rgba(226,232,240,0.22)' : 'rgba(15,23,42,0.18)');
-                                context.lineWidth = 1.5;
-                                drawRoundedRect(context, -w / 2, -h / 2, w, h, corner);
-                                context.stroke();
-
-                                // Icon on left
-                                context.save();
-                                context.translate(-w / 2 + 44, 0);
-                                drawSkillIcon(context, skillKey);
-                                context.restore();
-
-                                // Label
-                                if (body.label) {
-                                    context.font = "700 11px Inter, sans-serif";
-                                    context.fillStyle = textColor;
-                                    // Left-align label within the inner panel
-                                    context.textAlign = 'left';
-                                    context.fillText(body.label, -w / 2 + 66, 0);
-                                    context.textAlign = 'center';
-                                }
-                                
-                                context.restore();
-                            }
-                        });
-                    });
-
-                    Runner.run(engine);
-                    Render.run(render);
-                }, 100);
-
-                return () => {
-                    clearTimeout(timer);
-                    if (engineRef.current) {
-                        Matter.World.clear(engineRef.current.world);
-                        Matter.Engine.clear(engineRef.current);
-                    }
-                    if (sceneRef.current) sceneRef.current.innerHTML = '';
-                };
-            }, [resetKey, isDark, isBlueprint]);
-
-            return (
-                <div className="relative mt-8">
-                    <div className="w-full h-[450px] overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 relative">
-                        <div ref={sceneRef} className="w-full h-full block"></div>
-                        <div className="absolute top-4 left-4 text-xs font-mono opacity-50 pointer-events-none">PHYSICS ENGINE: ACTIVE</div>
-                        <button onClick={() => setResetKey(k => k + 1)} className="absolute top-4 right-4 p-2 bg-slate-200 dark:bg-slate-800 rounded-full hover:scale-110 transition-transform"><RotateCw size={14} /></button>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- ROBOT ARM CONTROLS (REF BASED) ---
-        const RobotArmControls = ({ armStateRef, isBlueprint, isDark }) => {
-            const [, forceUpdate] = useState(0);
-
-            const handleChange = (key, value) => {
-                if (armStateRef.current) {
-                    armStateRef.current[key] = parseFloat(value);
-                    forceUpdate(n => n + 1); 
-                }
-            };
-
-            const Slider = ({ label, propKey, min, max }) => {
-                const val = armStateRef.current ? armStateRef.current[propKey] : 0;
-                return (
-                    <div className="mb-6">
-                        <div className="flex justify-between mb-2 text-xs font-mono font-bold">
-                            <span className={isBlueprint ? "text-cyan-300" : "text-slate-500"}>{label}</span>
-                            <span className={isBlueprint ? "text-white" : (isDark ? "text-white" : "text-slate-900")}>{val.toFixed(0)}°</span>
-                        </div>
-                        <input 
-                            type="range" min={min} max={max} 
-                            defaultValue={val}
-                            onInput={(e) => handleChange(propKey, e.target.value)} 
-                            className="w-full h-2 rounded-lg appearance-none cursor-grab active:cursor-grabbing bg-slate-300 dark:bg-slate-700 accent-blue-600"
-                        />
-                    </div>
-                );
-            };
-
-            return (
-                <div className={`h-full flex flex-col justify-center p-8 rounded-2xl border ${isBlueprint ? 'bg-blue-900/40 border-blue-700' : (isDark ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200 shadow-sm')}`}>
-                    <div className={`flex items-center gap-3 mb-8 ${isBlueprint ? 'text-cyan-300' : 'text-blue-600'}`}>
-                        <Sliders size={24} />
-                        <h2 className="text-xl font-bold">Manual Override</h2>
-                    </div>
-                    <div className="space-y-4">
-                        <Slider label="BASE (J1)" propKey="base" min={-180} max={180} />
-                        <Slider label="SHOULDER (J2)" propKey="shoulder" min={-45} max={90} />
-                        <Slider label="ELBOW (J3)" propKey="elbow" min={-90} max={90} />
-                        <Slider label="WRIST (J4)" propKey="wrist" min={-180} max={180} />
-                        <Slider label="GRIPPER" propKey="gripper" min={0} max={100} />
-                    </div>
-                    <div className={`mt-auto pt-6 border-t ${isBlueprint ? 'border-blue-800 text-blue-300' : 'border-slate-200 text-slate-500'} text-xs font-mono`}>
-                        > STATUS: ONLINE<br/>> SERVO SYNC: ACTIVE
-                    </div>
-                </div>
-            );
-        };
-
-        const HeroAnimation = ({ isDark, isBlueprint }) => {
-            const canvasRef = useRef(null);
-            const startTimeRef = useRef(null);
-
-            useEffect(() => {
-                const canvas = canvasRef.current;
-                if (!canvas) return;
-
-                const rect = canvas.getBoundingClientRect();
-                canvas.width = rect.width * window.devicePixelRatio;
-                canvas.height = rect.height * window.devicePixelRatio;
-                const ctx = canvas.getContext('2d');
-                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-                const w = rect.width;
-                const h = rect.height;
-                const centerX = w / 2;
-                const centerY = h / 2;
-
-                const colors = {
-                    bg: isBlueprint ? '#1e3a8a' : (isDark ? '#0f172a' : '#f8fafc'),
-                    primary: isBlueprint ? '#06b6d4' : '#0ea5e9',
-                    secondary: isBlueprint ? '#22d3ee' : '#38bdf8',
-                    accent: isBlueprint ? '#ffffff' : '#1e293b',
-                    metal: '#cbd5e1',
-                    metalDark: '#64748b',
-                    wood: '#92400e',
-                    torch: '#fbbf24',
-                    grid: isBlueprint ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.03)',
-                };
-
-                const drawGrid = () => {
-                    if (!isBlueprint) return;
-                    ctx.strokeStyle = colors.grid;
-                    ctx.lineWidth = 0.5;
-                    for (let x = 0; x < w; x += 25) {
-                        ctx.beginPath();
-                        ctx.moveTo(x, 0);
-                        ctx.lineTo(x, h);
-                        ctx.stroke();
-                    }
-                    for (let y = 0; y < h; y += 25) {
-                        ctx.beginPath();
-                        ctx.moveTo(0, y);
-                        ctx.lineTo(w, y);
-                        ctx.stroke();
-                    }
-                };
-
-                const drawShadow = (x, y, w, h) => {
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
-                    ctx.beginPath();
-                    ctx.ellipse(x, y + h / 2 + 18, w * 0.65, 6, 0, 0, Math.PI * 2);
-                    ctx.fill();
-                };
-
-                const drawPart = (x, y, scale = 1, opacity = 1) => {
-                    ctx.globalAlpha = opacity;
-                    const grad = ctx.createLinearGradient(x - 84 * scale, y, x + 84 * scale, y);
-                    grad.addColorStop(0, colors.metal);
-                    grad.addColorStop(1, colors.metalDark);
-                    ctx.fillStyle = grad;
-                    ctx.beginPath();
-                    ctx.moveTo(x - 72 * scale, y - 16.5 * scale);
-                    ctx.lineTo(x + 72 * scale, y - 16.5 * scale);
-                    ctx.quadraticCurveTo(x + 84 * scale, y, x + 72 * scale, y + 16.5 * scale);
-                    ctx.lineTo(x - 72 * scale, y + 16.5 * scale);
-                    ctx.quadraticCurveTo(x - 84 * scale, y, x - 72 * scale, y - 16.5 * scale);
-                    ctx.fill();
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                    drawShadow(x, y, 144 * scale, 33 * scale);
-                    ctx.globalAlpha = 1;
-                };
-
-                const drawTorch = (x, y, intensity = 1) => {
-                    ctx.fillStyle = `rgba(251, 191, 36, ${0.9 * intensity})`;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 15, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.stroke();
-                    ctx.fillStyle = `rgba(251, 191, 36, ${0.15 * intensity})`;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 36, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(255, 169, 0, ${0.6 * intensity})`;
-                    ctx.beginPath();
-                    ctx.moveTo(x - 6, y - 10.5);
-                    ctx.quadraticCurveTo(x - 3, y - 24, x, y - 28.5);
-                    ctx.quadraticCurveTo(x + 3, y - 24, x + 6, y - 10.5);
-                    ctx.fill();
-                };
-
-                const drawLayers = (x, y, progress) => {
-                    const layerCount = 10;
-                    const layerHeight = 6;
-                    const maxHeight = layerCount * layerHeight;
-                    const visibleLayers = Math.floor(progress * layerCount);
-
-                    for (let i = 0; i < visibleLayers; i++) {
-                        const grad = ctx.createLinearGradient(x - 57, y, x + 57, y);
-                        grad.addColorStop(0, colors.primary);
-                        grad.addColorStop(1, colors.secondary);
-                        ctx.fillStyle = grad;
-                        ctx.fillRect(x - 57, y - maxHeight / 2 + i * layerHeight, 114, layerHeight - 0.75);
-                        ctx.strokeStyle = colors.accent;
-                        ctx.lineWidth = 1.5;
-                        ctx.strokeRect(x - 57, y - maxHeight / 2 + i * layerHeight, 114, layerHeight - 0.75);
-                    }
-                    drawShadow(x, y + maxHeight / 2, 114, 15);
-                };
-
-                const drawDrill = (x, y, progress) => {
-                    const drillY = y - 52.5 * progress;
-                    ctx.fillStyle = colors.metalDark;
-                    ctx.fillRect(x - 10.5, drillY - 36, 21, 72);
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(x - 10.5, drillY - 36, 21, 72);
-                    ctx.strokeStyle = `rgba(100, 116, 139, ${0.3})`;
-                    ctx.lineWidth = 2;
-                    for (let i = 0; i < 3; i++) {
-                        ctx.beginPath();
-                        ctx.arc(x, drillY, 15 + i * 6, 0, Math.PI * 2);
-                        ctx.stroke();
-                    }
-
-                    if (progress > 0.5) {
-                        ctx.fillStyle = '#000000';
-                        ctx.beginPath();
-                        ctx.arc(x, y + 15, 15, 0, Math.PI * 2);
-                        ctx.fill();
-                        ctx.strokeStyle = colors.accent;
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-                    }
-                };
-
-                const drawWood = (x, y) => {
-                    const grad = ctx.createLinearGradient(x - 66, y, x + 66, y);
-                    grad.addColorStop(0, colors.wood);
-                    grad.addColorStop(0.5, '#b45309');
-                    grad.addColorStop(1, colors.wood);
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(x - 66, y, 132, 27);
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(x - 66, y, 132, 27);
-                    ctx.strokeStyle = `rgba(139, 60, 0, 0.2)`;
-                    ctx.lineWidth = 0.75;
-                    for (let i = 0; i < 12; i++) {
-                        ctx.beginPath();
-                        ctx.moveTo(x - 66, y + 3 + i * 2);
-                        ctx.lineTo(x + 66, y + 3 + i * 2);
-                        ctx.stroke();
-                    }
-                    drawShadow(x, y + 13.5, 132, 27);
-                };
-
-                const drawCutter = (x, y) => {
-                    ctx.fillStyle = colors.metalDark;
-                    ctx.fillRect(x - 19.5, y - 9, 39, 18);
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(x - 19.5, y - 9, 39, 18);
-                    ctx.strokeStyle = `rgba(255, 255, 255, 0.3)`;
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(x - 16.5, y - 7.5);
-                    ctx.lineTo(x + 16.5, y - 7.5);
-                    ctx.stroke();
-                };
-
-                const drawAssembly = (x1, y1, x2, y2, progress) => {
-                    const p1X = x1 + (x1 - x2) * 0.4 * (1 - progress);
-                    const p2X = x2 - (x1 - x2) * 0.4 * (1 - progress);
-
-                    const grad1 = ctx.createLinearGradient(p1X - 45, y1, p1X + 45, y1);
-                    grad1.addColorStop(0, colors.primary);
-                    grad1.addColorStop(1, colors.secondary);
-                    ctx.fillStyle = grad1;
-                    ctx.fillRect(p1X - 45, y1 - 13.5, 90, 27);
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(p1X - 45, y1 - 13.5, 90, 27);
-
-                    const grad2 = ctx.createLinearGradient(p2X - 45, y2, p2X + 45, y2);
-                    grad2.addColorStop(0, colors.secondary);
-                    grad2.addColorStop(1, colors.primary);
-                    ctx.fillStyle = grad2;
-                    ctx.fillRect(p2X - 45, y2 - 13.5, 90, 27);
-                    ctx.strokeStyle = colors.accent;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(p2X - 45, y2 - 13.5, 90, 27);
-
-                    drawShadow((p1X + p2X) / 2, Math.max(y1, y2) + 13.5, 180, 27);
-                };
-
-                const animate = () => {
-                    if (!startTimeRef.current) startTimeRef.current = performance.now();
-                    const elapsed = (performance.now() - startTimeRef.current) / 1000;
-                    const totalTime = 10.5; // solder 2s, print 3s, drill 1.5s, carve 2s, assemble 2s
-                    const t = elapsed % totalTime;
-
-                    ctx.fillStyle = colors.bg;
-                    ctx.fillRect(0, 0, w, h);
-                    drawGrid();
-
-                    const stages = {
-                        solder: { start: 0, duration: 2.0 },
-                        print: { start: 2.0, duration: 3.0 },
-                        drill: { start: 5.0, duration: 1.5 },
-                        carve: { start: 6.5, duration: 2.0 },
-                        assemble: { start: 8.5, duration: 2.0 },
-                    };
-
-                    const getProgress = (stage) => {
-                        const s = stages[stage];
-                        if (t < s.start || t >= s.start + s.duration) return 0;
-                        return (t - s.start) / s.duration;
-                    };
-
-                    ctx.font = 'bold 13px Inter, sans-serif';
-                    ctx.fillStyle = colors.accent;
-                    ctx.textAlign = 'center';
-
-                    // Soldering (only during solder phase)
-                    const pSolder = getProgress('solder');
-                    if (t >= stages.solder.start && t < stages.solder.start + stages.solder.duration) {
-                        const intensity = 0.5 + 0.5 * Math.sin(pSolder * Math.PI * 8);
-                        drawPart(centerX, centerY - 45, 1, 1);
-                        drawTorch(centerX + 63, centerY - 27, intensity);
-                        ctx.fillText('SOLDERING', centerX, h - 22);
-                    }
-                    // Printing (only during print phase)
-                    else if (t >= stages.print.start && t < stages.print.start + stages.print.duration) {
-                        const pPrint = getProgress('print');
-                        const solderFade = Math.max(0, 1 - pPrint * 1.5);
-                        drawPart(centerX, centerY - 45, 1 - 0.15 * pPrint, solderFade);
-                        drawLayers(centerX, centerY - 45, pPrint);
-                        ctx.fillText('3D PRINTING', centerX, h - 22);
-                    }
-                    // Drilling (only during drill phase)
-                    else if (t >= stages.drill.start && t < stages.drill.start + stages.drill.duration) {
-                        const pDrill = getProgress('drill');
-                        drawLayers(centerX, centerY - 45, 1 - pDrill * 0.3);
-                        drawDrill(centerX, centerY - 7.5, pDrill);
-                        ctx.fillText('DRILLING', centerX, h - 22);
-                    }
-                    // Carving (only during carve phase)
-                    else if (t >= stages.carve.start && t < stages.carve.start + stages.carve.duration) {
-                        const pCarve = getProgress('carve');
-                        drawWood(centerX, centerY - 27);
-                        drawCutter(centerX + 75 - 150 * pCarve, centerY - 13.5);
-                        ctx.fillText('CARVING', centerX, h - 22);
-                    }
-                    // Assembly (only during assemble phase)
-                    else if (t >= stages.assemble.start && t < stages.assemble.start + stages.assemble.duration) {
-                        const pAssemble = getProgress('assemble');
-                        drawAssembly(centerX - 75, centerY - 52.5, centerX + 75, centerY - 52.5, pAssemble);
-                        ctx.fillText('ASSEMBLY', centerX, h - 22);
-                    }
-
-                    requestAnimationFrame(animate);
-                };
-
-                animate();
-            }, [isDark, isBlueprint]);
-
-            return <canvas ref={canvasRef} className="w-full h-full" />;
-        };
-
-        const ThreeScene = ({ type, isDark, isBlueprint, scaleOnHover, customSettings, armStateRef, staticCamera }) => {
-            // Hero uses 2D canvas animation instead of 3D
-            if (type === 'hero') {
-                return <HeroAnimation isDark={isDark} isBlueprint={isBlueprint} />;
-            }
-            
-            // All other types use Three.js
-            const mountRef = useRef(null);
-            const mouseRef = useRef({ x: 0, y: 0 });
-            const frameIdRef = useRef(null);
-            const modelRef = useRef(null);
-            const loadedModelRef = useRef(null); // reference to the currently-loaded GLTF scene/group
-            const heroStartRef = useRef(null);
-            const cameraRef = useRef(null);
-            const startCameraZRef = useRef(null);
-            const isMobileViewportRef = useRef(false);
-            const [showInternals, setShowInternals] = useState(false);
-            const [controlMode, setControlMode] = useState(DATA.config.defaultControlMode); 
-            const [zoom, setZoom] = useState(null);
-            const isTouchDevice = (typeof window !== 'undefined') && ('ontouchstart' in window || (navigator && navigator.maxTouchPoints && navigator.maxTouchPoints > 0));
-            
-            const dragStartPos = useRef({ x: 0, y: 0 });
-            const isDragging = useRef(false);
-            const hasMoved = useRef(false);
-            const sliderInteractingRef = useRef(false);
-            const defaultSettings = (type === 'arm' && DATA.config.armSettings) ? DATA.config.armSettings : DATA.config.heroSettings;
-            const settings = customSettings || defaultSettings;
-
-            const droneParts = useRef({ motors: [], props: [], camera: null, arms: [] });
-            const armParts = useRef({ base: null, shoulder: null, elbow: null, wrist: null });
-
-            useEffect(() => {
-                const handleMouseUp = () => { isDragging.current = false; };
-                window.addEventListener('mouseup', handleMouseUp);
-
-                // Mobile-only showroom rotation: detect by viewport width (not just touch).
-                const mobileMq = (typeof window !== 'undefined' && window.matchMedia)
-                    ? window.matchMedia('(max-width: 768px)')
-                    : null;
-                const updateIsMobile = () => {
-                    isMobileViewportRef.current = !!(mobileMq && mobileMq.matches);
-                };
-                updateIsMobile();
-                if (mobileMq) {
-                    if (mobileMq.addEventListener) mobileMq.addEventListener('change', updateIsMobile);
-                    else if (mobileMq.addListener) mobileMq.addListener(updateIsMobile);
-                }
-
-                const scene = new THREE.Scene();
-                const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
-                
-                const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-                
-                let canvasWrapper = null;
-                if (mountRef.current) {
-                    // keep React children (buttons) intact — append canvas inside a wrapper
-                    // remove old wrapper if present
-                    const old = mountRef.current.querySelector('.three-canvas-wrapper');
-                    if (old) mountRef.current.removeChild(old);
-                    canvasWrapper = document.createElement('div');
-                    canvasWrapper.className = 'three-canvas-wrapper';
-                    canvasWrapper.style.position = 'absolute';
-                    canvasWrapper.style.inset = '0';
-                    canvasWrapper.style.zIndex = '0';
-                    canvasWrapper.appendChild(renderer.domElement);
-                    mountRef.current.appendChild(canvasWrapper);
-                    const rect = mountRef.current.getBoundingClientRect();
-                    renderer.setSize(rect.width, rect.height);
-                    camera.aspect = rect.width / rect.height;
-                    camera.updateProjectionMatrix();
-                }
-
-                const resizeObserver = new ResizeObserver(() => {
-                    if (mountRef.current) {
-                        const rect = mountRef.current.getBoundingClientRect();
-                        renderer.setSize(rect.width, rect.height);
-                        camera.aspect = rect.width / rect.height;
-                        camera.updateProjectionMatrix();
-                    }
-                });
-                if(mountRef.current) resizeObserver.observe(mountRef.current);
-
-                camera.position.z = settings.cameraZ;
-                camera.position.y = 0.5;
-                // expose camera to outer scope for UI control
-                cameraRef.current = camera;
-                // initialize slider zoom state
-                setZoom(camera.position.z);
-                // remember initial camera z for slider bounds
-                startCameraZRef.current = camera.position.z;
-
-                // Zoom limits (relative to starting camera z)
-                const startCameraZ = camera.position.z;
-                const minZ = startCameraZ * 0.5;
-                const maxZ = startCameraZ * 2.5;
-
-                // Basic pinch-to-zoom (pointer events)
-                let pointers = {};
-                let initialPinchDist = null;
-                const getDist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-
-                const onPointerDown = (ev) => {
-                    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
-                    if (Object.keys(pointers).length === 2) {
-                        const ids = Object.keys(pointers);
-                        initialPinchDist = getDist(pointers[ids[0]], pointers[ids[1]]);
-                    }
-                };
-
-                const onPointerMove = (ev) => {
-                    if (!pointers[ev.pointerId]) return;
-                    pointers[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
-                    if (Object.keys(pointers).length === 2 && initialPinchDist) {
-                        const ids = Object.keys(pointers);
-                        const dist = getDist(pointers[ids[0]], pointers[ids[1]]);
-                        const diff = initialPinchDist - dist;
-                        const zoomDelta = diff * 0.005 * (DATA.config.mouseSensitivity || 1);
-                        camera.position.z = THREE.MathUtils.clamp(camera.position.z + zoomDelta, minZ, maxZ);
-                        setZoom(camera.position.z);
-                        initialPinchDist = dist;
-                    }
-                };
-
-                const onPointerUp = (ev) => {
-                    delete pointers[ev.pointerId];
-                    if (Object.keys(pointers).length < 2) initialPinchDist = null;
-                };
-
-                // Only attach pointer-based pinch handlers on touch-capable devices
-                if (isTouchDevice && canvasWrapper) {
-                    canvasWrapper.addEventListener('pointerdown', onPointerDown);
-                    canvasWrapper.addEventListener('pointermove', onPointerMove);
-                    canvasWrapper.addEventListener('pointerup', onPointerUp);
-                    canvasWrapper.addEventListener('pointercancel', onPointerUp);
-                }
-
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-                scene.add(ambientLight);
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
-                dirLight.position.set(5, 5, 5);
-                scene.add(dirLight);
-                const backLight = new THREE.DirectionalLight(0x3b82f6, 0.5);
-                backLight.position.set(-5, 0, -5);
-                scene.add(backLight);
-
-                let materialMain, materialAccent, materialWire;
-
-                if (isBlueprint) {
-                    materialMain = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true });
-                    materialAccent = new THREE.MeshBasicMaterial({ color: 0x22d3ee, wireframe: true });
-                    materialWire = new THREE.MeshBasicMaterial({ color: 0xffffff, wireframe: true, transparent: true, opacity: 0.2 });
-                } else {
-                    const colorMain = isDark ? 0xe2e8f0 : 0x334155; 
-                    materialMain = new THREE.MeshPhongMaterial({ color: colorMain, specular: 0x555555, shininess: 30 });
-                    materialAccent = new THREE.MeshPhongMaterial({ color: 0x3b82f6, emissive: 0x1d4ed8, emissiveIntensity: 0.1 });
-                    materialWire = new THREE.MeshBasicMaterial({ color: 0x3b82f6, wireframe: true, transparent: true, opacity: 0.15 });
-                }
-
-                const group = new THREE.Group();
-                
-                // Compute combined model scale multiplier: global * project-specific
-                const globalScaleMultiplier = (DATA.config && DATA.config.modelScaleMultiplier) ? DATA.config.modelScaleMultiplier : 1.0;
-                const projectScaleMultiplier = (customSettings && typeof customSettings.modelScaleMultiplier === 'number') ? customSettings.modelScaleMultiplier : 1.0;
-                const combinedScaleMultiplier = globalScaleMultiplier * projectScaleMultiplier;
-
-                group.position.y = settings.yOffset;
-                group.position.x = (typeof settings.xOffset === 'number') ? settings.xOffset : 0;
-                const s = settings.scale * combinedScaleMultiplier;
-                group.scale.set(s, s, s);
-
-                // If a custom model path is provided (e.g. a GLB), load it; otherwise use procedural model
-                const baseModelPath = customSettings && customSettings.modelPath ? customSettings.modelPath : null;
-                const internalsModelPath = customSettings && customSettings.internalsModelPath ? customSettings.internalsModelPath : null;
-
-                const currentModelPath = (internalsModelPath && showInternals) ? internalsModelPath : baseModelPath;
-
-                const disposeModel = (obj) => {
-                    if (!obj) return;
-                    obj.traverse && obj.traverse((child) => {
-                        if (child.geometry) child.geometry.dispose && child.geometry.dispose();
-                        if (child.material) {
-                            if (Array.isArray(child.material)) child.material.forEach(m => m.dispose && m.dispose());
-                            else child.material.dispose && child.material.dispose();
-                        }
-                    });
-                };
-
-                if (currentModelPath) {
-                    const loader = new GLTFLoader();
-
-                    // Remove previous GLTF model if present
-                    if (loadedModelRef.current) {
-                        group.remove(loadedModelRef.current);
-                        disposeModel(loadedModelRef.current);
-                        loadedModelRef.current = null;
-                    }
-
-                    loader.load(currentModelPath, (gltf) => {
-                        const model = gltf.scene || (gltf.scenes && gltf.scenes[0]);
-                        if (model) {
-                            // Compute bounding box to scale and center the model
-                            const box = new THREE.Box3().setFromObject(model);
-                            const size = new THREE.Vector3();
-                            box.getSize(size);
-                            const maxDim = Math.max(size.x, size.y, size.z) || 1;
-                            const baseScale = settings.scale ? (settings.scale / maxDim) : (1 / maxDim);
-                            const desiredScale = baseScale * combinedScaleMultiplier;
-                            model.scale.set(desiredScale, desiredScale, desiredScale);
-                            const center = new THREE.Vector3();
-                            box.getCenter(center);
-                            model.position.sub(center);
-                            group.add(model);
-                            loadedModelRef.current = model;
-                        } else {
-                            // Fallback to procedural if gltf has no scene
-                            createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
-                        }
-                        scene.add(group);
-                        modelRef.current = group;
-                    }, undefined, (err) => {
-                        console.error('GLTF load error:', err);
-                        // On error, fallback to procedural model
-                        createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
-                        scene.add(group);
-                        modelRef.current = group;
-                    });
-                } else {
-                    createProceduralModel(type, group, materialMain, materialAccent, materialWire, droneParts, armParts);
-                    scene.add(group);
-                    modelRef.current = group;
-                }
-
-                const animate = () => {
-                    frameIdRef.current = requestAnimationFrame(animate);
-
-                    const now = performance.now();
-                    if (!animate._lastTime) animate._lastTime = now;
-                    const rawDt = (now - animate._lastTime) / 1000;
-                    const dt = Math.min(0.05, Math.max(0, rawDt));
-                    animate._lastTime = now;
-                    
-                    if (type === 'hero') {
-                            // timeline-based manufacturing animation (~12s loop)
-                            if (!heroStartRef.current) heroStartRef.current = performance.now();
-                            const elapsed = (performance.now() - heroStartRef.current) / 1000; // seconds
-                            const total = 12.0;
-                            const t = (elapsed % total);
-
-                            let stages = droneParts.current && droneParts.current.heroStages ? droneParts.current.heroStages : null;
-                            // fallback: try to autodiscover named hero objects on the group
-                            if (!stages && modelRef.current) {
-                                const g = modelRef.current;
-                                const p = g.getObjectByName && g.getObjectByName('hero_part');
-                                if (p) {
-                                    const discovered = {};
-                                    discovered.part = p;
-                                    discovered.torch = g.getObjectByName('hero_torch') || null;
-                                    discovered.torchLight = g.getObjectByName('hero_torchLight') || null;
-                                    discovered.printedGroup = g.getObjectByName('hero_printedGroup') || null;
-                                    discovered.layers = [];
-                                    for (let i=0;i<16;i++) {
-                                        const ln = g.getObjectByName(`hero_layer_${i}`);
-                                        if (ln) discovered.layers.push(ln);
-                                    }
-                                    discovered.drill = g.getObjectByName('hero_drill') || null;
-                                    discovered.hole = g.getObjectByName('hero_hole') || null;
-                                    discovered.wood = g.getObjectByName('hero_wood') || null;
-                                    discovered.cutter = g.getObjectByName('hero_cutter') || null;
-                                    discovered.partA = g.getObjectByName('hero_partA') || null;
-                                    discovered.partB = g.getObjectByName('hero_partB') || null;
-                                    droneParts.current.heroStages = discovered;
-                                    stages = discovered;
-                                }
-                            }
-
-                            // stage durations (seconds)
-                            const d = { solder: 2.0, dissolve: 2.0, print: 3.0, drill: 1.5, carve: 2.0, assemble: 1.5 };
-                            let cursor = 0;
-
-                            // Soldering
-                            if (t < (cursor += d.solder)) {
-                                const p = (t) / d.solder;
-                                if (stages) {
-                                    stages.torch.material.opacity = 0.8 * (0.5 + 0.5 * Math.sin(p * Math.PI * 6));
-                                    stages.torch.position.x = 0.4 - 0.2 * p;
-                                    stages.part.material.opacity = 1.0;
-                                    stages.part.scale.set(1,1,1);
-                                    stages.printedGroup.visible = false;
-                                    stages.drill.visible = false;
-                                    stages.wood.visible = false;
-                                    stages.partA.visible = false; stages.partB.visible = false;
-                                }
-                            }
-                            // Dissolve
-                            else if (t < (cursor += d.dissolve)) {
-                                const p = (t - (cursor - d.dissolve)) / d.dissolve;
-                                if (stages) {
-                                    stages.torch.material.opacity = 0.0;
-                                    stages.part.material.opacity = 1.0 - p;
-                                    const s = 1 - 0.2 * p;
-                                    stages.part.scale.set(s,s,s);
-                                }
-                            }
-                            // Printing
-                            else if (t < (cursor += d.print)) {
-                                const p = (t - (cursor - d.print)) / d.print;
-                                if (stages) {
-                                    stages.printedGroup.visible = true;
-                                    const totalLayers = stages.layers.length;
-                                    const active = Math.floor(p * totalLayers);
-                                    for (let i=0;i<totalLayers;i++){
-                                        const l = stages.layers[i];
-                                        if (i <= active) l.scale.y = 1.0; else l.scale.y = 0.001;
-                                    }
-                                    stages.part.material.opacity = 0.0;
-                                }
-                            }
-                            // Drilling
-                            else if (t < (cursor += d.drill)) {
-                                const p = (t - (cursor - d.drill)) / d.drill;
-                                if (stages) {
-                                    stages.drill.visible = true;
-                                    stages.drill.rotation.z += 0.6;
-                                    stages.drill.position.y = 0.5 - 0.8 * p;
-                                    stages.hole.visible = p > 0.6;
-                                }
-                            }
-                            // Carving
-                            else if (t < (cursor += d.carve)) {
-                                const p = (t - (cursor - d.carve)) / d.carve;
-                                if (stages) {
-                                    stages.drill.visible = false;
-                                    stages.wood.visible = true;
-                                    stages.cutter.visible = true;
-                                    stages.cutter.position.x = 0.4 - 0.8 * p;
-                                }
-                            }
-                            // Assembly
-                            else {
-                                const p = (t - (cursor - d.assemble)) / d.assemble;
-                                if (stages) {
-                                    stages.wood.visible = false;
-                                    stages.cutter.visible = false;
-                                    stages.partA.visible = true; stages.partB.visible = true;
-                                    stages.partA.position.x = -0.6 + 0.6 * p;
-                                    stages.partB.position.x = 0.6 - 0.6 * p;
-                                    stages.partA.rotation.y = 0.5 * (1-p);
-                                    stages.partB.rotation.y = -0.5 * (1-p);
-                                }
-                            }
-
-                            // keep a subtle overall rotation
-                            if (modelRef.current) modelRef.current.rotation.y += 0.003;
-                        }
-                    
-                    if (type === 'arm' && armStateRef && armStateRef.current && armParts.current.base) {
-                         const s = armStateRef.current;
-                         armParts.current.base.rotation.y = THREE.MathUtils.degToRad(s.base);
-                         armParts.current.shoulder.rotation.z = THREE.MathUtils.degToRad(s.shoulder);
-                         armParts.current.elbow.rotation.z = THREE.MathUtils.degToRad(s.elbow);
-                         if (armParts.current.wrist) {
-                             armParts.current.wrist.rotation.x = THREE.MathUtils.degToRad(s.wrist);
-                             const gripScale = 1 - (s.gripper / 200);
-                             armParts.current.wrist.scale.set(gripScale, gripScale, gripScale);
-                         }
-                    }
-
-                    if (modelRef.current && type !== 'hero') {
-                        // Hover-based control depends on mouse movement; disable it on touch devices
-                        // so it doesn't constantly damp rotation back to 0 on mobile.
-                        if (!staticCamera && controlMode === 'hover' && !isTouchDevice) {
-                            const targetX = mouseRef.current.y * DATA.config.mouseSensitivity; 
-                            const targetY = mouseRef.current.x * DATA.config.mouseSensitivity;
-                            modelRef.current.rotation.x += (targetX - modelRef.current.rotation.x) * DATA.config.damping;
-                            modelRef.current.rotation.y += (targetY - modelRef.current.rotation.y) * DATA.config.damping;
-                        } 
-                        
-                        // Slow, showroom-style rotation on mobile viewports (no user interaction required).
-                        // Keep desktop behaviour the same, and only auto-rotate the arm model on mobile.
-                        const shouldAutoSpin = !staticCamera && !isDragging.current && (isMobileViewportRef.current || type !== 'arm');
-                        if (shouldAutoSpin) {
-                            const spinRadPerSec = isMobileViewportRef.current ? 0.07 : 0.05; // ~4°/s mobile, ~3°/s desktop
-                            modelRef.current.rotation.y += spinRadPerSec * dt;
-                        }
-                    }
-                    renderer.render(scene, camera);
-                };
-                animate();
-
-                return () => {
-                    cancelAnimationFrame(frameIdRef.current);
-                    window.removeEventListener('mouseup', handleMouseUp);
-                    if (mobileMq) {
-                        if (mobileMq.removeEventListener) mobileMq.removeEventListener('change', updateIsMobile);
-                        else if (mobileMq.removeListener) mobileMq.removeListener(updateIsMobile);
-                    }
-                    if (canvasWrapper) {
-                        // We only attached pointer handlers for touch-capable devices
-                        if (isTouchDevice) {
-                            canvasWrapper.removeEventListener('pointerdown', onPointerDown);
-                            canvasWrapper.removeEventListener('pointermove', onPointerMove);
-                            canvasWrapper.removeEventListener('pointerup', onPointerUp);
-                            canvasWrapper.removeEventListener('pointercancel', onPointerUp);
-                        }
-                    }
-                    resizeObserver.disconnect();
-                    if (canvasWrapper && mountRef.current && mountRef.current.contains(canvasWrapper)) {
-                        mountRef.current.removeChild(canvasWrapper);
-                    }
-                    renderer.dispose();
-                };
-            }, [type, isDark, controlMode, settings, isBlueprint, staticCamera, showInternals]);
-
-            const onMouseMove = (e) => {
-                // Ignore manual mouse interactions on touch devices
-                if (isTouchDevice) return;
-
-                if (controlMode === 'hover') {
-                    const rect = mountRef.current.getBoundingClientRect();
-                    mouseRef.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-                    mouseRef.current.y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-                } else if (controlMode === 'drag' && isDragging.current) {
-                    const deltaX = e.clientX - dragStartPos.current.x;
-                    const deltaY = e.clientY - dragStartPos.current.y;
-                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) hasMoved.current = true;
-                    if (modelRef.current) {
-                        modelRef.current.rotation.y += deltaX * 0.01;
-                        modelRef.current.rotation.x += deltaY * 0.01;
-                    }
-                    dragStartPos.current = { x: e.clientX, y: e.clientY };
-                }
-            };
-
-            const onMouseDown = (e) => {
-                // No manual mouse/drag activation on touch devices
-                if (isTouchDevice) return;
-
-                dragStartPos.current = { x: e.clientX, y: e.clientY };
-                hasMoved.current = false; 
-                if (controlMode === 'drag' || staticCamera) {
-                    isDragging.current = true;
-                    setControlMode('drag');
-                }
-            }
-
-            // Slider range values (used to invert slider mapping: right = zoom in)
-            const sliderMin = (startCameraZRef.current || settings.cameraZ) * 0.5;
-            const sliderMax = (startCameraZRef.current || settings.cameraZ) * 2.5;
-            const sliderValueDisplay = (sliderMin + sliderMax) - (zoom ?? (startCameraZRef.current || settings.cameraZ));
-
-                return (
-                <div 
-                    ref={mountRef} 
-                    onMouseMove={onMouseMove}
-                    onMouseDown={onMouseDown}
-                    onClick={(e) => {
-                        if (hasMoved.current) { e.stopPropagation(); e.preventDefault(); hasMoved.current = false; return; }
-                        if (sliderInteractingRef.current) { e.stopPropagation(); e.preventDefault(); return; }
-                    }}
-                    className={`relative w-full h-full flex items-center justify-center group/canvas overflow-hidden ${controlMode === 'drag' || staticCamera ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
-                >
-                    {!staticCamera && (
-                        <div className="absolute top-4 left-4 z-10 flex gap-2">
-                            {!isTouchDevice && (
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); setControlMode(controlMode === 'hover' ? 'drag' : 'hover'); }}
-                                    className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
-                                        isBlueprint ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 
-                                        (isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white')
-                                    }`}
-                                    title={controlMode === 'hover' ? "Switch to Click-and-Drag Control" : "Switch to Auto (Hover) Control"}
-                                >
-                                    {controlMode === 'hover' ? <MousePointer2 size={16} /> : <Move3d size={16} className={isBlueprint ? "text-cyan-300" : "text-blue-500"} />}
-                                </button>
-                            )}
-
-                            {customSettings && customSettings.internalsModelPath && (
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); setShowInternals(s => !s); }}
-                                    className={`p-2 rounded-full backdrop-blur-md border transition-all shadow-sm ${
-                                        isBlueprint ? 'bg-white/10 border-white/30 text-white hover:bg-white/20' : 
-                                        (isDark ? 'bg-slate-900/50 border-slate-700 text-slate-300 hover:bg-slate-800' : 'bg-white/50 border-slate-200 text-slate-600 hover:bg-white')
-                                    }`}
-                                    title={showInternals ? "Show Exterior" : "Show Internals"}
-                                >
-                                    <Layers size={16} className={showInternals ? (isBlueprint ? "text-cyan-300" : "text-blue-600") : ""} />
-                                </button>
-                            )}
-                        </div>
-                    )}
-                    {/* Zoom slider (desktop + mobile) */}
-                    {startCameraZRef.current && (
-                        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 w-2/3 md:w-1/3 px-4">
-                            <input
-                                type="range"
-                                min={sliderMin}
-                                max={sliderMax}
-                                step="0.01"
-                                value={sliderValueDisplay}
-                                onPointerDown={() => { sliderInteractingRef.current = true; }}
-                                onPointerUp={() => { setTimeout(() => { sliderInteractingRef.current = false; }, 50); }}
-                                onInput={(e) => {
-                                    const v = parseFloat(e.target.value);
-                                    const newCamZ = (sliderMin + sliderMax) - v; // invert mapping
-                                    setZoom(newCamZ);
-                                    if (cameraRef.current) cameraRef.current.position.z = newCamZ;
-                                }}
-                                className="w-full h-2 appearance-none bg-slate-300 dark:bg-slate-700 rounded-lg"
-                            />
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const createProceduralModel = (type, group, matMain, matAccent, matWire, droneRefs, armRefs) => {
-            if (type === 'robot') {
-                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 2.2, 32), matMain);
-                const wheelL = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.3, 32), matMain);
-                wheelL.rotateX(Math.PI/2); wheelL.position.set(-0.8, -1, 0);
-                const wheelR = wheelL.clone(); wheelR.position.set(0.8, -1, 0);
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.5, 0.6), matAccent);
-                head.position.y = 1.2;
-                group.add(body, wheelL, wheelR, head);
-            } else if (type === 'hero') {
-                // Manufacturing animation stages only (no old drone body)
-                const basePartMat = new THREE.MeshStandardMaterial({ color: 0x9ca3af, metalness: 0.3, roughness: 0.6, transparent: true });
-                const torchMat = new THREE.MeshBasicMaterial({ color: 0xffb86b, emissive: 0xff8a50, transparent: true, opacity: 0.0 });
-                const layerMat = new THREE.MeshStandardMaterial({ color: 0x111827, metalness: 0.1, roughness: 0.7 });
-                const drillMat = new THREE.MeshStandardMaterial({ color: 0x374151, metalness: 0.8, roughness: 0.3 });
-                const woodMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.8 });
-                const assembledMat = new THREE.MeshStandardMaterial({ color: 0x60a5fa, metalness: 0.4, roughness: 0.3 });
-
-                const part = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.2, 0.8), basePartMat);
-                part.name = 'hero_part';
-                part.position.y = 0;
-                group.add(part);
-
-                const torch = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), torchMat);
-                torch.name = 'hero_torch';
-                torch.position.set(0.4, 0.15, 0);
-                group.add(torch);
-
-                const torchLight = new THREE.PointLight(0xffb86b, 0.0, 2.5);
-                torchLight.name = 'hero_torchLight';
-                torchLight.position.copy(torch.position);
-                group.add(torchLight);
-
-                const printedGroup = new THREE.Group();
-                printedGroup.name = 'hero_printedGroup';
-                const layerCount = 12;
-                const layers = [];
-                for (let i = 0; i < layerCount; i++) {
-                    const h = 0.02;
-                    const l = new THREE.Mesh(new THREE.BoxGeometry(0.9, h, 0.6), layerMat);
-                    l.position.y = (i * h) - 0.11 + h/2;
-                    l.scale.y = 0.001;
-                    l.name = `hero_layer_${i}`;
-                    printedGroup.add(l);
-                    layers.push(l);
-                }
-                printedGroup.position.y = 0;
-                group.add(printedGroup);
-
-                const drill = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4, 8), drillMat);
-                drill.name = 'hero_drill';
-                drill.rotation.x = Math.PI/2;
-                drill.position.set(-0.2, 0.5, 0);
-                group.add(drill);
-                const hole = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.09, 0.02, 16), new THREE.MeshBasicMaterial({ color: 0x000000 }));
-                hole.name = 'hero_hole';
-                hole.rotation.x = Math.PI/2;
-                hole.position.set(-0.2, 0.01, 0);
-                hole.visible = false;
-                group.add(hole);
-
-                const wood = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.18, 0.6), woodMat);
-                wood.name = 'hero_wood';
-                wood.position.set(0, -0.8, 0);
-                group.add(wood);
-                const cutter = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.05, 0.12), drillMat);
-                cutter.name = 'hero_cutter';
-                cutter.position.set(0.4, -0.7, 0);
-                group.add(cutter);
-
-                const partA = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
-                const partB = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.4), assembledMat);
-                partA.name = 'hero_partA';
-                partB.name = 'hero_partB';
-                partA.position.set(-0.6, -0.2, 0);
-                partB.position.set(0.6, -0.2, 0);
-                group.add(partA, partB);
-
-                torch.material.opacity = 0.0;
-                printedGroup.visible = false;
-                drill.visible = false;
-                hole.visible = false;
-                wood.visible = false;
-                cutter.visible = false;
-                partA.visible = false;
-                partB.visible = false;
-
-                if (droneRefs) {
-                    droneRefs.current.heroStages = { part, torch, printedGroup, layers, drill, hole, wood, cutter, partA, partB, torchLight };
-                }
-            } else if (type === 'remote') {
-                const body = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.6, 2.5), matMain);
-                const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.5, 32), matAccent);
-                knob.position.y = 0.4; group.add(body, knob); group.rotation.x = 0.5;
-            } else if (type === 'arm') {
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.2, 0.2, 32), matMain);
-                base.position.y = -1.5; group.add(base);
-                const turret = new THREE.Group(); turret.position.y = -1.4;
-                const turretMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.4, 32), matAccent);
-                turretMesh.position.y = 0.2; turret.add(turretMesh); group.add(turret);
-                if (armRefs) armRefs.current.base = turret;
-                const shoulder = new THREE.Group(); shoulder.position.y = 0.4; 
-                const shoulderMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.5, 0.5), matMain);
-                shoulderMesh.position.y = 0.75; shoulder.add(shoulderMesh); turret.add(shoulder);
-                if (armRefs) armRefs.current.shoulder = shoulder;
-                const elbow = new THREE.Group(); elbow.position.y = 1.5;
-                const elbowMesh = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.2, 0.4), matMain);
-                elbowMesh.position.y = 0.6; elbow.add(elbowMesh); shoulder.add(elbow);
-                if (armRefs) armRefs.current.elbow = elbow;
-                const wrist = new THREE.Group(); wrist.position.y = 1.2;
-                const clawL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), matAccent);
-                clawL.position.set(-0.15, 0.2, 0); clawL.rotation.z = 0.2;
-                const clawR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.4, 0.1), matAccent);
-                clawR.position.set(0.15, 0.2, 0); clawR.rotation.z = -0.2;
-                wrist.add(clawL, clawR); elbow.add(wrist);
-                if (armRefs) armRefs.current.wrist = wrist;
-            } else if (type === 'convoy') {
-                const globe = new THREE.Mesh(new THREE.IcosahedronGeometry(1.2, 1), matMain);
-                const sat = new THREE.Mesh(new THREE.SphereGeometry(0.2), matAccent);
-                sat.position.set(1.5, 1, 0);
-                const ring = new THREE.Mesh(new THREE.TorusGeometry(1.8, 0.02, 16, 100), matWire);
-                ring.rotation.x = Math.PI/2; group.add(globe, sat, ring);
-            }
-        };
-
-        const Portfolio = () => {
-            const [activeProject, setActiveProject] = useState(null);
-            const [isDark, setIsDark] = useState(false);
-            const [isBlueprint, setIsBlueprint] = useState(false);
-            const [skillFilter, setSkillFilter] = useState("All");
-            
-            // USE REF FOR ARM STATE (Fixes lag/input dropping)
-            const armStateRef = useRef({ base: 0, shoulder: 0, elbow: 0, wrist: 0, gripper: 0 });
-
-            const activeData = DATA.projects.find(p => p.id === activeProject);
-            const filteredSkills = skillFilter === "All" ? DATA.skills : DATA.skills.filter(s => s.category === skillFilter);
-
-            useEffect(() => { window.scrollTo(0,0); }, [activeProject]);
-
-            // Subtle, professional scroll-reveal animations (DOM only; does not touch Three.js or Matter.js)
-            useEffect(() => {
-                const reduceMotion = typeof window !== 'undefined'
-                    && window.matchMedia
-                    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                const anime = (typeof window !== 'undefined') ? window.anime : null;
-                if (reduceMotion || !anime) return;
-
-                const els = Array.from(document.querySelectorAll('[data-reveal="true"]'));
-                if (!els.length) return;
-
-                // Set initial state at runtime so content isn't hidden if JS fails.
-                els.forEach((el) => {
-                    if (el.dataset.revealed === 'true') return;
-                    el.style.opacity = '0';
-                    el.style.transform = 'translateY(12px)';
-                    el.style.willChange = 'transform, opacity';
-                });
-
-                const io = new IntersectionObserver((entries) => {
-                    entries.forEach((entry) => {
-                        if (!entry.isIntersecting) return;
-                        const el = entry.target;
-                        if (el.dataset.revealed === 'true') {
-                            io.unobserve(el);
-                            return;
-                        }
-
-                        const order = Number.parseInt(el.getAttribute('data-reveal-order') || '0', 10);
-                        anime({
-                            targets: el,
-                            opacity: [0, 1],
-                            translateY: [12, 0],
-                            duration: 650,
-                            easing: 'easeOutCubic',
-                            delay: Math.max(0, Number.isFinite(order) ? order : 0) * 80,
-                            complete: () => {
-                                el.dataset.revealed = 'true';
-                                el.style.opacity = '';
-                                el.style.transform = '';
-                                el.style.willChange = '';
-                            }
-                        });
-                        io.unobserve(el);
-                    });
-                }, { threshold: 0.15, rootMargin: '0px 0px -5% 0px' });
-
-                els.forEach((el) => io.observe(el));
-                return () => io.disconnect();
-            }, [activeProject]);
-
-            const styles = {
-                bg: isBlueprint ? "blueprint-grid" : (isDark ? "bg-slate-950" : "bg-slate-50"),
-                text: isBlueprint ? "text-blue-100" : (isDark ? "text-slate-200" : "text-slate-800"),
-                textSub: isBlueprint ? "text-blue-300" : (isDark ? "text-slate-400" : "text-slate-500"),
-                card: isBlueprint ? "bg-blue-900/40 border-blue-700 backdrop-blur-sm" : (isDark ? "bg-slate-900 border-slate-800" : "bg-white border-slate-200 shadow-sm"),
-                nav: isBlueprint ? "bg-blue-950/80 border-blue-800" : (isDark ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"),
-                skillColors: { Mechanical: "bg-blue-500", Embedded: "bg-emerald-500", Software: "bg-purple-500" }
-            };
-
-            return (
-                <div className={`min-h-screen ${styles.bg} ${styles.text} font-sans selection:bg-blue-500/30 transition-all duration-500`}>
-                    {/* Nav removed — controls moved into hero overlay */}
-
-                    {activeProject ? (
-                        <div className="pt-32 pb-20 max-w-6xl mx-auto px-6 animate-fade-in">
-                            <button onClick={() => setActiveProject(null)} className={`flex items-center gap-2 mb-8 transition-colors group ${isBlueprint ? 'text-blue-300 hover:text-white' : 'text-slate-500 hover:text-blue-600'}`}>
-                                <ArrowLeft size={18} className="group-hover:-translate-x-1 transition-transform" /> Back to Lab
-                            </button>
-
-                            <div className="mb-12">
-                                <h1 className="text-4xl md:text-6xl font-bold mb-4">{activeData.title}</h1>
-                                <div className="flex flex-wrap gap-2 mb-6">
-                                    {activeData.tags.map(tag => (
-                                        <span key={tag} className={`px-3 py-1 rounded-full text-sm font-medium border ${isBlueprint ? 'bg-blue-800/50 border-blue-600 text-blue-100' : (isDark ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' : 'bg-blue-50 text-blue-700 border-blue-100')}`}>{tag}</span>
-                                    ))}
-                                </div>
-                                
-                                    <p className={`text-xl leading-relaxed max-w-3xl ${styles.textSub}`}>{activeData.content.intro}</p>
-                            </div>
-
-                            {/* --- FULL WIDTH ROW FOR ROBOT ARM --- */}
-                            {activeData.id === 'arm' ? (
-                                <div className="mb-12 grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
-                                    <div className={`lg:col-span-2 rounded-2xl border overflow-hidden relative ${styles.card}`}>
-                                        {/* Pass REF instead of State */}
-                                        <ThreeScene type="arm" isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} customSettings={activeData.modelSettings} armStateRef={armStateRef} staticCamera={true} />
-                                        <div className="absolute bottom-4 left-4 text-xs font-mono opacity-50">CAM: LOCKED | DRAG TO ROTATE</div>
-                                    </div>
-                                    <div className="lg:col-span-1 h-full">
-                                        {/* Pass REF instead of State */}
-                                        <RobotArmControls armStateRef={armStateRef} isBlueprint={isBlueprint} isDark={isDark} />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className={`relative h-80 w-full rounded-2xl border overflow-hidden flex items-center justify-center mb-12 ${styles.card}`}>
-                                    <div className="scale-125 cursor-move w-full h-full">
-                                        <ThreeScene type={activeData.type} isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={false} customSettings={activeData.modelSettings} />
-                                    </div>
-                                </div>
-                            )}
-
-                            <div className="grid md:grid-cols-3 gap-8">
-                                <div className="md:col-span-2 space-y-8">
-                                    <section className={`p-8 rounded-2xl border ${styles.card}`}>
-                                        <div className={`flex items-center gap-3 mb-4 ${isBlueprint ? 'text-cyan-300' : 'text-blue-600'}`}><Wrench /> <h2 className="text-2xl font-bold">Engineering</h2></div>
-                                        <p className={`whitespace-pre-line leading-relaxed ${styles.textSub}`}>{activeData.content.tech}</p>
-                                    </section>
-                                    {activeData.id === 'balance' && (
-                                        <section className="animate-fade-in">
-                                            <div className={`flex items-center gap-3 mb-4 ${isBlueprint ? 'text-emerald-300' : 'text-emerald-600'}`}>
-                                                <Terminal size={24} />
-                                                <h2 className="text-2xl font-bold">Serial Monitor</h2>
-                                            </div>
-                                            <RobotTerminal />
-                                        </section>
-                                    )}
-                                    <section className={`p-8 rounded-2xl border ${styles.card}`}>
-                                        <div className={`flex items-center gap-3 mb-4 ${isBlueprint ? 'text-purple-300' : 'text-purple-600'}`}><Radio /> <h2 className="text-2xl font-bold">The Math</h2></div>
-                                        <div className={`font-mono text-sm p-4 rounded-lg border-l-4 border-purple-500 ${isBlueprint ? 'bg-blue-950 text-blue-200' : (isDark ? 'bg-black/30 text-slate-300' : 'bg-slate-100 text-slate-700')}`}>
-                                            {activeData.content.math}
-                                        </div>
-                                    </section>
-                                </div>
-                                <div className={`p-6 rounded-xl border h-fit ${styles.card}`}>
-                                    <h3 className="text-lg font-bold mb-4">Challenges</h3>
-                                    <p className={`text-sm ${styles.textSub}`}>{activeData.content.challenges}</p>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <section className="relative w-full">
-                                <div className="w-full">
-                                            <ModernHero profile={DATA.profile} isDark={isDark} isBlueprint={isBlueprint} textSub={styles.textSub}
-                                                onHomeClick={() => setActiveProject(null)}
-                                                onToggleBlueprint={() => setIsBlueprint(!isBlueprint)}
-                                                onToggleDark={() => {
-                                                    if (isBlueprint) { setIsBlueprint(false); return; }
-                                                    setIsDark(!isDark);
-                                                }}
-                                            />
-                                </div>
-                            </section>
-
-                            <section id="projects" className="py-20 max-w-7xl mx-auto px-6">
-                                <h2 data-reveal="true" className="text-3xl font-bold mb-12">Selected Projects</h2>
-                                <div className="grid md:grid-cols-2 gap-8">
-                                    {DATA.projects.map((project, i) => (
-                                        <div
-                                            key={project.id}
-                                            data-reveal="true"
-                                            data-reveal-order={i}
-                                            onClick={() => setActiveProject(project.id)}
-                                            className={`project-card group rounded-3xl overflow-hidden border cursor-pointer hover:shadow-2xl transition-all duration-300 ${styles.card} ${isBlueprint ? 'hover:border-cyan-500/50' : (isDark ? 'hover:border-blue-500/50' : 'hover:border-blue-400')}`}
-                                        >
-                                            <div className={`h-72 relative overflow-hidden ${isBlueprint ? 'bg-blue-950/50' : (isDark ? 'bg-slate-900' : 'bg-slate-50')}`}>
-                                                <div className="w-full h-full">
-                                                    <ThreeScene type={project.type} isDark={isDark} isBlueprint={isBlueprint} scaleOnHover={true} customSettings={project.modelSettings} />
-                                                </div>
-                                                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                                    <div className={`p-2 rounded-full ${isBlueprint ? 'bg-white text-blue-900' : 'bg-blue-600 text-white'}`}><ChevronRight size={20} /></div>
-                                                </div>
-                                            </div>
-                                            <div className="p-8">
-                                                <h3 className={`text-2xl font-bold mb-2 transition-colors ${isBlueprint ? 'group-hover:text-cyan-300' : 'group-hover:text-blue-600'}`}>{project.title}</h3>
-                                                <p className={`${styles.textSub} mb-4`}>{project.shortDesc}</p>
-                                                <div className="flex flex-wrap gap-2">
-                                                    {project.tags.map(tag => <span key={tag} className={`text-xs font-bold px-3 py-1 rounded-full ${isBlueprint ? 'bg-blue-800/50 text-blue-200' : (isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600')}`}>{tag}</span>)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-
-                            <section className={`py-20 border-y ${isBlueprint ? 'border-blue-800 bg-blue-950/30' : (isDark ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-50 border-slate-200')}`}>
-                                <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-20">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-6">
-                                            <h2 data-reveal="true" className={`text-3xl font-bold flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Layers className={isBlueprint ? "text-cyan-300" : "text-blue-600"}/> Skills & Tools</h2>
-                                        </div>
-                                        <p data-reveal="true" className={`mb-4 ${styles.textSub}`}>Drag and throw the blocks below!</p>
-                                        {/* Color Legend */}
-                                        <div data-reveal="true" className="flex gap-4 text-xs font-medium mb-4">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-3 h-3 rounded-sm bg-blue-500"></div>
-                                                <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Mechanical</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-3 h-3 rounded-sm bg-emerald-500"></div>
-                                                <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Embedded</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-3 h-3 rounded-sm bg-purple-500"></div>
-                                                <span className={`${isDark || isBlueprint ? 'text-slate-400' : 'text-slate-600'}`}>Software</span>
-                                            </div>
-                                        </div>
-                                        <PhysicsSkills skills={DATA.skills} isDark={isDark} isBlueprint={isBlueprint} />
-                                    </div>
-                                    <div>
-                                        <h2 data-reveal="true" className={`text-3xl font-bold mb-8 flex items-center gap-3 ${isBlueprint ? 'text-blue-100' : ''}`}><Briefcase className={isBlueprint ? "text-purple-300" : "text-purple-600"}/> Experience</h2>
-                                        <div className={`space-y-8 border-l-2 ml-3 pl-8 relative ${isBlueprint ? 'border-blue-800' : (isDark ? 'border-slate-800' : 'border-slate-200')}`}>
-                                            {DATA.experience.map((item, i) => (
-                                                <div key={item.id} data-reveal="true" data-reveal-order={i} className="relative group">
-                                                    <span className={`absolute -left-[41px] top-6 w-4 h-4 rounded-full border-2 transition-all duration-300 
-                                                        ${isBlueprint ? 'bg-blue-950 border-cyan-500 group-hover:bg-cyan-500' : (isDark ? 'bg-slate-950 border-blue-500 group-hover:bg-blue-500' : 'bg-white border-blue-600 group-hover:bg-blue-600')}
-                                                    `}></span>
-                                                    <div className={`p-6 rounded-2xl border transition-all hover:-translate-y-1 hover:shadow-lg cursor-default ${styles.card} ${isBlueprint ? 'group-hover:border-cyan-500/30' : 'group-hover:border-blue-500/30'}`}>
-                                                        <div className="flex justify-between mb-2">
-                                                            <h3 className={`font-bold text-lg transition-colors ${isBlueprint ? 'group-hover:text-cyan-300' : 'group-hover:text-blue-600'}`}>{item.title}</h3>
-                                                            <span className={`text-xs font-mono px-2 py-1 rounded ${isBlueprint ? 'bg-blue-800 text-blue-200' : 'text-blue-600 bg-blue-500/10'}`}>{item.date}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2 text-sm mb-4 opacity-70">
-                                                            {item.type === 'education' ? <GraduationCap size={16}/> : <Briefcase size={16}/>}
-                                                            {item.place}
-                                                        </div>
-                                                        <p className={`text-sm ${styles.textSub}`}>{item.desc}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <footer className={`py-12 text-center border-t ${isBlueprint ? 'border-blue-800 text-blue-400' : (isDark ? 'border-slate-800 text-slate-600' : 'border-slate-200 text-slate-400')}`}>
-                                <div className="flex justify-center gap-6 mb-8">
-                                    <a href={DATA.profile.socialLinks.github} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Github /></a>
-                                    <a href={DATA.profile.socialLinks.linkedin} className={`transition-colors ${isBlueprint ? 'hover:text-cyan-300' : 'hover:text-blue-500'}`}><Linkedin /></a>
-                                </div>
-                                <p>© {new Date().getFullYear()} {DATA.profile.name}. Built with React & Three.js.</p>
-                            </footer>
-                        </>
-                    )}
-                </div>
-            );
-        };
-
-        const root = createRoot(document.getElementById('root'));
-        root.render(<Portfolio />);
-    </script>
+<body>
+<div id="root"></div>
+
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  window.THREE = THREE;
+  window.GLTFLoader = GLTFLoader;
+  window.OrbitControls = OrbitControls;
+  window.dispatchEvent(new Event('three-ready'));
+</script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+/* ── DATA ───────────────────────────────────────────── */
+const DATA = {
+  profile: {
+    name: "Lewis Fowler",
+    role: "Design Engineer",
+    bio: "Based in Newcastle upon Tyne. Designing bespoke thermal management solutions for automotive and space industries. Background in CFD, robotics, and fabrication.",
+    current: "Design Engineer @ Boyd",
+    location: "Newcastle, UK",
+  },
+  stats: [
+    { n: "4+", l: "Years Experience" },
+    { n: "2", l: "Industries" },
+    { n: "MEng", l: "Glasgow" },
+  ],
+  skills: [
+    { name: "SolidWorks",   cat: "Software"   },
+    { name: "Fusion 360",   cat: "Software"   },
+    { name: "CFD / Fluent", cat: "Software"   },
+    { name: "MATLAB",       cat: "Software"   },
+    { name: "Python",       cat: "Software"   },
+    { name: "C++",          cat: "Embedded"   },
+    { name: "Fabrication",  cat: "Mechanical" },
+    { name: "3D Printing",  cat: "Mechanical" },
+    { name: "Arduino",      cat: "Embedded"   },
+    { name: "ROS 2",        cat: "Embedded"   },
+  ],
+  experience: [
+    { id:1, title:"Design Engineer", place:"Boyd", date:"Jan 2025 – Present", desc:"Designing bespoke cold plate solutions for thermal management in automotive and space sectors. Managing projects from concept to delivery via 3D CAD, CFD analysis, and DFM." },
+    { id:2, title:"Data Engineer", place:"ROSEN (UK)", date:"Sep 2023 – Dec 2024", desc:"Authored technical reports and analysed In-Line Inspection data. Liaised with engineering disciplines on technical calculations and industry standards." },
+    { id:3, title:"External Placement", place:"Rolls-Royce", date:"May 2022 – Jan 2023", desc:"Designed novel high-performance heat exchangers to improve aircraft system efficiency. Conducted risk assessments and delivered regular technical presentations." },
+    { id:4, title:"MEng Mechanical Engineering", place:"University of Glasgow", date:"2018 – 2023", desc:"Formula Student: Aerodynamics (CFD) & Control Teams. Final year project at Rolls-Royce designing high-performance heat exchangers." },
+  ],
+  projects: [
+    { id:"balance", title:"Self-Balancing Robot", short:"PID control + EKF state estimation.", tags:["Robotics","Control Theory","3D Printing","ROS 2"],
+      model: { path:"assets/models/Self-Balancing-Robot.glb", internalsPath:"assets/models/Self-Balancing-Robot-Internals.glb" },
+      intro:"One of the fundamentals of control engineering is keeping an inherently unstable system stable.",
+      tech:"Implemented a PID controller with an Extended Kalman Filter (EKF) for sensor fusion and accurate tilt estimation. Built on ROS 2.",
+      math:"u(t) = Kp·e(t) + Ki·∫e(t)dt + Kd·de/dt",
+      challenges:"Raw accelerometer data was too noisy for the D-term. A moving average filter resolved instability without adding lag." },
+    { id:"arm", title:"Robotic Arm", short:"Inverse kinematics & precision path planning.", tags:["Robotics","MATLAB","Mechanical Design"],
+      intro:"A desktop-scale manipulator to explore coordinate systems, actuator control, and trajectory planning.",
+      tech:"Inverse kinematics via Jacobian Transpose to map (x,y,z) targets to joint angles. Smooth path planning with interpolated waypoints.",
+      math:"θ̇ = Jᵀ(θ) · ẋ",
+      challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop." },
+    { id:"sonos", title:"ESP32 SONOS Remote", short:"Tactile smart home interface, 6+ month battery life.", tags:["IoT","PCB Design","SolidWorks","C++"],
+      intro:"A physical volume knob for Sonos systems focused on low power consumption and clean industrial design.",
+      tech:"ESP32-C3 deep sleep: wakes on interrupt, connects to WiFi, sends command, sleeps. Optimistic UI with instant LED feedback.",
+      math:"v_out = e^(k·θ)  — logarithmic volume curve matching human hearing",
+      challenges:"Latency felt unresponsive. Optimistic updates give instant LED feedback before network confirmation arrives." },
+    { id:"convoy", title:"ConvoyLink", short:"Off-grid LoRa mesh for GPS tracking & voice.", tags:["RF","ESP32","React Native"],
+      intro:"Mesh radio network for vehicle convoy tracking outside cell coverage areas.",
+      tech:"LoRa 915MHz for long-range telemetry. Bluetooth bridge to React Native app. ESP32-S3 as processor.",
+      math:"d = 2R · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))",
+      challenges:"LoRa bandwidth is tiny. Codec2 voice compression made audio transmission feasible within packet limits." },
+  ],
+};
+
+/* ── MODEL VIEWER ───────────────────────────────────── */
+function ModelViewer({ path, withControls = false, autoRotate = true }) {
+  const mountRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!path || !mountRef.current) return;
+
+    let disposed = false;
+    let animId = null;
+    let resizeObs = null;
+    let renderer, scene, camera, controls, model;
+
+    const init = () => {
+      if (!window.THREE || !window.GLTFLoader) {
+        window.addEventListener('three-ready', init, { once: true });
+        return;
+      }
+      const THREE = window.THREE;
+      const mount = mountRef.current;
+      if (!mount) return;
+
+      const w = mount.clientWidth || 400;
+      const h = mount.clientHeight || 180;
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 1000);
+      camera.position.set(0, 0.4, 3.2);
+
+      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(w, h);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      mount.appendChild(renderer.domElement);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.85));
+      const key = new THREE.DirectionalLight(0xffffff, 1.1);
+      key.position.set(4, 6, 5); scene.add(key);
+      const rim = new THREE.DirectionalLight(0xb83232, 0.35);
+      rim.position.set(-4, 2, -3); scene.add(rim);
+
+      if (withControls && window.OrbitControls) {
+        controls = new window.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.08;
+        controls.enablePan = false;
+        controls.minDistance = 1.5;
+        controls.maxDistance = 8;
+      }
+
+      const loader = new window.GLTFLoader();
+      loader.load(path, (gltf) => {
+        if (disposed) return;
+        model = gltf.scene;
+        const box = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3(); box.getSize(size);
+        const center = new THREE.Vector3(); box.getCenter(center);
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        const targetSize = withControls ? 1.8 : 1.6;
+        const scale = targetSize / maxDim;
+        model.scale.setScalar(scale);
+        model.position.sub(center.multiplyScalar(scale));
+        scene.add(model);
+        setLoading(false);
+      }, undefined, (err) => {
+        console.warn('GLB load failed:', err);
+        setLoading(false);
+      });
+
+      resizeObs = new ResizeObserver(() => {
+        if (!mount || !renderer || !camera) return;
+        const rw = mount.clientWidth, rh = mount.clientHeight;
+        renderer.setSize(rw, rh);
+        camera.aspect = rw / rh;
+        camera.updateProjectionMatrix();
+      });
+      resizeObs.observe(mount);
+
+      const tick = () => {
+        if (disposed) return;
+        if (model && autoRotate) model.rotation.y += 0.005;
+        if (controls) controls.update();
+        renderer.render(scene, camera);
+        animId = requestAnimationFrame(tick);
+      };
+      tick();
+    };
+
+    init();
+
+    return () => {
+      disposed = true;
+      if (animId) cancelAnimationFrame(animId);
+      if (resizeObs) resizeObs.disconnect();
+      if (controls) controls.dispose();
+      if (renderer) {
+        renderer.dispose();
+        if (renderer.domElement && renderer.domElement.parentNode) {
+          renderer.domElement.parentNode.removeChild(renderer.domElement);
+        }
+      }
+      if (scene) {
+        scene.traverse(o => {
+          if (o.geometry) o.geometry.dispose();
+          if (o.material) {
+            const mats = Array.isArray(o.material) ? o.material : [o.material];
+            mats.forEach(m => m.dispose && m.dispose());
+          }
+        });
+      }
+    };
+  }, [path, withControls, autoRotate]);
+
+  return <div ref={mountRef} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}`}></div>;
+}
+
+/* ── HERO ───────────────────────────────────────────── */
+function Hero() {
+  const heroRef = useRef(null);
+  const glowRef = useRef(null);
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    const glow = glowRef.current;
+    if (!hero || !glow) return;
+    let rafId = null;
+    let tx = hero.clientWidth / 2, ty = hero.clientHeight / 2;
+
+    const onMove = e => {
+      const r = hero.getBoundingClientRect();
+      tx = e.clientX - r.left; ty = e.clientY - r.top;
+      glow.style.opacity = '1';
+      if (!rafId) rafId = requestAnimationFrame(tick);
+    };
+    const tick = () => {
+      glow.style.left = tx + 'px'; glow.style.top = ty + 'px';
+      rafId = null;
+    };
+    const onLeave = () => { glow.style.opacity = '0'; };
+    hero.addEventListener('mousemove', onMove);
+    hero.addEventListener('mouseleave', onLeave);
+    return () => {
+      hero.removeEventListener('mousemove', onMove);
+      hero.removeEventListener('mouseleave', onLeave);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  const name = DATA.profile.name;
+  const [first, last] = name.split(' ');
+
+  return (
+    <section className="hero" ref={heroRef}>
+      <div className="hero-grid"></div>
+      <div className="hero-glow" ref={glowRef}></div>
+      {/* Industrial decoration */}
+      <div style={{position:'absolute',top:100,right:52,width:100,height:100,border:'1px solid var(--accent)',opacity:.2,zIndex:2}}>
+        <div style={{position:'absolute',top:'25%',left:'25%',width:'50%',height:'50%',border:'1px solid var(--accent)'}}></div>
+        <div style={{position:'absolute',top:'50%',left:0,right:0,height:'1px',background:'var(--accent)'}}></div>
+        <div style={{position:'absolute',left:'50%',top:0,bottom:0,width:'1px',background:'var(--accent)'}}></div>
+      </div>
+      <div style={{position:'absolute',bottom:80,left:52,fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
+        NEWCASTLE UPON TYNE · EST. 2018
+      </div>
+      <div className="hero-inner">
+        <div className="hero-eyebrow">{DATA.profile.current}</div>
+        <h1 className="hero-h1">{first} {last}</h1>
+        <p className="hero-bio">{DATA.profile.bio}</p>
+        <div className="hero-ctas">
+          <a href="#work" className="btn-p">View Work</a>
+          <a href="#experience" className="btn-g">Experience</a>
+        </div>
+      </div>
+      <div className="hero-meta">
+        {DATA.stats.map((s,i) => (
+          <div className="hero-stat" key={i}>
+            <div className="hero-stat-n">{s.n}</div>
+            <div className="hero-stat-l">{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div className="scroll-cue">
+        <div className="scroll-line"></div>
+        <span>Scroll</span>
+      </div>
+    </section>
+  );
+}
+
+
+
+/* ── NAV ────────────────────────────────────────────── */
+function Nav() {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const fn = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', fn, { passive: true });
+    return () => window.removeEventListener('scroll', fn);
+  }, []);
+  return (
+    <nav className={`nav${scrolled?' scrolled':''}`}>
+      <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
+        <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
+        Lewis <span>Fowler</span>
+      </a>
+      <div className="nav-links">
+        <a href="#work">Work</a>
+        <a href="#skills">Skills</a>
+        <a href="#experience">Experience</a>
+      </div>
+
+    </nav>
+  );
+}
+
+/* ── PROJECTS ───────────────────────────────────────── */
+function Projects() {
+  const [active, setActive] = useState(null);
+  const [showInternals, setShowInternals] = useState(false);
+  const proj = active ? DATA.projects.find(p => p.id === active) : null;
+  const modalModelPath = proj && proj.model
+    ? (showInternals && proj.model.internalsPath ? proj.model.internalsPath : proj.model.path)
+    : null;
+
+  useEffect(() => { if (!active) setShowInternals(false); }, [active]);
+
+  useEffect(() => {
+    document.body.style.overflow = active ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [active]);
+
+  return (
+    <section id="work" className="sec">
+      <div className="wrap">
+        <div className="sec-label" data-n="01 /">Projects</div>
+        <div className="sec-title">Selected Work</div>
+      </div>
+      <div className="wrap" style={{paddingLeft:0,paddingRight:0}}>
+        <div className="proj-grid">
+          {DATA.projects.map(p => (
+            <div key={p.id} className="proj-card" onClick={() => setActive(p.id)}>
+              <div className="proj-badge">{p.tags[0]}</div>
+              {p.model
+                ? <ModelViewer path={p.model.path} />
+                : <div className="proj-placeholder">3D model — {p.title}</div>}
+              <div className="proj-title">{p.title}</div>
+              <div className="proj-short">{p.short}</div>
+              <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
+              <div className="proj-arrow">↗</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {proj && (
+        <div className="overlay" onClick={e => e.target === e.currentTarget && setActive(null)}>
+          <div className="modal">
+            <button className="modal-close" onClick={() => setActive(null)}>Close ×</button>
+            <div className="modal-tag">{proj.tags[0]}</div>
+            <div className="modal-h">{proj.title}</div>
+            <div className="modal-sub">{proj.short}</div>
+            {proj.model ? (
+              <div style={{position:'relative'}}>
+                <ModelViewer path={modalModelPath} withControls={true} autoRotate={false} />
+                {proj.model.internalsPath && (
+                  <button
+                    className="viewer-toggle"
+                    onClick={() => setShowInternals(v => !v)}
+                  >{showInternals ? 'Show Exterior' : 'Show Internals'}</button>
+                )}
+              </div>
+            ) : (
+              <div className="modal-placeholder">3D model — {proj.title}</div>
+            )}
+            <div className="modal-sh">Overview</div>
+            <p className="modal-p">{proj.intro}</p>
+            <div className="modal-sh">Technical Approach</div>
+            <p className="modal-p">{proj.tech}</p>
+            <div className="modal-sh">Key Equation</div>
+            <div className="modal-code">{proj.math}</div>
+            <div className="modal-sh">Challenge & Solution</div>
+            <p className="modal-p">{proj.challenges}</p>
+            <div className="modal-tags">{proj.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ── SKILLS ─────────────────────────────────────────── */
+function Skills({ themeKey }) {
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!wrapRef.current || !window.Matter) return;
+    const wrap = wrapRef.current;
+    const { Engine, Render, World, Bodies, Mouse, MouseConstraint, Runner, Events } = Matter;
+    const W = wrap.clientWidth || 1100;
+    const H = 460;
+
+    const engine = Engine.create();
+    const render = Render.create({
+      element: wrap, engine,
+      options: { width: W, height: H, wireframes: false, background: 'transparent', pixelRatio: Math.min(window.devicePixelRatio, 2) }
+    });
+
+    const wall = { isStatic: true, render: { fillStyle: 'transparent', strokeStyle: 'transparent', lineWidth: 0 } };
+    World.add(engine.world, [
+      Bodies.rectangle(W/2, H+25, W, 50, wall),
+      Bodies.rectangle(-25,  H/2, 50, H,  wall),
+      Bodies.rectangle(W+25, H/2, 50, H,  wall),
+    ]);
+
+    // Read CSS skill category colors at runtime
+    const cs = getComputedStyle(document.documentElement);
+    const catColor = {
+      Software:   cs.getPropertyValue('--skill-a').trim() || '#3b82f6',
+      Mechanical: cs.getPropertyValue('--skill-b').trim() || '#f59e0b',
+      Embedded:   cs.getPropertyValue('--skill-c').trim() || '#10b981',
+    };
+
+    DATA.skills.forEach((s, i) => {
+      const tw = Math.max(120, s.name.length * 9 + 44);
+      const th = 46;
+      const x = Math.random() * (W - 180) + 90;
+      const y = -Math.random() * 380 - 60;
+      const b = Bodies.rectangle(x, y, tw, th, {
+        restitution: .5, friction: .4,
+        chamfer: { radius: 8 },
+        label: s.name,
+        plugin: { color: catColor[s.cat] || '#64748b', w: tw, h: th },
+      });
+      World.add(engine.world, b);
+    });
+
+    const mouse = Mouse.create(render.canvas);
+    mouse.pixelRatio = Math.min(window.devicePixelRatio, 2);
+    const mc = MouseConstraint.create(engine, { mouse, constraint: { stiffness: .2, render: { visible: false } } });
+    World.add(engine.world, mc);
+    render.mouse = mouse;
+
+    Events.on(render, 'afterRender', () => {
+      const ctx = render.context;
+      const fgColor = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#fff';
+      const fontM = "'Fira Code', monospace";
+      engine.world.bodies.forEach(b => {
+        if (b.isStatic) return;
+        const { x, y } = b.position;
+        const a = b.angle;
+        const { color = '#64748b', w = 120, h = 46 } = b.plugin || {};
+        const r = 8;
+        ctx.save();
+        ctx.translate(x, y); ctx.rotate(a);
+        // pill bg
+        ctx.beginPath();
+        ctx.moveTo(-w/2+r,-h/2); ctx.lineTo(w/2-r,-h/2);
+        ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);
+        ctx.lineTo(w/2,h/2-r); ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);
+        ctx.lineTo(-w/2+r,h/2); ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);
+        ctx.lineTo(-w/2,-h/2+r); ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
+        ctx.closePath();
+        ctx.fillStyle = color + '28'; ctx.fill();
+        ctx.strokeStyle = color + '80'; ctx.lineWidth = 1; ctx.stroke();
+        // label
+        ctx.fillStyle = fgColor;
+        ctx.font = `500 12px ${fontM}`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(b.label, 0, 0);
+        ctx.restore();
+      });
+    });
+
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+    Render.run(render);
+
+    return () => {
+      Render.stop(render); Runner.stop(runner);
+      World.clear(engine.world); Engine.clear(engine);
+      if (render.canvas) render.canvas.remove();
+    };
+  }, [themeKey]);
+
+  return (
+    <section id="skills" className="sec" style={{paddingTop:120,paddingBottom:0,borderTop:'1px solid var(--border2)'}}>
+      <div className="wrap" style={{paddingBottom:64}}>
+        <div className="sec-label" data-n="02 /">Skills</div>
+        <div className="sec-title" style={{marginBottom:0}}>Technical Toolkit</div>
+      </div>
+      <div className="skills-wrap" ref={wrapRef}>
+        <div className="skills-hint">Drag to interact</div>
+      </div>
+    </section>
+  );
+}
+
+/* ── CONTACT ────────────────────────────────────────── */
+function Contact() {
+  return (
+    <section id="contact" className="sec">
+      <div className="wrap">
+        <div className="sec-label" data-n="04 /">Contact</div>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:48,alignItems:'end',marginBottom:0}}>
+          <div>
+            <div className="contact-big">Let's work<br/>together.</div>
+            <div className="contact-sub">Open to freelance projects, collaborations, and full-time opportunities in design engineering, thermal management, and robotics.</div>
+          </div>
+          <div style={{display:'flex',flexDirection:'column',gap:12,alignItems:'flex-end'}}>
+            <a href="mailto:lewis@lewis-fowler.co.uk" className="btn-p" style={{textAlign:'center',minWidth:220}}>lewis@lewis-fowler.co.uk</a>
+            <a href="https://linkedin.com/in/lewisfowler" target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>LinkedIn ↗</a>
+            <a href="https://github.com/lewisfowler" target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>GitHub ↗</a>
+          </div>
+        </div>
+        <div className="contact-grid">
+          <div className="contact-cell">
+            <div className="contact-label">Currently</div>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Design Engineer @ Boyd</span>
+          </div>
+          <div className="contact-cell">
+            <div className="contact-label">Location</div>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Newcastle upon Tyne, UK</span>
+          </div>
+          <div className="contact-cell accent-bg">
+            <div className="contact-label">Availability</div>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Open to freelance projects</span>
+          </div>
+          <div className="contact-cell">
+            <div className="contact-label">Response time</div>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Within 48 hours</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── EXPERIENCE ─────────────────────────────────────── */
+function Experience() {
+  return (
+    <section id="experience" className="sec">
+      <div className="wrap">
+        <div className="sec-label" data-n="03 /">Experience</div>
+        <div className="sec-title">Career Timeline</div>
+        <div className="timeline">
+          {DATA.experience.map(e => (
+            <div key={e.id} className="tl-item">
+              <div className="tl-date">{e.date}</div>
+              <div className="tl-line"><div className="tl-dot"></div></div>
+              <div>
+                <div className="tl-place">{e.place}</div>
+                <div className="tl-title">{e.title}</div>
+                <div className="tl-desc">{e.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
+
+/* ── APP ────────────────────────────────────────────── */
+function App() {
+  return (
+    <>
+      <Nav />
+      <Hero />
+      <Projects />
+      <Skills />
+      <Experience />
+      <Contact />
+      <footer style={{borderTop:'1px solid var(--border2)'}}>
+        <div className="footer-inner">
+          <div className="footer-name">Lewis <span>Fowler</span></div>
+          <div className="footer-links">
+            <a href="https://linkedin.com/in/lewisfowler" target="_blank" rel="noopener">LinkedIn</a>
+            <a href="https://github.com/lewisfowler" target="_blank" rel="noopener">GitHub</a>
+            <a href="mailto:lewis@lewis-fowler.co.uk">Email</a>
+          </div>
+          <div className="footer-copy">Design Engineer · Newcastle upon Tyne</div>
+        </div>
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
