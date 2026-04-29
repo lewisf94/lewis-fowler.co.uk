@@ -757,6 +757,10 @@ function Skills({ themeKey }) {
 
     const mouse = Mouse.create(render.canvas);
     mouse.pixelRatio = Math.min(window.devicePixelRatio, 2);
+    // Matter.js attaches mousewheel listeners that call preventDefault — strip them
+    // so the page can still scroll when the cursor is over the physics canvas.
+    mouse.element.removeEventListener('mousewheel', mouse.mousewheel);
+    mouse.element.removeEventListener('DOMMouseScroll', mouse.mousewheel);
     const mc = MouseConstraint.create(engine, { mouse, constraint: { stiffness: .2, render: { visible: false } } });
     World.add(engine.world, mc);
     render.mouse = mouse;
