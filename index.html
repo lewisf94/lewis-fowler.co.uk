@@ -352,10 +352,10 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 <script type="module">
   import * as THREE from 'three';
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-  import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+  import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
   window.THREE = THREE;
   window.GLTFLoader = GLTFLoader;
-  window.OrbitControls = OrbitControls;
+  window.TrackballControls = TrackballControls;
   window.dispatchEvent(new Event('three-ready'));
 </script>
 
@@ -464,11 +464,14 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
       const rim = new THREE.DirectionalLight(0xb83232, 0.5);
       rim.position.set(-4, 2, -3); scene.add(rim);
 
-      if (withControls && window.OrbitControls) {
-        controls = new window.OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.08;
-        controls.enablePan = false;
+      if (withControls && window.TrackballControls) {
+        controls = new window.TrackballControls(camera, renderer.domElement);
+        controls.rotateSpeed = 4.0;
+        controls.zoomSpeed = 1.2;
+        controls.panSpeed = 0.8;
+        controls.noPan = true;
+        controls.staticMoving = false;
+        controls.dynamicDampingFactor = 0.15;
         controls.minDistance = 1.5;
         controls.maxDistance = 8;
       }
