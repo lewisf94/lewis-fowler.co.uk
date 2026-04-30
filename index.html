@@ -479,6 +479,13 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         if (disposed) return;
         model = gltf.scene;
 
+        // ─────────────────────────────────────────────────────────────
+        // DEV TWEAKS — adjust if model isn't centred well in the frame.
+        // Positive = up, negative = down (units roughly match model size).
+        const CARD_Y_OFFSET  = 0;   // small auto-rotating preview on the card
+        const MODAL_Y_OFFSET = 0;   // larger viewer in the project modal
+        // ─────────────────────────────────────────────────────────────
+
         // Rotate to correct orientation: GLBs exported from CAD (Z-up) load
         // on their side. Apply upright rotation via quaternion before computing
         // bounds so scaling/centering uses the correctly-oriented model.
@@ -492,6 +499,7 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         const scale = targetSize / maxDim;
         model.scale.setScalar(scale);
         model.position.sub(center.multiplyScalar(scale));
+        model.position.y += withControls ? MODAL_Y_OFFSET : CARD_Y_OFFSET;
 
         // Find pairs of meshes that share the same geometry (same vertex
         // count and bounding-box dimensions = mirrored twin parts) and
