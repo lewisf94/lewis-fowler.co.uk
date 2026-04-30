@@ -488,6 +488,29 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         const scale = targetSize / maxDim;
         model.scale.setScalar(scale);
         model.position.sub(center.multiplyScalar(scale));
+
+        // Collect material colours, split into grey vs coloured buckets,
+        // then paint grey materials with the first non-grey colour found
+        // so both motors/wheels are consistent.
+        const coloured = [], grey = [];
+        model.traverse(child => {
+          if (!child.isMesh) return;
+          const mats = Array.isArray(child.material) ? child.material : [child.material];
+          mats.forEach(mat => {
+            if (!mat.color) return;
+            const {r, g, b} = mat.color;
+            const max = Math.max(r, g, b), min = Math.min(r, g, b);
+            const sat = max > 0.01 ? (max - min) / max : 0;
+            const brightness = (r + g + b) / 3;
+            if (sat < 0.2 && brightness > 0.12 && brightness < 0.88) grey.push(mat);
+            else if (sat >= 0.2) coloured.push(mat);
+          });
+        });
+        if (coloured.length && grey.length) {
+          const target = coloured[0].color;
+          grey.forEach(mat => mat.color.copy(target));
+        }
+
         scene.add(model);
         setLoading(false);
       }, undefined, (err) => {
