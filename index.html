@@ -478,6 +478,12 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
       loader.load(path, (gltf) => {
         if (disposed) return;
         model = gltf.scene;
+
+        // Rotate to correct orientation: GLBs exported from CAD (Z-up) load
+        // on their side. Apply upright rotation via quaternion before computing
+        // bounds so scaling/centering uses the correctly-oriented model.
+        model.quaternion.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+
         const box = new THREE.Box3().setFromObject(model);
         const size = new THREE.Vector3(); box.getSize(size);
         const center = new THREE.Vector3(); box.getCenter(center);
@@ -541,9 +547,14 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
       });
       resizeObs.observe(mount);
 
+      // Precompute spin quaternion — tiny rotation around world Y each frame.
+      const spinQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.005);
+
       const tick = () => {
         if (disposed) return;
-        if (model && autoRotate) model.rotation.y += 0.005;
+        // Premultiply in world space so the spin is always around world Y
+        // regardless of the model's initial orientation quaternion.
+        if (model && autoRotate) model.quaternion.premultiply(spinQ);
         if (controls) controls.update();
         renderer.render(scene, camera);
         animId = requestAnimationFrame(tick);
