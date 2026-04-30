@@ -487,34 +487,50 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         model.scale.setScalar(scale);
         model.position.sub(center.multiplyScalar(scale));
 
-        // Identify the yellow and grey materials in the GLB, then reassign
-        // meshes using a grey material to share the yellow material reference
-        // so all PBR properties (maps, roughness, metalness) match exactly.
+        // Pick the most-saturated material in the model and reassign any
+        // mid-brightness duller material to share that reference, so the
+        // grey wheel/motor inherits the yellow set's exact PBR material.
+        const matInfo = (mat) => {
+          if (!mat || !mat.color) return null;
+          const {r, g, b} = mat.color;
+          const max = Math.max(r, g, b), min = Math.min(r, g, b);
+          const sat = max > 0.01 ? (max - min) / max : 0;
+          const brightness = (r + g + b) / 3;
+          return { sat, brightness, hex: mat.color.getHexString() };
+        };
         const allMats = new Set();
         model.traverse(child => {
           if (!child.isMesh) return;
           const mats = Array.isArray(child.material) ? child.material : [child.material];
           mats.forEach(m => m && allMats.add(m));
         });
-        let yellowMat = null;
-        const greyMats = new Set();
-        allMats.forEach(mat => {
-          if (!mat.color) return;
-          const {r, g, b} = mat.color;
-          const max = Math.max(r, g, b), min = Math.min(r, g, b);
-          const sat = max > 0.01 ? (max - min) / max : 0;
-          const brightness = (r + g + b) / 3;
-          if (sat >= 0.25 && r > g && g > b && !yellowMat) yellowMat = mat;
-          else if (sat < 0.2 && brightness > 0.12 && brightness < 0.88) greyMats.add(mat);
+        if (window.__logMaterials) {
+          [...allMats].forEach((m, i) => {
+            const info = matInfo(m);
+            console.log(`mat[${i}] ${m.name || ''}`, info, 'map=', !!m.map, 'metal=', m.metalness, 'rough=', m.roughness);
+          });
+        }
+        let target = null, targetSat = 0.25;
+        allMats.forEach(m => {
+          const info = matInfo(m);
+          if (info && info.sat > targetSat) { target = m; targetSat = info.sat; }
         });
-        if (yellowMat && greyMats.size) {
+        if (target) {
           model.traverse(child => {
             if (!child.isMesh) return;
-            if (Array.isArray(child.material)) {
-              child.material = child.material.map(m => greyMats.has(m) ? yellowMat : m);
-            } else if (greyMats.has(child.material)) {
-              child.material = yellowMat;
-            }
+            const swap = (m) => {
+              if (!m || m === target) return m;
+              const info = matInfo(m);
+              if (!info) return m;
+              // Swap any material that's clearly less saturated than the
+              // target and not very dark (chassis/tyres) or very bright (white plastic).
+              if (info.sat < targetSat * 0.5 && info.brightness > 0.08 && info.brightness < 0.92) {
+                return target;
+              }
+              return m;
+            };
+            if (Array.isArray(child.material)) child.material = child.material.map(swap);
+            else child.material = swap(child.material);
           });
         }
 
