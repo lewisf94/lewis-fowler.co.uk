@@ -610,13 +610,15 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           group.add(shell);
           fitInsideUnit(group, withControls ? 1.8 : 1.6);
 
+          const cw0 = renderer.domElement.width;
+          const ch0 = renderer.domElement.height;
           spotlight = {
-            cursorPx: new THREE.Vector2(-9999, -9999),
-            manualPx: new THREE.Vector2(),
-            active: { value: 0 },
+            cursorPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
+            manualPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
+            active: { value: 0.7 },
             cursorMode: false,
             tick: 0,
-            radiusPx: { value: 52 * renderer.getPixelRatio() },
+            radiusPx: { value: 26 * renderer.getPixelRatio() },
           };
           shell.traverse(c => {
             if (!c.isMesh) return;
@@ -660,7 +662,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = 52 * renderer.getPixelRatio();
+        if (spotlight) spotlight.radiusPx.value = 26 * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
@@ -675,15 +677,15 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           const cw = renderer.domElement.width;
           const ch = renderer.domElement.height;
           if (spotlight.cursorMode) {
-            spotlight.cursorPx.lerp(spotlight.manualPx, 0.2);
+            spotlight.cursorPx.lerp(spotlight.manualPx, 0.22);
             spotlight.active.value += (1.0 - spotlight.active.value) * 0.14;
           } else {
-            // Lissajous drift — golden-ratio frequency pair for non-repeating path
-            const driftX = cw * 0.5 + Math.sin(t * 0.006 + 0.5) * cw * 0.28;
-            const driftY = ch * 0.5 + Math.sin(t * 0.0097 + 1.2) * ch * 0.28;
-            spotlight.cursorPx.x += (driftX - spotlight.cursorPx.x) * 0.03;
-            spotlight.cursorPx.y += (driftY - spotlight.cursorPx.y) * 0.03;
-            spotlight.active.value += (0.7 - spotlight.active.value) * 0.06;
+            // Lissajous drift — irrational-ratio frequency pair for non-repeating path
+            const driftX = cw * 0.5 + Math.sin(t * 0.028 + 0.5) * cw * 0.32;
+            const driftY = ch * 0.5 + Math.sin(t * 0.045 + 1.2) * ch * 0.30;
+            spotlight.cursorPx.x += (driftX - spotlight.cursorPx.x) * 0.12;
+            spotlight.cursorPx.y += (driftY - spotlight.cursorPx.y) * 0.12;
+            spotlight.active.value += (0.85 - spotlight.active.value) * 0.08;
           }
         }
         if (controls) controls.update();
