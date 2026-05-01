@@ -612,9 +612,11 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
 
           spotlight = {
             cursorPx: new THREE.Vector2(-9999, -9999),
+            manualPx: new THREE.Vector2(),
             active: { value: 0 },
-            target: 0,
-            radiusPx: { value: 110 * renderer.getPixelRatio() },
+            cursorMode: false,
+            tick: 0,
+            radiusPx: { value: 52 * renderer.getPixelRatio() },
           };
           shell.traverse(c => {
             if (!c.isMesh) return;
@@ -625,13 +627,13 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           onCanvasMove = (e) => {
             const rect = canvasRef.getBoundingClientRect();
             const pr = renderer.getPixelRatio();
-            spotlight.cursorPx.set(
+            spotlight.manualPx.set(
               (e.clientX - rect.left) * pr,
               (rect.height - (e.clientY - rect.top)) * pr
             );
-            spotlight.target = 1;
+            spotlight.cursorMode = true;
           };
-          onCanvasLeave = () => { spotlight.target = 0; };
+          onCanvasLeave = () => { spotlight.cursorMode = false; };
           canvasRef.addEventListener('mousemove', onCanvasMove);
           canvasRef.addEventListener('mouseleave', onCanvasLeave);
 
@@ -658,7 +660,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = 110 * renderer.getPixelRatio();
+        if (spotlight) spotlight.radiusPx.value = 52 * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
@@ -668,7 +670,21 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         if (disposed) return;
         if (model && autoRotate) model.quaternion.premultiply(spinQ);
         if (spotlight) {
-          spotlight.active.value += (spotlight.target - spotlight.active.value) * 0.14;
+          spotlight.tick++;
+          const t = spotlight.tick;
+          const cw = renderer.domElement.width;
+          const ch = renderer.domElement.height;
+          if (spotlight.cursorMode) {
+            spotlight.cursorPx.lerp(spotlight.manualPx, 0.2);
+            spotlight.active.value += (1.0 - spotlight.active.value) * 0.14;
+          } else {
+            // Lissajous drift — golden-ratio frequency pair for non-repeating path
+            const driftX = cw * 0.5 + Math.sin(t * 0.006 + 0.5) * cw * 0.28;
+            const driftY = ch * 0.5 + Math.sin(t * 0.0097 + 1.2) * ch * 0.28;
+            spotlight.cursorPx.x += (driftX - spotlight.cursorPx.x) * 0.03;
+            spotlight.cursorPx.y += (driftY - spotlight.cursorPx.y) * 0.03;
+            spotlight.active.value += (0.7 - spotlight.active.value) * 0.06;
+          }
         }
         if (controls) controls.update();
         renderer.render(scene, camera);
