@@ -186,6 +186,17 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   margin-bottom:64px; line-height:1.05;
 }
 
+/* ── REVEAL ON SCROLL ───────────────────────────────── */
+.reveal-x {
+  opacity:0; transform:translateX(-40px);
+  transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1);
+}
+.reveal-x.in { opacity:1; transform:translateX(0); }
+.sec-title.reveal-x { transition-delay:.08s; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal-x { opacity:1; transform:none; transition:none; }
+}
+
 /* ── PROJECTS ───────────────────────────────────────── */
 .proj-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; background:var(--border2); border:1px solid var(--border2); }
 .proj-card {
@@ -967,6 +978,24 @@ function Experience() {
 
 
 /* ── APP ────────────────────────────────────────────── */
+/* ── SECTION TITLE REVEAL ───────────────────────────── */
+function useSectionReveal() {
+  useEffect(() => {
+    const targets = document.querySelectorAll('.sec-label, .sec-title');
+    targets.forEach(el => el.classList.add('reveal-x'));
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+    targets.forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+}
+
 /* ── MAGNETIC BUTTONS ───────────────────────────────── */
 function useMagneticButtons() {
   useEffect(() => {
@@ -1050,6 +1079,7 @@ function CursorCrosshair() {
 
 function App() {
   useMagneticButtons();
+  useSectionReveal();
   return (
     <>
       <CursorCrosshair />
