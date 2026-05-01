@@ -197,39 +197,6 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   .reveal-x { opacity:1; transform:none; transition:none; }
 }
 
-/* ── SCROLL RAIL ────────────────────────────────────── */
-.scroll-rail {
-  position:fixed; right:24px; top:0; bottom:0; width:20px;
-  display:flex; justify-content:center; align-items:center;
-  z-index:90; pointer-events:none;
-}
-.scroll-rail-inner {
-  position:relative; width:1px; height:min(56vh, 360px);
-  background:var(--border);
-}
-.scroll-rail-fill {
-  position:absolute; top:0; left:0; right:0;
-  background:var(--accent); transition:height .08s linear;
-}
-.scroll-rail-dot {
-  position:absolute; left:50%; transform:translate(-50%, -50%);
-  width:5px; height:5px; border-radius:50%;
-  background:var(--bg2); border:1px solid var(--border);
-  cursor:pointer; pointer-events:auto; padding:0;
-  transition:background .25s, border-color .25s, transform .2s;
-}
-.scroll-rail-dot.active { background:var(--accent); border-color:var(--accent); }
-.scroll-rail-dot:hover { transform:translate(-50%, -50%) scale(1.6); }
-.scroll-rail-dot:hover .scroll-rail-label { opacity:1; transform:translateY(-50%) translateX(0); }
-.scroll-rail-label {
-  position:absolute; right:calc(100% + 12px); top:50%;
-  transform:translateY(-50%) translateX(6px);
-  white-space:nowrap; font-family:var(--fm); font-size:9px;
-  letter-spacing:.14em; text-transform:uppercase; color:var(--fg2);
-  opacity:0; transition:opacity .2s, transform .2s; pointer-events:none;
-}
-@media (max-width:900px) { .scroll-rail { display:none; } }
-
 /* ── PROJECTS ───────────────────────────────────────── */
 .proj-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; background:var(--border2); border:1px solid var(--border2); }
 .proj-card {
@@ -1011,58 +978,6 @@ function Experience() {
 
 
 /* ── APP ────────────────────────────────────────────── */
-/* ── SCROLL RAIL ────────────────────────────────────── */
-const RAIL_SECTIONS = [
-  { id:'work', label:'Work' },
-  { id:'skills', label:'Skills' },
-  { id:'experience', label:'Experience' },
-  { id:'contact', label:'Contact' },
-];
-function ScrollRail() {
-  const [progress, setProgress] = useState(0);
-  const [dots, setDots] = useState([]);
-  useEffect(() => {
-    const calcDots = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      if (!max) return;
-      setDots(RAIL_SECTIONS.map(s => {
-        const el = document.getElementById(s.id);
-        return el ? { ...s, pct: Math.min(el.offsetTop / max, 1) } : null;
-      }).filter(Boolean));
-    };
-    const onScroll = () => {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max ? window.scrollY / max : 0);
-    };
-    calcDots();
-    window.addEventListener('scroll', onScroll, { passive:true });
-    window.addEventListener('resize', calcDots, { passive:true });
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', calcDots);
-    };
-  }, []);
-  const jumpTo = id => document.getElementById(id)?.scrollIntoView({ behavior:'smooth' });
-  return (
-    <div className="scroll-rail" aria-hidden="true">
-      <div className="scroll-rail-inner">
-        <div className="scroll-rail-fill" style={{ height:`${progress*100}%` }} />
-        {dots.map(d => (
-          <button
-            key={d.id}
-            className={`scroll-rail-dot${progress >= d.pct - 0.01 ? ' active' : ''}`}
-            style={{ top:`${d.pct*100}%` }}
-            onClick={() => jumpTo(d.id)}
-            aria-label={`Jump to ${d.label}`}
-          >
-            <span className="scroll-rail-label">{d.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ── SECTION TITLE REVEAL ───────────────────────────── */
 function useSectionReveal() {
   useEffect(() => {
@@ -1168,7 +1083,6 @@ function App() {
   return (
     <>
       <CursorCrosshair />
-      <ScrollRail />
       <Nav />
       <Hero />
       <Projects />
