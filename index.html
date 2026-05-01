@@ -251,6 +251,16 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   text-transform:uppercase; color:var(--fg3);
 }
 .modal-viewer { height:320px; margin-bottom:40px; }
+.proj-model-wrap { position:relative; }
+.reveal-hint {
+  position:absolute; top:10px; left:12px; z-index:3;
+  font-family:var(--fm); font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent);
+  pointer-events:none; opacity:.55; transition:opacity .25s;
+  display:flex; align-items:center; gap:8px;
+}
+.reveal-hint::before { content:''; width:14px; height:1px; background:var(--accent); }
+.proj-model-wrap:hover .reveal-hint { opacity:0; }
 .viewer-toggle {
   position:absolute; bottom:12px; right:12px; z-index:2;
   font-family:var(--fm); font-size:10px; letter-spacing:.1em;
@@ -447,7 +457,7 @@ const DATA = {
 };
 
 /* ── MODEL VIEWER ───────────────────────────────────── */
-function ModelViewer({ path, withControls = false, autoRotate = true }) {
+function ModelViewer({ path, revealPath = null, withControls = false, autoRotate = true }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
@@ -458,6 +468,9 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
     let animId = null;
     let resizeObs = null;
     let renderer, scene, camera, controls, model;
+    let spotlight = null;
+    let canvasRef = null;
+    let onCanvasMove = null, onCanvasLeave = null;
 
     const init = () => {
       if (!window.THREE || !window.GLTFLoader) {
@@ -480,6 +493,7 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
       renderer.setSize(w, h);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       mount.appendChild(renderer.domElement);
+      canvasRef = renderer.domElement;
 
       scene.add(new THREE.AmbientLight(0xffffff, 1.6));
       const key = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -501,58 +515,33 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         controls.maxDistance = 8;
       }
 
-      const loader = new window.GLTFLoader();
-      loader.load(path, (gltf) => {
-        if (disposed) return;
-        model = gltf.scene;
+      // ─────────────────────────────────────────────────────────────
+      // DEV TWEAKS — adjust if model isn't centred well in the frame.
+      const CARD_Y_OFFSET  = 0;
+      const MODAL_Y_OFFSET = 0;
+      // ─────────────────────────────────────────────────────────────
 
-        // ─────────────────────────────────────────────────────────────
-        // DEV TWEAKS — adjust if model isn't centred well in the frame.
-        // Positive = up, negative = down (units roughly match model size).
-        const CARD_Y_OFFSET  = 0;   // small auto-rotating preview on the card
-        const MODAL_Y_OFFSET = 0;   // larger viewer in the project modal
-        // ─────────────────────────────────────────────────────────────
+      const matSat = (mat) => {
+        if (!mat || !mat.color) return -1;
+        const {r, g, b} = mat.color;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        return max > 0.01 ? (max - min) / max : 0;
+      };
 
-        // Rotate to correct orientation: GLBs exported from CAD (Z-up) load
-        // on their side. Apply upright rotation via quaternion before computing
-        // bounds so scaling/centering uses the correctly-oriented model.
-        model.quaternion.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
-
-        const box = new THREE.Box3().setFromObject(model);
-        const size = new THREE.Vector3(); box.getSize(size);
-        const center = new THREE.Vector3(); box.getCenter(center);
-        const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const targetSize = withControls ? 1.8 : 1.6;
-        const scale = targetSize / maxDim;
-        model.scale.setScalar(scale);
-        model.position.sub(center.multiplyScalar(scale));
-        model.position.y += withControls ? MODAL_Y_OFFSET : CARD_Y_OFFSET;
-
-        // Find pairs of meshes that share the same geometry (same vertex
-        // count and bounding-box dimensions = mirrored twin parts) and
-        // copy the more-saturated material across to the duller copy.
+      const applyMaterialPairing = (root) => {
         const meshes = [];
-        model.traverse(c => { if (c.isMesh) meshes.push(c); });
-
-        const matSat = (mat) => {
-          if (!mat || !mat.color) return -1;
-          const {r, g, b} = mat.color;
-          const max = Math.max(r, g, b), min = Math.min(r, g, b);
-          return max > 0.01 ? (max - min) / max : 0;
-        };
-
+        root.traverse(c => { if (c.isMesh) meshes.push(c); });
         const groups = new Map();
         meshes.forEach(mesh => {
           if (!mesh.geometry) return;
           const vCount = mesh.geometry.attributes.position?.count || 0;
           if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
-          const size = new THREE.Vector3();
-          mesh.geometry.boundingBox.getSize(size);
-          const sig = `${vCount}|${Math.abs(size.x).toFixed(2)}|${Math.abs(size.y).toFixed(2)}|${Math.abs(size.z).toFixed(2)}`;
+          const sz = new THREE.Vector3();
+          mesh.geometry.boundingBox.getSize(sz);
+          const sig = `${vCount}|${Math.abs(sz.x).toFixed(2)}|${Math.abs(sz.y).toFixed(2)}|${Math.abs(sz.z).toFixed(2)}`;
           if (!groups.has(sig)) groups.set(sig, []);
           groups.get(sig).push(mesh);
         });
-
         groups.forEach(group => {
           if (group.length < 2) return;
           let best = null, bestSat = -1;
@@ -565,13 +554,103 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
             group.forEach(mesh => { mesh.material = best; });
           }
         });
+      };
 
-        scene.add(model);
-        setLoading(false);
-      }, undefined, (err) => {
-        console.warn('GLB load failed:', err);
-        setLoading(false);
+      const orientAndPair = (m) => {
+        m.quaternion.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+        applyMaterialPairing(m);
+      };
+
+      const fitInsideUnit = (root, targetSize) => {
+        const box = new THREE.Box3().setFromObject(root);
+        const size = new THREE.Vector3(); box.getSize(size);
+        const center = new THREE.Vector3(); box.getCenter(center);
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        const scale = targetSize / maxDim;
+        root.scale.setScalar(scale);
+        root.position.sub(center.multiplyScalar(scale));
+        root.position.y += withControls ? MODAL_Y_OFFSET : CARD_Y_OFFSET;
+      };
+
+      const injectSpotlight = (mat, sp) => {
+        if (!mat || mat._spotlightInjected) return;
+        mat._spotlightInjected = true;
+        const prev = mat.onBeforeCompile;
+        mat.onBeforeCompile = (shader) => {
+          if (prev) prev(shader);
+          shader.uniforms.uCursorPx = { value: sp.cursorPx };
+          shader.uniforms.uActive = sp.active;
+          shader.uniforms.uRadiusPx = sp.radiusPx;
+          shader.fragmentShader = shader.fragmentShader
+            .replace('#include <common>',
+              '#include <common>\nuniform vec2 uCursorPx;\nuniform float uActive;\nuniform float uRadiusPx;')
+            .replace('void main() {',
+              'void main() {\n  if (uActive > 0.001) { float d = distance(gl_FragCoord.xy, uCursorPx); if (d < uRadiusPx * uActive) discard; }');
+        };
+        mat.needsUpdate = true;
+      };
+
+      const loadOne = (p) => new Promise((resolve, reject) => {
+        new window.GLTFLoader().load(p, (gltf) => resolve(gltf.scene), undefined, reject);
       });
+
+      const finishWithGroup = (group) => {
+        scene.add(group);
+        model = group;
+        setLoading(false);
+      };
+
+      if (revealPath) {
+        Promise.all([loadOne(path), loadOne(revealPath)]).then(([shell, inner]) => {
+          if (disposed) return;
+          orientAndPair(shell);
+          orientAndPair(inner);
+          const group = new THREE.Group();
+          group.add(inner);
+          group.add(shell);
+          fitInsideUnit(group, withControls ? 1.8 : 1.6);
+
+          spotlight = {
+            cursorPx: new THREE.Vector2(-9999, -9999),
+            active: { value: 0 },
+            target: 0,
+            radiusPx: { value: 110 * renderer.getPixelRatio() },
+          };
+          shell.traverse(c => {
+            if (!c.isMesh) return;
+            const mats = Array.isArray(c.material) ? c.material : [c.material];
+            mats.forEach(m => injectSpotlight(m, spotlight));
+          });
+
+          onCanvasMove = (e) => {
+            const rect = canvasRef.getBoundingClientRect();
+            const pr = renderer.getPixelRatio();
+            spotlight.cursorPx.set(
+              (e.clientX - rect.left) * pr,
+              (rect.height - (e.clientY - rect.top)) * pr
+            );
+            spotlight.target = 1;
+          };
+          onCanvasLeave = () => { spotlight.target = 0; };
+          canvasRef.addEventListener('mousemove', onCanvasMove);
+          canvasRef.addEventListener('mouseleave', onCanvasLeave);
+
+          finishWithGroup(group);
+        }).catch(err => {
+          console.warn('GLB load failed:', err);
+          setLoading(false);
+        });
+      } else {
+        loadOne(path).then((m) => {
+          if (disposed) return;
+          orientAndPair(m);
+          fitInsideUnit(m, withControls ? 1.8 : 1.6);
+          finishWithGroup(m);
+        }).catch(err => {
+          console.warn('GLB load failed:', err);
+          setLoading(false);
+        });
+      }
 
       resizeObs = new ResizeObserver(() => {
         if (!mount || !renderer || !camera) return;
@@ -579,17 +658,18 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
+        if (spotlight) spotlight.radiusPx.value = 110 * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
-      // Precompute spin quaternion — tiny rotation around world Y each frame.
       const spinQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.005);
 
       const tick = () => {
         if (disposed) return;
-        // Premultiply in world space so the spin is always around world Y
-        // regardless of the model's initial orientation quaternion.
         if (model && autoRotate) model.quaternion.premultiply(spinQ);
+        if (spotlight) {
+          spotlight.active.value += (spotlight.target - spotlight.active.value) * 0.14;
+        }
         if (controls) controls.update();
         renderer.render(scene, camera);
         animId = requestAnimationFrame(tick);
@@ -604,6 +684,8 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
       if (animId) cancelAnimationFrame(animId);
       if (resizeObs) resizeObs.disconnect();
       if (controls) controls.dispose();
+      if (canvasRef && onCanvasMove) canvasRef.removeEventListener('mousemove', onCanvasMove);
+      if (canvasRef && onCanvasLeave) canvasRef.removeEventListener('mouseleave', onCanvasLeave);
       if (renderer) {
         renderer.dispose();
         if (renderer.domElement && renderer.domElement.parentNode) {
@@ -620,9 +702,9 @@ function ModelViewer({ path, withControls = false, autoRotate = true }) {
         });
       }
     };
-  }, [path, withControls, autoRotate]);
+  }, [path, revealPath, withControls, autoRotate]);
 
-  return <div ref={mountRef} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}`}></div>;
+  return <div ref={mountRef} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`}></div>;
 }
 
 /* ── HERO ───────────────────────────────────────────── */
@@ -752,7 +834,10 @@ function Projects() {
             <div key={p.id} className="proj-card" onClick={() => setActive(p.id)}>
               <div className="proj-badge">{p.tags[0]}</div>
               {p.model
-                ? <ModelViewer path={p.model.path} />
+                ? <div className="proj-model-wrap">
+                    <ModelViewer path={p.model.path} revealPath={p.model.internalsPath || null} />
+                    {p.model.internalsPath && <div className="reveal-hint">Hover · Reveal Internals</div>}
+                  </div>
                 : <div className="proj-placeholder">3D model — {p.title}</div>}
               <div className="proj-title">{p.title}</div>
               <div className="proj-short">{p.short}</div>
