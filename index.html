@@ -578,14 +578,29 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         const prev = mat.onBeforeCompile;
         mat.onBeforeCompile = (shader) => {
           if (prev) prev(shader);
-          shader.uniforms.uCursorPx = { value: sp.cursorPx };
+          shader.uniforms.uPts = { value: sp.pts };
+          shader.uniforms.uWeights = { value: sp.weights };
           shader.uniforms.uActive = sp.active;
           shader.uniforms.uRadiusPx = sp.radiusPx;
           shader.fragmentShader = shader.fragmentShader
             .replace('#include <common>',
-              '#include <common>\nuniform vec2 uCursorPx;\nuniform float uActive;\nuniform float uRadiusPx;')
+              `#include <common>
+              uniform vec2 uPts[3];
+              uniform float uWeights[3];
+              uniform float uActive;
+              uniform float uRadiusPx;`)
             .replace('void main() {',
-              'void main() {\n  if (uActive > 0.001) { float d = distance(gl_FragCoord.xy, uCursorPx); if (d < uRadiusPx * uActive) discard; }');
+              `void main() {
+                if (uActive > 0.001) {
+                  float r = uRadiusPx * uActive;
+                  float field = 0.0;
+                  for (int i = 0; i < 3; i++) {
+                    float d = distance(gl_FragCoord.xy, uPts[i]);
+                    float k = max(0.0, 1.0 - d / r);
+                    field += k * k * uWeights[i];
+                  }
+                  if (field > 0.42) discard;
+                }`);
         };
         mat.needsUpdate = true;
       };
@@ -613,12 +628,17 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           const cw0 = renderer.domElement.width;
           const ch0 = renderer.domElement.height;
           spotlight = {
-            cursorPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
+            pts: [
+              new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
+              new THREE.Vector2(cw0 * 0.45, ch0 * 0.55),
+              new THREE.Vector2(cw0 * 0.55, ch0 * 0.45),
+            ],
+            weights: [1.0, 1.0, 1.0],
             manualPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
-            active: { value: 0.7 },
+            active: { value: 0.85 },
             cursorMode: false,
             tick: 0,
-            radiusPx: { value: 26 * renderer.getPixelRatio() },
+            radiusPx: { value: 60 * renderer.getPixelRatio() },
           };
           shell.traverse(c => {
             if (!c.isMesh) return;
@@ -662,7 +682,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = 26 * renderer.getPixelRatio();
+        if (spotlight) spotlight.radiusPx.value = 60 * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
@@ -676,16 +696,30 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           const t = spotlight.tick;
           const cw = renderer.domElement.width;
           const ch = renderer.domElement.height;
+          const pts = spotlight.pts;
           if (spotlight.cursorMode) {
-            spotlight.cursorPx.lerp(spotlight.manualPx, 0.22);
+            // Cursor drives the main blob; two satellites orbit it for fluid edge.
+            pts[0].lerp(spotlight.manualPx, 0.22);
+            pts[1].x += (spotlight.manualPx.x + Math.sin(t * 0.06) * cw * 0.05 - pts[1].x) * 0.18;
+            pts[1].y += (spotlight.manualPx.y + Math.cos(t * 0.06) * cw * 0.05 - pts[1].y) * 0.18;
+            pts[2].x += (spotlight.manualPx.x + Math.sin(t * 0.08 + 2.4) * cw * 0.04 - pts[2].x) * 0.18;
+            pts[2].y += (spotlight.manualPx.y + Math.cos(t * 0.08 + 2.4) * cw * 0.04 - pts[2].y) * 0.18;
             spotlight.active.value += (1.0 - spotlight.active.value) * 0.14;
           } else {
-            // Lissajous drift — irrational-ratio frequency pair for non-repeating path
-            const driftX = cw * 0.5 + Math.sin(t * 0.028 + 0.5) * cw * 0.32;
-            const driftY = ch * 0.5 + Math.sin(t * 0.045 + 1.2) * ch * 0.30;
-            spotlight.cursorPx.x += (driftX - spotlight.cursorPx.x) * 0.12;
-            spotlight.cursorPx.y += (driftY - spotlight.cursorPx.y) * 0.12;
-            spotlight.active.value += (0.85 - spotlight.active.value) * 0.08;
+            // Three independent Lissajous wanderers — they merge and split for an organic blob.
+            const params = [
+              [0.022, 0.038, 0.5, 1.2, 0.30, 0.26],
+              [0.031, 0.046, 2.1, 3.4, 0.26, 0.30],
+              [0.027, 0.041, 4.3, 5.8, 0.32, 0.24],
+            ];
+            for (let i = 0; i < 3; i++) {
+              const [fx, fy, px, py, ax, ay] = params[i];
+              const tx = cw * 0.5 + Math.sin(t * fx + px) * cw * ax;
+              const ty = ch * 0.5 + Math.sin(t * fy + py) * ch * ay;
+              pts[i].x += (tx - pts[i].x) * 0.10;
+              pts[i].y += (ty - pts[i].y) * 0.10;
+            }
+            spotlight.active.value += (0.9 - spotlight.active.value) * 0.08;
           }
         }
         if (controls) controls.update();
