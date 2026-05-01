@@ -55,6 +55,20 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 
+/* ── CURSOR CROSSHAIR ───────────────────────────────── */
+.cursor-crosshair {
+  position:fixed; top:0; left:0; pointer-events:none;
+  z-index:9999; color:var(--accent); opacity:0;
+  transition:opacity .25s ease;
+  mix-blend-mode:multiply;
+  will-change:transform;
+}
+.cursor-crosshair svg { display:block; transition:transform .2s ease, opacity .2s ease; }
+.cursor-crosshair.hover svg { transform:scale(1.6); opacity:.8; }
+@media (hover: none), (pointer: coarse) {
+  .cursor-crosshair { display:none !important; }
+}
+
 /* ── LOGO ───────────────────────────────────────────── */
 .logo-img { width:28px; height:28px; flex-shrink:0; display:block; }
 
@@ -951,9 +965,59 @@ function Experience() {
 
 
 /* ── APP ────────────────────────────────────────────── */
+/* ── CURSOR CROSSHAIR ───────────────────────────────── */
+function CursorCrosshair() {
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!window.matchMedia('(hover: hover)').matches) return;
+    const el = ref.current;
+    if (!el) return;
+    let tx = 0, ty = 0, x = 0, y = 0, raf = null, started = false;
+    const tick = () => {
+      tx += (x - tx) * 0.28;
+      ty += (y - ty) * 0.28;
+      el.style.transform = `translate(${tx}px, ${ty}px) translate(-50%, -50%)`;
+      raf = requestAnimationFrame(tick);
+    };
+    const onMove = (e) => {
+      x = e.clientX; y = e.clientY;
+      if (!started) { tx = x; ty = y; started = true; }
+      el.style.opacity = '0.55';
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const onLeave = () => { el.style.opacity = '0'; };
+    const onOver = (e) => {
+      const t = e.target;
+      const interactive = t.closest && t.closest('a, button, .proj, [role="button"]');
+      el.classList.toggle('hover', !!interactive);
+    };
+    window.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseleave', onLeave);
+    window.addEventListener('mouseover', onOver);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('mouseover', onOver);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return (
+    <div className="cursor-crosshair" ref={ref} aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 28 28">
+        <rect x="10" y="10" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1"/>
+        <line x1="14" y1="1" x2="14" y2="7" stroke="currentColor" strokeWidth="1"/>
+        <line x1="14" y1="21" x2="14" y2="27" stroke="currentColor" strokeWidth="1"/>
+        <line x1="1" y1="14" x2="7" y2="14" stroke="currentColor" strokeWidth="1"/>
+        <line x1="21" y1="14" x2="27" y2="14" stroke="currentColor" strokeWidth="1"/>
+      </svg>
+    </div>
+  );
+}
+
 function App() {
   return (
     <>
+      <CursorCrosshair />
       <Nav />
       <Hero />
       <Projects />
