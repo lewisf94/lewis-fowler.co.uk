@@ -321,13 +321,9 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   overflow:hidden; background:var(--bg2);
 }
 .skills-hint {
-  position:absolute; bottom:16px; right:24px; z-index:2; pointer-events:none;
+  position:absolute; bottom:16px; right:24px; z-index:1; pointer-events:none;
   font-family:var(--fm); font-size:10px; letter-spacing:.12em;
   text-transform:uppercase; color:var(--fg3);
-}
-.cfd-canvas {
-  position:absolute; inset:0; width:100%; height:100%;
-  z-index:0; pointer-events:none;
 }
 
 /* ── EXPERIENCE ─────────────────────────────────────── */
@@ -927,120 +923,7 @@ function Projects() {
 /* ── SKILLS ─────────────────────────────────────────── */
 function Skills({ themeKey }) {
   const wrapRef = useRef(null);
-  const cfdRef  = useRef(null);
 
-  // CFD thermal diffusion heatmap
-  useEffect(() => {
-    const wrap = wrapRef.current;
-    const canvas = cfdRef.current;
-    if (!wrap || !canvas) return;
-
-    const W = wrap.clientWidth || 1100;
-    const H = 460;
-    canvas.width  = W;
-    canvas.height = H;
-    const ctx  = canvas.getContext('2d');
-    const CELL = 14;
-    const COLS = Math.ceil(W / CELL);
-    const ROWS = Math.ceil(H / CELL);
-
-    // Offscreen at grid resolution — scaled up to display canvas for smooth gradients
-    const off = document.createElement('canvas');
-    off.width = COLS; off.height = ROWS;
-    const oc  = off.getContext('2d');
-    const img = oc.createImageData(COLS, ROWS);
-    const pix = img.data;
-
-    let grid = new Float32Array(COLS * ROWS);
-    let next = new Float32Array(COLS * ROWS);
-    for (let i = 0; i < grid.length; i++) grid[i] = Math.random() * 0.035;
-
-    // Classic CFD rainbow: blue → cyan → green → yellow → red (--accent at hot end)
-    const STOPS = [
-      [0,    0,  20,  80], [0.20,  0, 120, 220],
-      [0.40, 0, 200, 160], [0.60,  0, 190,  30],
-      [0.75, 210, 210,  0], [0.88, 255,  80,   0],
-      [1.0, 184,  50,  50],
-    ];
-    const LUT = Array.from({length:256}, (_,i) => {
-      const t = i / 255;
-      for (let s = 0; s < STOPS.length-1; s++) {
-        const [t0,r0,g0,b0] = STOPS[s], [t1,r1,g1,b1] = STOPS[s+1];
-        if (t >= t0 && t <= t1) {
-          const f = (t-t0)/(t1-t0);
-          return [Math.round(r0+(r1-r0)*f), Math.round(g0+(g1-g0)*f), Math.round(b0+(b1-b0)*f)];
-        }
-      }
-      return [184, 50, 50];
-    });
-
-    let mx = -1, my = -1, mActive = false, frame = 0;
-    const onMove = (e) => {
-      const rect = wrap.getBoundingClientRect();
-      mx = e.clientX - rect.left; my = e.clientY - rect.top; mActive = true;
-    };
-    const onLeave = () => { mActive = false; };
-    wrap.addEventListener('mousemove', onMove);
-    wrap.addEventListener('mouseleave', onLeave);
-
-    let rafId;
-    const tick = () => {
-      frame++;
-      // Two slowly drifting autonomous heat sources
-      const t = frame * 0.006;
-      const srcs = [
-        [Math.floor((0.25 + Math.sin(t*0.4)*0.08) * COLS), Math.floor(ROWS*0.50), 0.05],
-        [Math.floor((0.75 + Math.cos(t*0.3)*0.08) * COLS), Math.floor(ROWS*0.45), 0.04],
-      ];
-      srcs.forEach(([c, r, str]) => {
-        if (c >= 0 && c < COLS && r >= 0 && r < ROWS)
-          grid[r*COLS+c] = Math.min(1, grid[r*COLS+c] + str);
-      });
-      // Mouse heat injection
-      if (mActive) {
-        const mc = Math.floor(mx / (W/COLS));
-        const mr = Math.floor(my / (H/ROWS));
-        for (let dr = -4; dr <= 4; dr++) for (let dc = -4; dc <= 4; dc++) {
-          const c = mc+dc, r = mr+dr;
-          if (c >= 0 && c < COLS && r >= 0 && r < ROWS) {
-            const d = Math.sqrt(dc*dc + dr*dr);
-            if (d <= 4) grid[r*COLS+c] = Math.min(1, grid[r*COLS+c] + (1-d/4)*0.18);
-          }
-        }
-      }
-      // 2D heat diffusion (explicit finite difference, α=0.20 < 0.25 stability bound)
-      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
-        const i  = r*COLS+c;
-        const l  = c > 0       ? grid[i-1]    : grid[i];
-        const ri = c < COLS-1  ? grid[i+1]    : grid[i];
-        const u  = r > 0       ? grid[i-COLS] : grid[i];
-        const dw = r < ROWS-1  ? grid[i+COLS] : grid[i];
-        next[i] = (grid[i] + 0.20*(l+ri+u+dw - 4*grid[i])) * 0.987;
-      }
-      const tmp = grid; grid = next; next = tmp;
-      // Render at grid resolution, scale up with bilinear interpolation
-      for (let i = 0; i < COLS*ROWS; i++) {
-        const v = grid[i];
-        const [r,g,b] = LUT[Math.min(255, Math.floor(v*255))];
-        pix[i*4]=r; pix[i*4+1]=g; pix[i*4+2]=b; pix[i*4+3]=Math.floor(v*155);
-      }
-      oc.putImageData(img, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-      ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(off, 0, 0, COLS, ROWS, 0, 0, W, H);
-      rafId = requestAnimationFrame(tick);
-    };
-    tick();
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      wrap.removeEventListener('mousemove', onMove);
-      wrap.removeEventListener('mouseleave', onLeave);
-    };
-  }, [themeKey]);
-
-  // Matter.js physics pills
   useEffect(() => {
     if (!wrapRef.current || !window.Matter) return;
     const wrap = wrapRef.current;
@@ -1053,7 +936,6 @@ function Skills({ themeKey }) {
       element: wrap, engine,
       options: { width: W, height: H, wireframes: false, background: 'transparent', pixelRatio: Math.min(window.devicePixelRatio, 2) }
     });
-    if (render.canvas) render.canvas.style.zIndex = '1';
 
     const wall = { isStatic: true, render: { fillStyle: 'transparent', strokeStyle: 'transparent', lineWidth: 0 } };
     World.add(engine.world, [
@@ -1062,6 +944,7 @@ function Skills({ themeKey }) {
       Bodies.rectangle(W+25, H/2, 50, H,  wall),
     ]);
 
+    // Read CSS skill category colors at runtime
     const cs = getComputedStyle(document.documentElement);
     const catColor = {
       Software:   cs.getPropertyValue('--skill-a').trim() || '#3b82f6',
@@ -1085,6 +968,8 @@ function Skills({ themeKey }) {
 
     const mouse = Mouse.create(render.canvas);
     mouse.pixelRatio = Math.min(window.devicePixelRatio, 2);
+    // Matter.js attaches mousewheel listeners that call preventDefault — strip them
+    // so the page can still scroll when the cursor is over the physics canvas.
     mouse.element.removeEventListener('mousewheel', mouse.mousewheel);
     mouse.element.removeEventListener('DOMMouseScroll', mouse.mousewheel);
     const mc = MouseConstraint.create(engine, { mouse, constraint: { stiffness: .2, render: { visible: false } } });
@@ -1103,6 +988,7 @@ function Skills({ themeKey }) {
         const r = 8;
         ctx.save();
         ctx.translate(x, y); ctx.rotate(a);
+        // pill bg
         ctx.beginPath();
         ctx.moveTo(-w/2+r,-h/2); ctx.lineTo(w/2-r,-h/2);
         ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);
@@ -1112,6 +998,7 @@ function Skills({ themeKey }) {
         ctx.closePath();
         ctx.fillStyle = color + '28'; ctx.fill();
         ctx.strokeStyle = color + '80'; ctx.lineWidth = 1; ctx.stroke();
+        // label
         ctx.fillStyle = fgColor;
         ctx.font = `500 12px ${fontM}`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -1138,7 +1025,6 @@ function Skills({ themeKey }) {
         <div className="sec-title" style={{marginBottom:0}}>Technical Toolkit</div>
       </div>
       <div className="skills-wrap" ref={wrapRef}>
-        <canvas ref={cfdRef} className="cfd-canvas" />
         <div className="skills-hint">Drag to interact</div>
       </div>
     </section>
