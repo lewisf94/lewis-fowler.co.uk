@@ -271,6 +271,26 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   transition:color .2s,border-color .2s;
 }
 .viewer-toggle:hover { color:var(--accent); border-color:var(--accent); }
+.proj-planned { opacity:.55; cursor:default; }
+.proj-planned .proj-arrow { display:none; }
+.proj-planned-badge {
+  display:inline-block; font-family:var(--fm); font-size:9px;
+  letter-spacing:.14em; text-transform:uppercase;
+  color:var(--fg3); border:1px solid var(--border2);
+  padding:3px 8px; border-radius:var(--r); margin-top:8px;
+}
+.cs-hero-toggle {
+  position:absolute; bottom:20px; right:20px; z-index:10;
+  font-family:var(--fm); font-size:11px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg2);
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px);
+  border:1px solid var(--border); padding:8px 18px;
+  border-radius:var(--r); cursor:pointer;
+  transition:color .2s,border-color .2s,background .2s;
+}
+.cs-hero-toggle:hover { color:var(--accent); border-color:var(--accent); }
+.cs-hero-toggle.active { color:var(--accent); border-color:var(--accent); }
 
 /* ── MODAL ──────────────────────────────────────────── */
 .overlay {
@@ -518,20 +538,17 @@ const DATA = {
     { id:4, title:"MEng Mechanical Engineering", place:"University of Glasgow", date:"2018 – 2023", desc:"Formula Student: Aerodynamics (CFD) & Control Teams. Final year project at Rolls-Royce designing high-performance heat exchangers." },
   ],
   projects: [
-    { id:"balance", title:"Self-Balancing Robot", short:"PID control + EKF state estimation.", tags:["Robotics","Control Theory","3D Printing","ROS 2"],
-      model: { path:"assets/models/Self-Balancing-Robot.glb", internalsPath:"assets/models/Self-Balancing-Robot-Internals.glb" },
-      intro:"One of the fundamentals of control engineering is keeping an inherently unstable system stable.",
-      tech:"Implemented a PID controller with an Extended Kalman Filter (EKF) for sensor fusion and accurate tilt estimation. Built on ROS 2.",
-      math:"u(t) = Kp·e(t) + Ki·∫e(t)dt + Kd·de/dt",
-      challenges:"Raw accelerometer data was too noisy for the D-term. A moving average filter resolved instability without adding lag.",
-      results:null, specs:null, timeline:null, links:null, images:null },
-    { id:"arm", title:"Robotic Arm", short:"Inverse kinematics & precision path planning.", tags:["Robotics","MATLAB","Mechanical Design"],
-      intro:"A desktop-scale manipulator to explore coordinate systems, actuator control, and trajectory planning.",
-      tech:"Inverse kinematics via Jacobian Transpose to map (x,y,z) targets to joint angles. Smooth path planning with interpolated waypoints.",
-      math:"θ̇ = Jᵀ(θ) · ẋ",
-      challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop.",
-      results:null, specs:null, timeline:null, links:null, images:null },
-    { id:"sonos", title:"Music Controller", short:"Haptic smart knob, Spotify over Thread, LVGL touchscreen — a physical antidote to the phone.", tags:["IoT","PCB Design","BLDC / FOC","C++","LVGL"],
+    // ── display config reference ──────────────────────────────────────
+    // cardScale:   model size in the project card        (default 2.0)
+    // studyScale:  model size on the case study page     (default 1.8)
+    // cardY:       vertical offset in card view          (default 0, + = up)
+    // studyY:      vertical offset on case study page    (default 0, + = up)
+    // cameraZ:     camera distance — smaller = zoom in   (default 3.2)
+    // rotCenterY:  spin axis offset from bbox centre     (default 0, + = axis moves up)
+    // ─────────────────────────────────────────────────────────────────
+    { id:"sonos", status:"active",
+      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+      title:"Music Controller", short:"Haptic smart knob, Spotify over Thread, LVGL touchscreen — a physical antidote to the phone.", tags:["IoT","PCB Design","BLDC / FOC","C++","LVGL"],
       model: { path:"assets/models/MusicControllerExternal.glb", internalsPath:"assets/models/MusicControllerInternal.glb" },
       intro:"Phones are everything devices. They can't specialise, so they're mediocre at most things — including controlling music. This project is a dedicated physical controller built to do one thing well: make interacting with music enjoyable. Physical buttons that click, a haptic knob that resists and snaps, a 5\" screen worth looking at. V1 used a Cheap Yellow Display and a mechanical rotary encoder. V1 hit real limits fast. V2 replaces both with a 5\" ESP32-S3 IPS touchscreen and a SmartKnob-inspired BLDC motor assembly — elevating the volume knob from a component into an experience.",
       tech:"A dual-MCU architecture separates concerns cleanly. The ESP32-S3 handles Wi-Fi, LVGL rendering, and Spotify via a Raspberry Pi Thread border router that strips API JSON into lightweight packets before forwarding. A dedicated RP2040 co-MCU runs Field Oriented Control (FOC) at 5kHz+, synthesising programmable haptic detents, hard end-stops, and anti-nudge resistance profiles in real time. The RP2040 pushes asynchronous events (e.g. KNOB_TURN:+1, BTN_PRESS) over UART to the S3, guaranteeing sub-millisecond input latency independent of Wi-Fi state. The MT6701 magnetic encoder runs on a fully isolated SPI bus to prevent collisions with the display pipeline.",
@@ -549,7 +566,26 @@ const DATA = {
         { label:"Input",          value:"Smart knob (BLDC) + 4× mechanical switches" },
       ],
       timeline:null, links:null, images:null },
-    { id:"convoy", title:"ConvoyLink", short:"Off-grid LoRa mesh for GPS tracking & voice.", tags:["RF","ESP32","React Native"],
+    { id:"balance", status:"active",
+      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+      title:"Self-Balancing Robot", short:"PID control + EKF state estimation.", tags:["Robotics","Control Theory","3D Printing","ROS 2"],
+      model: { path:"assets/models/Self-Balancing-Robot.glb", internalsPath:"assets/models/Self-Balancing-Robot-Internals.glb" },
+      intro:"One of the fundamentals of control engineering is keeping an inherently unstable system stable.",
+      tech:"Implemented a PID controller with an Extended Kalman Filter (EKF) for sensor fusion and accurate tilt estimation. Built on ROS 2.",
+      math:"u(t) = Kp·e(t) + Ki·∫e(t)dt + Kd·de/dt",
+      challenges:"Raw accelerometer data was too noisy for the D-term. A moving average filter resolved instability without adding lag.",
+      results:null, specs:null, timeline:null, links:null, images:null },
+    { id:"arm", status:"planned",
+      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+      title:"Robotic Arm", short:"Inverse kinematics & precision path planning.", tags:["Robotics","MATLAB","Mechanical Design"],
+      intro:"A desktop-scale manipulator to explore coordinate systems, actuator control, and trajectory planning.",
+      tech:"Inverse kinematics via Jacobian Transpose to map (x,y,z) targets to joint angles. Smooth path planning with interpolated waypoints.",
+      math:"θ̇ = Jᵀ(θ) · ẋ",
+      challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop.",
+      results:null, specs:null, timeline:null, links:null, images:null },
+    { id:"convoy", status:"planned",
+      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+      title:"ConvoyLink", short:"Off-grid LoRa mesh for GPS tracking & voice.", tags:["RF","ESP32","React Native"],
       intro:"Mesh radio network for vehicle convoy tracking outside cell coverage areas.",
       tech:"LoRa 915MHz for long-range telemetry. Bluetooth bridge to React Native app. ESP32-S3 as processor.",
       math:"d = 2R · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))",
@@ -559,7 +595,7 @@ const DATA = {
 };
 
 /* ── MODEL VIEWER ───────────────────────────────────── */
-function ModelViewer({ path, revealPath = null, withControls = false, autoRotate = true }) {
+function ModelViewer({ path, revealPath = null, withControls = false, autoRotate = true, display = {} }) {
   const mountRef = useRef(null);
   const [loading, setLoading] = useState(true);
 
@@ -588,7 +624,15 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
 
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(40, w / h, 0.1, 1000);
-      camera.position.set(0, 0.4, 3.2);
+      // ── PER-MODEL DISPLAY TWEAKS (edit display:{} on each project in DATA) ──
+      const CARD_SCALE   = display.cardScale   ?? 2.0;
+      const STUDY_SCALE  = display.studyScale  ?? 1.8;
+      const CARD_Y       = display.cardY       ?? 0;
+      const STUDY_Y      = display.studyY      ?? 0;
+      const CAMERA_Z     = display.cameraZ     ?? 3.2;
+      const ROT_CENTER_Y = display.rotCenterY  ?? 0;
+      // ─────────────────────────────────────────────────────────────────────────
+      camera.position.set(0, 0.4, CAMERA_Z);
 
       renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -617,11 +661,6 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         controls.maxDistance = 8;
       }
 
-      // ─────────────────────────────────────────────────────────────
-      // DEV TWEAKS — adjust if model isn't centred well in the frame.
-      const CARD_Y_OFFSET  = 0;
-      const MODAL_Y_OFFSET = 0;
-      // ─────────────────────────────────────────────────────────────
 
       const matSat = (mat) => {
         if (!mat || !mat.color) return -1;
@@ -671,7 +710,8 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         const scale = targetSize / maxDim;
         root.scale.setScalar(scale);
         root.position.sub(center.multiplyScalar(scale));
-        root.position.y += withControls ? MODAL_Y_OFFSET : CARD_Y_OFFSET;
+        root.position.y += withControls ? STUDY_Y : CARD_Y;
+        root.position.y -= ROT_CENTER_Y;
       };
 
       const injectSpotlight = (mat, sp) => {
@@ -725,7 +765,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           const group = new THREE.Group();
           group.add(inner);
           group.add(shell);
-          fitInsideUnit(group, withControls ? 1.8 : 1.6);
+          fitInsideUnit(group, withControls ? STUDY_SCALE : CARD_SCALE);
 
           const cw0 = renderer.domElement.width;
           const ch0 = renderer.domElement.height;
@@ -769,7 +809,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         loadOne(path).then((m) => {
           if (disposed) return;
           orientAndPair(m);
-          fitInsideUnit(m, withControls ? 1.8 : 1.6);
+          fitInsideUnit(m, withControls ? STUDY_SCALE : CARD_SCALE);
           finishWithGroup(m);
         }).catch(err => {
           console.warn('GLB load failed:', err);
@@ -941,6 +981,8 @@ function Nav() {
 
 /* ── PROJECTS ───────────────────────────────────────── */
 function Projects() {
+  const active  = DATA.projects.filter(p => p.status === 'active');
+  const planned = DATA.projects.filter(p => p.status === 'planned');
   return (
     <section id="work" className="sec">
       <div className="wrap">
@@ -949,12 +991,12 @@ function Projects() {
       </div>
       <div className="wrap" style={{paddingLeft:0,paddingRight:0}}>
         <div className="proj-grid">
-          {DATA.projects.map(p => (
+          {active.map(p => (
             <div key={p.id} className="proj-card" onClick={() => { window.location.hash = '#work/' + p.id; }}>
               <div className="proj-badge">{p.tags[0]}</div>
               {p.model
                 ? <div className="proj-model-wrap">
-                    <ModelViewer path={p.model.path} revealPath={p.model.internalsPath || null} />
+                    <ModelViewer path={p.model.path} revealPath={p.model.internalsPath || null} display={p.display} />
                     {p.model.internalsPath && <div className="reveal-hint">Hover · Reveal Internals</div>}
                   </div>
                 : <div className="proj-placeholder">3D model — {p.title}</div>}
@@ -962,6 +1004,16 @@ function Projects() {
               <div className="proj-short">{p.short}</div>
               <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
               <div className="proj-arrow">↗</div>
+            </div>
+          ))}
+          {planned.map(p => (
+            <div key={p.id} className="proj-card proj-planned">
+              <div className="proj-badge">{p.tags[0]}</div>
+              <div className="proj-placeholder">In Development</div>
+              <div className="proj-title">{p.title}</div>
+              <div className="proj-short">{p.short}</div>
+              <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
+              <div className="proj-planned-badge">Planned</div>
             </div>
           ))}
         </div>
@@ -1262,8 +1314,12 @@ function CaseStudy({ proj }) {
   const idx = DATA.projects.findIndex(p => p.id === proj.id);
   const prev = DATA.projects[idx - 1] || null;
   const next = DATA.projects[idx + 1] || null;
+  const [showInternals, setShowInternals] = useState(false);
+  const modelPath = proj.model
+    ? (showInternals && proj.model.internalsPath ? proj.model.internalsPath : proj.model.path)
+    : null;
 
-  useEffect(() => { window.scrollTo(0, 0); }, [proj.id]);
+  useEffect(() => { window.scrollTo(0, 0); setShowInternals(false); }, [proj.id]);
 
   return (
     <div className="cs-page">
@@ -1276,9 +1332,15 @@ function CaseStudy({ proj }) {
       </nav>
 
       <div className="cs-hero">
-        {proj.model
-          ? <ModelViewer path={proj.model.path} withControls={true} autoRotate={false} />
+        {modelPath
+          ? <ModelViewer key={modelPath} path={modelPath} withControls={true} autoRotate={false} display={proj.display} />
           : <div className="modal-placeholder">3D model — {proj.title}</div>}
+        {proj.model?.internalsPath && (
+          <button
+            className={`cs-hero-toggle${showInternals ? ' active' : ''}`}
+            onClick={() => setShowInternals(v => !v)}
+          >{showInternals ? 'Exterior' : 'Internals'}</button>
+        )}
       </div>
 
       <div className="cs-header">
