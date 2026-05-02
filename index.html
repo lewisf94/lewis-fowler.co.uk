@@ -578,28 +578,21 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         const prev = mat.onBeforeCompile;
         mat.onBeforeCompile = (shader) => {
           if (prev) prev(shader);
-          shader.uniforms.uPts = { value: sp.pts };
-          shader.uniforms.uWeights = { value: sp.weights };
+          shader.uniforms.uCenter = { value: sp.pts[0] };
           shader.uniforms.uActive = sp.active;
           shader.uniforms.uRadiusPx = sp.radiusPx;
           shader.fragmentShader = shader.fragmentShader
             .replace('#include <common>',
               `#include <common>
-              uniform vec2 uPts[3];
-              uniform float uWeights[3];
+              uniform vec2 uCenter;
               uniform float uActive;
               uniform float uRadiusPx;`)
             .replace('void main() {',
               `void main() {
                 if (uActive > 0.001) {
                   float r = uRadiusPx * uActive;
-                  float field = 0.0;
-                  for (int i = 0; i < 3; i++) {
-                    float d = distance(gl_FragCoord.xy, uPts[i]);
-                    float k = max(0.0, 1.0 - d / r);
-                    field += k * k * uWeights[i];
-                  }
-                  if (field > 0.42) discard;
+                  float d = distance(gl_FragCoord.xy, uCenter);
+                  if (d < r) discard;
                 }`);
         };
         mat.needsUpdate = true;
@@ -630,15 +623,11 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           spotlight = {
             pts: [
               new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
-              new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
-              new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
             ],
-            weights: [1.25, 0.95, 0.7],
             manualPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
             active: { value: 0 },
             cursorMode: false,
-            tick: 0,
-            radiusPx: { value: 56 * renderer.getPixelRatio() },
+            radiusPx: { value: 32 * renderer.getPixelRatio() },
           };
           shell.traverse(c => {
             if (!c.isMesh) return;
@@ -682,7 +671,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = 56 * renderer.getPixelRatio();
+        if (spotlight) spotlight.radiusPx.value = 32 * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
@@ -694,16 +683,10 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         if (spotlight) {
           const pts = spotlight.pts;
           if (spotlight.cursorMode) {
-            // Comet-tail trail: head follows cursor, each segment lags behind the
-            // previous one. The chain naturally elongates along the direction of
-            // motion and tightens to a single dot when the cursor stops.
-            pts[0].lerp(spotlight.manualPx, 0.32);
-            pts[1].lerp(pts[0], 0.16);
-            pts[2].lerp(pts[1], 0.10);
-            spotlight.active.value += (1.0 - spotlight.active.value) * 0.16;
+            pts[0].lerp(spotlight.manualPx, 0.7);
+            spotlight.active.value += (1.0 - spotlight.active.value) * 0.25;
           } else {
-            // Cursor not on canvas — fade reveal closed without moving points.
-            spotlight.active.value += (0.0 - spotlight.active.value) * 0.10;
+            spotlight.active.value += (0.0 - spotlight.active.value) * 0.18;
           }
         }
         if (controls) controls.update();
