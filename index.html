@@ -636,7 +636,6 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
             weights: [1.4, 1.0, 0.65],
             manualPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
             active: { value: 0 },
-            velocity: 0,
             cursorMode: false,
             radiusPx: { value: 52 * renderer.getPixelRatio() },
           };
@@ -649,16 +648,13 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           onCanvasMove = (e) => {
             const rect = canvasRef.getBoundingClientRect();
             const pr = renderer.getPixelRatio();
-            const nx = (e.clientX - rect.left) * pr;
-            const ny = (rect.height - (e.clientY - rect.top)) * pr;
-            const dx = nx - spotlight.manualPx.x;
-            const dy = ny - spotlight.manualPx.y;
-            const speed = Math.sqrt(dx * dx + dy * dy) / pr;
-            spotlight.velocity = Math.min(1, speed / 8);
-            spotlight.manualPx.set(nx, ny);
+            spotlight.manualPx.set(
+              (e.clientX - rect.left) * pr,
+              (rect.height - (e.clientY - rect.top)) * pr
+            );
             spotlight.cursorMode = true;
           };
-          onCanvasLeave = () => { spotlight.cursorMode = false; spotlight.velocity = 0; };
+          onCanvasLeave = () => { spotlight.cursorMode = false; };
           canvasRef.addEventListener('mousemove', onCanvasMove);
           canvasRef.addEventListener('mouseleave', onCanvasLeave);
 
@@ -700,10 +696,8 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
             pts[0].lerp(spotlight.manualPx, 0.45);
             pts[1].lerp(pts[0], 0.20);
             pts[2].lerp(pts[1], 0.12);
-            spotlight.velocity *= 0.78;
-            spotlight.active.value += (spotlight.velocity - spotlight.active.value) * 0.30;
+            spotlight.active.value += (1.0 - spotlight.active.value) * 0.20;
           } else {
-            spotlight.velocity = 0;
             spotlight.active.value += (0.0 - spotlight.active.value) * 0.15;
           }
         }
