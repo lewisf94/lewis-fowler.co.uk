@@ -96,6 +96,30 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .nav-links a:hover { color:var(--accent); }
 
+/* ── STICKY SUB-NAV ─────────────────────────────────── */
+.subnav {
+  position:fixed; top:72px; left:0; right:0; z-index:99;
+  height:32px;
+  background:color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border2);
+  display:flex; align-items:center;
+  transform:translateY(-100%); opacity:0;
+  transition:transform .28s cubic-bezier(.2,.7,.2,1), opacity .28s ease;
+  pointer-events:none;
+}
+.subnav.subnav-visible { transform:translateY(0); opacity:1; pointer-events:auto; }
+.subnav-inner {
+  display:flex; align-items:center; gap:20px;
+  width:100%; max-width:1200px; margin:0 auto; padding:0 52px;
+}
+.subnav-label {
+  font-family:var(--fm); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); white-space:nowrap; flex-shrink:0;
+}
+.subnav-bar { flex:1; height:1px; background:var(--border2); overflow:hidden; }
+.subnav-fill { height:100%; background:var(--accent); transform-origin:left; transform:scaleX(0); }
+@media(max-width:900px) { .subnav { display:none; } }
 
 /* ── HERO ───────────────────────────────────────────── */
 .hero {
@@ -1098,6 +1122,57 @@ function Experience() {
 
 
 
+/* ── STICKY SUB-NAV ─────────────────────────────────── */
+const SUBNAV_SECTIONS = [
+  { id:'work',       label:'01 / Projects'   },
+  { id:'skills',     label:'02 / Skills'     },
+  { id:'experience', label:'03 / Experience' },
+  { id:'contact',    label:'04 / Contact'    },
+];
+
+function StickySubNav() {
+  const fillRef  = useRef(null);
+  const labelRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const activeRef = useRef(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const sy = window.scrollY;
+      let found = null, prog = 0;
+      for (const s of SUBNAV_SECTIONS) {
+        const el = document.getElementById(s.id);
+        if (!el) continue;
+        const top = el.offsetTop;
+        const h   = el.offsetHeight;
+        if (sy >= top - 80 && sy < top + h - 80) {
+          found = s;
+          prog  = h > 160 ? Math.min(1, Math.max(0, (sy - top + 80) / (h - 160))) : 1;
+          break;
+        }
+      }
+      if (found !== activeRef.current) {
+        activeRef.current = found;
+        setVisible(!!found);
+        if (found && labelRef.current) labelRef.current.textContent = found.label;
+      }
+      if (fillRef.current) fillRef.current.style.transform = `scaleX(${found ? prog : 0})`;
+    };
+    window.addEventListener('scroll', onScroll, { passive:true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <div className={`subnav${visible ? ' subnav-visible' : ''}`}>
+      <div className="subnav-inner">
+        <span className="subnav-label" ref={labelRef}></span>
+        <div className="subnav-bar"><div className="subnav-fill" ref={fillRef} /></div>
+      </div>
+    </div>
+  );
+}
+
 /* ── APP ────────────────────────────────────────────── */
 /* ── SECTION TITLE REVEAL ───────────────────────────── */
 function useSectionReveal() {
@@ -1204,6 +1279,7 @@ function App() {
   return (
     <>
       <CursorCrosshair />
+      <StickySubNav />
       <Nav />
       <Hero />
       <Projects />
