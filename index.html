@@ -314,6 +314,92 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .modal-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:32px; }
 
+/* ── CASE STUDY ─────────────────────────────────────── */
+@keyframes csPageIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+.cs-page { min-height:100vh; background:var(--bg); animation:csPageIn .35s ease; }
+.cs-nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 52px;
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter:blur(16px); border-bottom:1px solid var(--border2);
+}
+.cs-back {
+  font-family:var(--fm); font-size:11px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg2); text-decoration:none;
+  display:flex; align-items:center; gap:8px; transition:color .2s;
+}
+.cs-back:hover { color:var(--accent); }
+.cs-hero {
+  width:100%; height:55vh; margin-top:72px;
+  border-bottom:1px solid var(--border2); overflow:hidden; position:relative;
+}
+.cs-hero .model-viewer,
+.cs-hero .modal-viewer { width:100%; height:100%; margin-bottom:0; border:none; border-radius:0; background:var(--bg2); }
+.cs-header {
+  max-width:1200px; margin:0 auto;
+  padding:56px 52px 56px;
+  border-bottom:1px solid var(--border2);
+}
+.cs-tags-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.cs-title {
+  font-family:var(--fh); font-size:clamp(36px,5vw,64px);
+  font-weight:700; letter-spacing:-0.04em; color:var(--fg);
+  line-height:1.0; margin-bottom:14px;
+}
+.cs-subtitle { font-size:16px; color:var(--fg2); line-height:1.6; max-width:600px; }
+.cs-body { max-width:1200px; margin:0 auto; padding:56px 52px 120px; }
+.cs-section { margin-top:52px; }
+.cs-sh {
+  font-family:var(--fm); font-size:10px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent); margin-bottom:14px;
+}
+.cs-p { font-size:15px; line-height:1.75; color:var(--fg2); }
+.cs-code {
+  background:var(--bg4); border:1px solid var(--border2); padding:18px 22px;
+  font-family:var(--fm); font-size:13px; color:var(--accent);
+  border-radius:var(--r); margin:12px 0; overflow-x:auto;
+}
+.cs-specs {
+  display:grid; grid-template-columns:1fr 1fr; gap:1px;
+  background:var(--border2); border:1px solid var(--border2);
+  border-radius:var(--r); overflow:hidden; margin-top:14px;
+}
+.cs-spec { background:var(--bg); padding:14px 18px; display:flex; flex-direction:column; gap:4px; }
+.cs-spec-label { font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--fg3); }
+.cs-spec-value { font-size:14px; color:var(--fg); font-weight:500; }
+.cs-tl { display:flex; flex-direction:column; margin-top:14px; }
+.cs-tl-item { display:grid; grid-template-columns:120px 1px 1fr; column-gap:28px; padding-bottom:36px; }
+.cs-tl-item:last-child { padding-bottom:0; }
+.cs-tl-date { font-family:var(--fm); font-size:11px; color:var(--fg2); letter-spacing:.05em; padding-top:2px; text-align:right; }
+.cs-tl-line { background:var(--border2); position:relative; }
+.cs-tl-dot { position:absolute; top:4px; left:50%; transform:translateX(-50%); width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid var(--bg); }
+.cs-tl-text { font-size:14px; color:var(--fg2); line-height:1.6; }
+.cs-links { display:flex; gap:12px; flex-wrap:wrap; margin-top:14px; }
+.cs-link {
+  font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--fg2); text-decoration:none; border:1px solid var(--border);
+  padding:10px 20px; border-radius:var(--r); transition:color .2s,border-color .2s;
+}
+.cs-link:hover { color:var(--accent); border-color:var(--accent); }
+.cs-pagination {
+  border-top:1px solid var(--border2); margin-top:80px; padding-top:40px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.cs-pag-link {
+  font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--fg2); text-decoration:none; display:flex; flex-direction:column; gap:6px; transition:color .2s;
+}
+.cs-pag-link:hover { color:var(--accent); }
+.cs-pag-dir { font-size:10px; opacity:.5; }
+.cs-pag-title { font-size:13px; }
+@media(max-width:900px) {
+  .cs-nav { padding:18px 24px; }
+  .cs-header, .cs-body { padding-left:24px; padding-right:24px; }
+  .cs-specs { grid-template-columns:1fr; }
+  .cs-hero { height:40vh; }
+}
+
 /* ── SKILLS ─────────────────────────────────────────── */
 .skills-wrap {
   width:100%; height:460px; position:relative;
@@ -437,22 +523,26 @@ const DATA = {
       intro:"One of the fundamentals of control engineering is keeping an inherently unstable system stable.",
       tech:"Implemented a PID controller with an Extended Kalman Filter (EKF) for sensor fusion and accurate tilt estimation. Built on ROS 2.",
       math:"u(t) = Kp·e(t) + Ki·∫e(t)dt + Kd·de/dt",
-      challenges:"Raw accelerometer data was too noisy for the D-term. A moving average filter resolved instability without adding lag." },
+      challenges:"Raw accelerometer data was too noisy for the D-term. A moving average filter resolved instability without adding lag.",
+      results:null, specs:null, timeline:null, links:null, images:null },
     { id:"arm", title:"Robotic Arm", short:"Inverse kinematics & precision path planning.", tags:["Robotics","MATLAB","Mechanical Design"],
       intro:"A desktop-scale manipulator to explore coordinate systems, actuator control, and trajectory planning.",
       tech:"Inverse kinematics via Jacobian Transpose to map (x,y,z) targets to joint angles. Smooth path planning with interpolated waypoints.",
       math:"θ̇ = Jᵀ(θ) · ẋ",
-      challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop." },
+      challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop.",
+      results:null, specs:null, timeline:null, links:null, images:null },
     { id:"sonos", title:"ESP32 SONOS Remote", short:"Tactile smart home interface, 6+ month battery life.", tags:["IoT","PCB Design","SolidWorks","C++"],
       intro:"A physical volume knob for Sonos systems focused on low power consumption and clean industrial design.",
       tech:"ESP32-C3 deep sleep: wakes on interrupt, connects to WiFi, sends command, sleeps. Optimistic UI with instant LED feedback.",
       math:"v_out = e^(k·θ)  — logarithmic volume curve matching human hearing",
-      challenges:"Latency felt unresponsive. Optimistic updates give instant LED feedback before network confirmation arrives." },
+      challenges:"Latency felt unresponsive. Optimistic updates give instant LED feedback before network confirmation arrives.",
+      results:null, specs:null, timeline:null, links:null, images:null },
     { id:"convoy", title:"ConvoyLink", short:"Off-grid LoRa mesh for GPS tracking & voice.", tags:["RF","ESP32","React Native"],
       intro:"Mesh radio network for vehicle convoy tracking outside cell coverage areas.",
       tech:"LoRa 915MHz for long-range telemetry. Bluetooth bridge to React Native app. ESP32-S3 as processor.",
       math:"d = 2R · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))",
-      challenges:"LoRa bandwidth is tiny. Codec2 voice compression made audio transmission feasible within packet limits." },
+      challenges:"LoRa bandwidth is tiny. Codec2 voice compression made audio transmission feasible within packet limits.",
+      results:null, specs:null, timeline:null, links:null, images:null },
   ],
 };
 
@@ -839,20 +929,6 @@ function Nav() {
 
 /* ── PROJECTS ───────────────────────────────────────── */
 function Projects() {
-  const [active, setActive] = useState(null);
-  const [showInternals, setShowInternals] = useState(false);
-  const proj = active ? DATA.projects.find(p => p.id === active) : null;
-  const modalModelPath = proj && proj.model
-    ? (showInternals && proj.model.internalsPath ? proj.model.internalsPath : proj.model.path)
-    : null;
-
-  useEffect(() => { if (!active) setShowInternals(false); }, [active]);
-
-  useEffect(() => {
-    document.body.style.overflow = active ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [active]);
-
   return (
     <section id="work" className="sec">
       <div className="wrap">
@@ -862,7 +938,7 @@ function Projects() {
       <div className="wrap" style={{paddingLeft:0,paddingRight:0}}>
         <div className="proj-grid">
           {DATA.projects.map(p => (
-            <div key={p.id} className="proj-card" onClick={() => setActive(p.id)}>
+            <div key={p.id} className="proj-card" onClick={() => { window.location.hash = '#work/' + p.id; }}>
               <div className="proj-badge">{p.tags[0]}</div>
               {p.model
                 ? <div className="proj-model-wrap">
@@ -878,39 +954,6 @@ function Projects() {
           ))}
         </div>
       </div>
-
-      {proj && (
-        <div className="overlay" onClick={e => e.target === e.currentTarget && setActive(null)}>
-          <div className="modal">
-            <button className="modal-close" onClick={() => setActive(null)}>Close ×</button>
-            <div className="modal-tag">{proj.tags[0]}</div>
-            <div className="modal-h">{proj.title}</div>
-            <div className="modal-sub">{proj.short}</div>
-            {proj.model ? (
-              <div style={{position:'relative'}}>
-                <ModelViewer path={modalModelPath} withControls={true} autoRotate={false} />
-                {proj.model.internalsPath && (
-                  <button
-                    className="viewer-toggle"
-                    onClick={() => setShowInternals(v => !v)}
-                  >{showInternals ? 'Show Exterior' : 'Show Internals'}</button>
-                )}
-              </div>
-            ) : (
-              <div className="modal-placeholder">3D model — {proj.title}</div>
-            )}
-            <div className="modal-sh">Overview</div>
-            <p className="modal-p">{proj.intro}</p>
-            <div className="modal-sh">Technical Approach</div>
-            <p className="modal-p">{proj.tech}</p>
-            <div className="modal-sh">Key Equation</div>
-            <div className="modal-code">{proj.math}</div>
-            <div className="modal-sh">Challenge & Solution</div>
-            <p className="modal-p">{proj.challenges}</p>
-            <div className="modal-tags">{proj.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
-          </div>
-        </div>
-      )}
     </section>
   );
 }
@@ -1193,7 +1236,132 @@ function CursorCrosshair() {
   );
 }
 
-function App() {
+function useRouter() {
+  const [hash, setHash] = useState(window.location.hash);
+  useEffect(() => {
+    const fn = () => setHash(window.location.hash);
+    window.addEventListener('hashchange', fn);
+    return () => window.removeEventListener('hashchange', fn);
+  }, []);
+  return hash;
+}
+
+function CaseStudy({ proj }) {
+  const idx = DATA.projects.findIndex(p => p.id === proj.id);
+  const prev = DATA.projects[idx - 1] || null;
+  const next = DATA.projects[idx + 1] || null;
+
+  useEffect(() => { window.scrollTo(0, 0); }, [proj.id]);
+
+  return (
+    <div className="cs-page">
+      <nav className="cs-nav">
+        <a href="#work" className="cs-back">← Work</a>
+        <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
+          <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
+          Lewis <span>Fowler</span>
+        </a>
+      </nav>
+
+      <div className="cs-hero">
+        {proj.model
+          ? <ModelViewer path={proj.model.path} withControls={true} autoRotate={false} />
+          : <div className="modal-placeholder">3D model — {proj.title}</div>}
+      </div>
+
+      <div className="cs-header">
+        <div className="cs-tags-row">
+          {proj.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}
+        </div>
+        <div className="cs-title">{proj.title}</div>
+        <div className="cs-subtitle">{proj.short}</div>
+      </div>
+
+      <div className="cs-body">
+        <div className="cs-section">
+          <div className="cs-sh">Overview</div>
+          <p className="cs-p">{proj.intro}</p>
+        </div>
+        <div className="cs-section">
+          <div className="cs-sh">Technical Approach</div>
+          <p className="cs-p">{proj.tech}</p>
+        </div>
+        <div className="cs-section">
+          <div className="cs-sh">Key Equation</div>
+          <div className="cs-code">{proj.math}</div>
+        </div>
+        <div className="cs-section">
+          <div className="cs-sh">Challenge & Solution</div>
+          <p className="cs-p">{proj.challenges}</p>
+        </div>
+
+        {proj.specs && (
+          <div className="cs-section">
+            <div className="cs-sh">Specifications</div>
+            <div className="cs-specs">
+              {proj.specs.map(s => (
+                <div key={s.label} className="cs-spec">
+                  <span className="cs-spec-label">{s.label}</span>
+                  <span className="cs-spec-value">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {proj.results && (
+          <div className="cs-section">
+            <div className="cs-sh">Results</div>
+            <p className="cs-p">{proj.results}</p>
+          </div>
+        )}
+
+        {proj.timeline && (
+          <div className="cs-section">
+            <div className="cs-sh">Timeline</div>
+            <div className="cs-tl">
+              {proj.timeline.map((t, i) => (
+                <div key={i} className="cs-tl-item">
+                  <div className="cs-tl-date">{t.date}</div>
+                  <div className="cs-tl-line"><div className="cs-tl-dot" /></div>
+                  <div className="cs-tl-text">{t.milestone}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {proj.links && (
+          <div className="cs-section">
+            <div className="cs-sh">Links</div>
+            <div className="cs-links">
+              {proj.links.github && <a href={proj.links.github} target="_blank" rel="noopener" className="cs-link">GitHub ↗</a>}
+              {proj.links.demo && <a href={proj.links.demo} target="_blank" rel="noopener" className="cs-link">Live Demo ↗</a>}
+              {proj.links.video && <a href={proj.links.video} target="_blank" rel="noopener" className="cs-link">Video ↗</a>}
+            </div>
+          </div>
+        )}
+
+        <div className="cs-pagination">
+          {prev
+            ? <a href={'#work/' + prev.id} className="cs-pag-link">
+                <span className="cs-pag-dir">← Previous</span>
+                <span className="cs-pag-title">{prev.title}</span>
+              </a>
+            : <span />}
+          {next
+            ? <a href={'#work/' + next.id} className="cs-pag-link" style={{textAlign:'right'}}>
+                <span className="cs-pag-dir">Next →</span>
+                <span className="cs-pag-title">{next.title}</span>
+              </a>
+            : <span />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Portfolio() {
   useMagneticButtons();
   useSectionReveal();
   return (
@@ -1218,6 +1386,16 @@ function App() {
       </footer>
     </>
   );
+}
+
+function App() {
+  const hash = useRouter();
+  const csMatch = hash.match(/^#work\/(.+)$/);
+  if (csMatch) {
+    const proj = DATA.projects.find(p => p.id === csMatch[1]);
+    if (proj) return <CaseStudy proj={proj} />;
+  }
+  return <Portfolio />;
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
