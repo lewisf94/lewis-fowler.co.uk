@@ -578,21 +578,28 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         const prev = mat.onBeforeCompile;
         mat.onBeforeCompile = (shader) => {
           if (prev) prev(shader);
-          shader.uniforms.uCenter = { value: sp.pts[0] };
+          shader.uniforms.uPts = { value: sp.pts };
+          shader.uniforms.uWeights = { value: sp.weights };
           shader.uniforms.uActive = sp.active;
           shader.uniforms.uRadiusPx = sp.radiusPx;
           shader.fragmentShader = shader.fragmentShader
             .replace('#include <common>',
               `#include <common>
-              uniform vec2 uCenter;
+              uniform vec2 uPts[3];
+              uniform float uWeights[3];
               uniform float uActive;
               uniform float uRadiusPx;`)
             .replace('void main() {',
               `void main() {
                 if (uActive > 0.001) {
-                  float r = uRadiusPx * uActive;
-                  float d = distance(gl_FragCoord.xy, uCenter);
-                  if (d < r) discard;
+                  float r = uRadiusPx;
+                  float field = 0.0;
+                  for (int i = 0; i < 3; i++) {
+                    float d = distance(gl_FragCoord.xy, uPts[i]);
+                    float k = max(0.0, 1.0 - d / r);
+                    field += k * k * uWeights[i];
+                  }
+                  if (field * uActive > 0.38) discard;
                 }`);
         };
         mat.needsUpdate = true;
@@ -623,11 +630,15 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           spotlight = {
             pts: [
               new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
+              new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
+              new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
             ],
+            weights: [1.4, 1.0, 0.65],
             manualPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
             active: { value: 0 },
+            velocity: 0,
             cursorMode: false,
-            radiusPx: { value: 32 * renderer.getPixelRatio() },
+            radiusPx: { value: 52 * renderer.getPixelRatio() },
           };
           shell.traverse(c => {
             if (!c.isMesh) return;
@@ -638,13 +649,16 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
           onCanvasMove = (e) => {
             const rect = canvasRef.getBoundingClientRect();
             const pr = renderer.getPixelRatio();
-            spotlight.manualPx.set(
-              (e.clientX - rect.left) * pr,
-              (rect.height - (e.clientY - rect.top)) * pr
-            );
+            const nx = (e.clientX - rect.left) * pr;
+            const ny = (rect.height - (e.clientY - rect.top)) * pr;
+            const dx = nx - spotlight.manualPx.x;
+            const dy = ny - spotlight.manualPx.y;
+            const speed = Math.sqrt(dx * dx + dy * dy) / pr;
+            spotlight.velocity = Math.min(1, speed / 8);
+            spotlight.manualPx.set(nx, ny);
             spotlight.cursorMode = true;
           };
-          onCanvasLeave = () => { spotlight.cursorMode = false; };
+          onCanvasLeave = () => { spotlight.cursorMode = false; spotlight.velocity = 0; };
           canvasRef.addEventListener('mousemove', onCanvasMove);
           canvasRef.addEventListener('mouseleave', onCanvasLeave);
 
@@ -671,7 +685,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = 32 * renderer.getPixelRatio();
+        if (spotlight) spotlight.radiusPx.value = 52 * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
@@ -683,10 +697,14 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         if (spotlight) {
           const pts = spotlight.pts;
           if (spotlight.cursorMode) {
-            pts[0].lerp(spotlight.manualPx, 0.7);
-            spotlight.active.value += (1.0 - spotlight.active.value) * 0.25;
+            pts[0].lerp(spotlight.manualPx, 0.45);
+            pts[1].lerp(pts[0], 0.20);
+            pts[2].lerp(pts[1], 0.12);
+            spotlight.velocity *= 0.78;
+            spotlight.active.value += (spotlight.velocity - spotlight.active.value) * 0.30;
           } else {
-            spotlight.active.value += (0.0 - spotlight.active.value) * 0.18;
+            spotlight.velocity = 0;
+            spotlight.active.value += (0.0 - spotlight.active.value) * 0.15;
           }
         }
         if (controls) controls.update();
