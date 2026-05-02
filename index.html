@@ -271,6 +271,8 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   transition:color .2s,border-color .2s;
 }
 .viewer-toggle:hover { color:var(--accent); border-color:var(--accent); }
+.proj-card-active { grid-column:1/-1; }
+.proj-card-active .model-viewer { height:280px; }
 .proj-planned { opacity:.55; cursor:default; }
 .proj-planned .proj-arrow { display:none; }
 .proj-planned-badge {
@@ -717,6 +719,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
       const injectSpotlight = (mat, sp) => {
         if (!mat || mat._spotlightInjected) return;
         mat._spotlightInjected = true;
+        mat.transparent = true;
         const prev = mat.onBeforeCompile;
         mat.onBeforeCompile = (shader) => {
           if (prev) prev(shader);
@@ -731,18 +734,18 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
               uniform float uWeights[3];
               uniform float uActive;
               uniform float uRadiusPx;`)
-            .replace('void main() {',
-              `void main() {
-                if (uActive > 0.001) {
-                  float r = uRadiusPx;
-                  float field = 0.0;
-                  for (int i = 0; i < 3; i++) {
-                    float d = distance(gl_FragCoord.xy, uPts[i]);
-                    float k = max(0.0, 1.0 - d / r);
-                    field += k * k * uWeights[i];
-                  }
-                  if (field * uActive > 0.38) discard;
-                }`);
+            .replace('#include <dithering_fragment>',
+              `#include <dithering_fragment>
+              if (uActive > 0.001) {
+                float r = uRadiusPx;
+                float field = 0.0;
+                for (int i = 0; i < 3; i++) {
+                  float d = distance(gl_FragCoord.xy, uPts[i]);
+                  float k = max(0.0, 1.0 - d / r);
+                  field += k * k * uWeights[i];
+                }
+                gl_FragColor.a *= 1.0 - smoothstep(0.28, 0.46, field * uActive);
+              }`);
         };
         mat.needsUpdate = true;
       };
@@ -992,7 +995,7 @@ function Projects() {
       <div className="wrap" style={{paddingLeft:0,paddingRight:0}}>
         <div className="proj-grid">
           {active.map(p => (
-            <div key={p.id} className="proj-card" onClick={() => { window.location.hash = '#work/' + p.id; }}>
+            <div key={p.id} className="proj-card proj-card-active" onClick={() => { window.location.hash = '#work/' + p.id; }}>
               <div className="proj-badge">{p.tags[0]}</div>
               {p.model
                 ? <div className="proj-model-wrap">
