@@ -37,21 +37,89 @@
 html { scroll-behavior: smooth; }
 body { overflow-x: hidden; line-height: 1; }
 
-/* ── DESIGN TOKENS ──────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   DESIGN TOKENS  —  tweak anything here
+   ═══════════════════════════════════════════════════════ */
 :root {
-  --bg:#f4efe6; --bg2:#ece6db; --bg3:rgba(184,50,50,.06); --bg4:#e8e1d4;
-  --fg:#1a1208; --fg2:#6b5e52; --fg3:rgba(26,18,8,.3);
-  --accent:#b83232; --border:rgba(26,18,8,.12); --border2:rgba(26,18,8,.06);
-  --grid:rgba(26,18,8,.04); --glow:rgba(184,50,50,.09);
-  --fh:'DM Serif Display',serif; --fb:'DM Sans',sans-serif; --fm:'Fira Code',monospace;
-  --r:1px; --sh:0 2px 20px rgba(26,18,8,.08);
-  --skill-a:#b83232; --skill-b:#16a34a; --skill-c:#1e3a5f;
+
+  /* ── COLOURS ────────────────────────────────────────── */
+  --bg:#f4efe6;               /* page background */
+  --bg2:#ece6db;              /* subtle surface (cards, inputs) */
+  --bg3:rgba(184,50,50,.06);  /* very light accent tint */
+  --bg4:#e8e1d4;              /* slightly darker surface */
+  --fg:#1a1208;               /* primary text */
+  --fg2:#6b5e52;              /* secondary text */
+  --fg3:rgba(26,18,8,.3);     /* muted / placeholder text */
+  --accent:#b83232;           /* brand red */
+  --border:rgba(26,18,8,.12); /* visible border */
+  --border2:rgba(26,18,8,.06);/* hairline border */
+  --grid:rgba(26,18,8,.04);   /* hero background grid lines */
+  --glow:rgba(184,50,50,.09); /* cursor glow tint */
+  --skill-a:#b83232;          /* skills category colour A */
+  --skill-b:#16a34a;          /* skills category colour B */
+  --skill-c:#1e3a5f;          /* skills category colour C */
+
+  /* ── TYPOGRAPHY ─────────────────────────────────────── */
+  --fh:'DM Serif Display',serif;
+  --fb:'DM Sans',sans-serif;
+  --fm:'Fira Code',monospace;
+  --logo-size:17px;           /* nav logo text size */
+  --logo-name-gap:0px;        /* extra space between "Lewis" and "Fowler" (+ = more, − = tighter) */
+  --logo-img:28px;            /* logo icon size */
+  --nav-size:12px;            /* nav link font size */
+  --hero-h1-size:clamp(56px,9vw,120px); /* hero heading */
+  --hero-h1-leading:.95;      /* hero heading line-height */
+  --hero-bio-size:17px;       /* hero bio paragraph */
+  --sec-title-size:clamp(34px,4.5vw,56px); /* section headings */
+  --body-size:15px;           /* prose paragraphs */
+  --small-size:14px;          /* secondary / card text */
+  --stat-n-size:36px;         /* hero stat number */
+
+  /* ── SPACING ────────────────────────────────────────── */
+  --pad-x:52px;               /* main horizontal padding — nav, sections, footer */
+  --nav-y:22px;               /* nav top & bottom padding */
+  --nav-gap:40px;             /* gap between Work / Skills / Experience links */
+  --sec-pad:120px;            /* section top & bottom padding */
+  --sec-title-mb:64px;        /* space below section headings */
+  --sec-label-mb:18px;        /* space below section eyebrow labels */
+  --hero-pad-top:80px;        /* hero content clearance from top (nav height) */
+  --hero-eyebrow-mb:28px;     /* space below "Design Engineer" line */
+  --hero-h1-mb:28px;          /* space below "Lewis Fowler" heading */
+  --hero-bio-mb:52px;         /* space below bio paragraph */
+  --hero-cta-gap:14px;        /* space between CTA buttons */
+  --hero-stat-gap:32px;       /* space between stat items (right column) */
+  --card-pad:44px;            /* project card / contact cell inner padding */
+  --card-gap:2px;             /* hairline gap between cards */
+  --card-badge-mb:28px;       /* space below the category badge on a card */
+
+  /* ── SIZING ─────────────────────────────────────────── */
+  --max-w:1200px;             /* max content width */
+  --grid-cell:52px;           /* hero background grid square size */
+  --glow-size:560px;          /* hero cursor glow circle diameter */
+  --skills-h:460px;           /* height of the physics skills canvas */
+  --scrollbar-w:5px;          /* scrollbar width */
+  --viewer-h:180px;           /* 3D viewer height in project card */
+  --viewer-h-active:280px;    /* 3D viewer height in full-width active card */
+  --viewer-h-study:55vh;      /* case study hero model viewer height */
+  --viewer-h-modal:320px;     /* legacy modal viewer height */
+
+  /* ── ANIMATION ──────────────────────────────────────── */
+  --dur-fast:.2s;             /* hover / micro-interactions */
+  --dur-base:.3s;             /* UI state transitions */
+  --dur-slow:.8s;             /* scroll reveal */
+  --ease:cubic-bezier(.25,.46,.45,.94);    /* main ease-out */
+  --ease-reveal:cubic-bezier(.2,.7,.2,1); /* scroll reveal */
+  --hero-pulse:2.4s;          /* scroll-cue line pulse duration */
+
+  /* ── MISC ───────────────────────────────────────────── */
+  --r:1px;                    /* border-radius (keep small for industrial feel) */
+  --sh:0 2px 20px rgba(26,18,8,.08); /* standard card shadow */
 }
 
 /* ── BASE ───────────────────────────────────────────── */
 body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:background .4s,color .4s; }
 ::selection { background:var(--accent); color:var(--bg); }
-::-webkit-scrollbar { width:5px; }
+::-webkit-scrollbar { width:var(--scrollbar-w); }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 
@@ -59,40 +127,39 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .cursor-crosshair {
   position:fixed; top:0; left:0; pointer-events:none;
   z-index:9999; color:var(--accent); opacity:0;
-  transition:opacity .25s ease;
+  transition:opacity var(--dur-fast) ease;
   mix-blend-mode:multiply;
   will-change:transform;
 }
-.cursor-crosshair svg { display:block; transition:transform .2s ease, opacity .2s ease; }
+.cursor-crosshair svg { display:block; transition:transform var(--dur-fast) ease, opacity var(--dur-fast) ease; }
 .cursor-crosshair.hover svg { transform:scale(1.6); opacity:.8; }
 @media (hover: none), (pointer: coarse) {
   .cursor-crosshair { display:none !important; }
 }
 
 /* ── LOGO ───────────────────────────────────────────── */
-.logo-img { width:28px; height:28px; flex-shrink:0; display:block; }
+.logo-img { width:var(--logo-img); height:var(--logo-img); flex-shrink:0; display:block; }
 
 /* ── NAV ────────────────────────────────────────────── */
 .nav {
   position:fixed; top:0; left:0; right:0; z-index:100;
   display:flex; align-items:center; justify-content:space-between;
-  padding:22px 52px; transition:background .3s,border-color .3s,backdrop-filter .3s;
+  padding:var(--nav-y) var(--pad-x); transition:background var(--dur-base),border-color var(--dur-base),backdrop-filter var(--dur-base);
 }
 .nav.scrolled {
   background:color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter:blur(16px); border-bottom:1px solid var(--border2);
 }
 .nav-logo {
-  font-family:var(--fh); font-size:17px; font-weight:700;
+  font-family:var(--fh); font-size:var(--logo-size); font-weight:700;
   letter-spacing:-0.02em; color:var(--fg); text-decoration:none;
-  word-spacing:-3px;
 }
-.nav-logo span { color:var(--accent); }
-.nav-links { display:flex; gap:40px; }
+.nav-logo span { color:var(--accent); margin-left:var(--logo-name-gap); }
+.nav-links { display:flex; gap:var(--nav-gap); }
 .nav-links a {
-  color:var(--fg2); font-size:12px; text-decoration:none;
+  color:var(--fg2); font-size:var(--nav-size); text-decoration:none;
   letter-spacing:.08em; text-transform:uppercase; font-family:var(--fm);
-  transition:color .2s;
+  transition:color var(--dur-fast);
 }
 .nav-links a:hover { color:var(--accent); }
 
@@ -105,91 +172,91 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .hero-grid {
   position:absolute; inset:0; z-index:0;
   background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
-  background-size:52px 52px;
+  background-size:var(--grid-cell) var(--grid-cell);
   mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
   -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
 }
 .hero-glow {
-  position:absolute; z-index:1; width:560px; height:560px; border-radius:50%;
+  position:absolute; z-index:1; width:var(--glow-size); height:var(--glow-size); border-radius:50%;
   background:radial-gradient(circle,var(--glow) 0%,transparent 70%);
   pointer-events:none; transform:translate(-50%,-50%);
   transition:opacity .4s; opacity:0;
 }
 .hero-inner {
-  position:relative; z-index:2; padding:0 52px; padding-top:80px;
-  width:100%; max-width:1200px; margin:0 auto;
+  position:relative; z-index:2; padding:0 var(--pad-x); padding-top:var(--hero-pad-top);
+  width:100%; max-width:var(--max-w); margin:0 auto;
 }
 .hero-eyebrow {
   display:flex; align-items:center; gap:14px;
   font-family:var(--fm); font-size:11px; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--accent); margin-bottom:28px;
+  text-transform:uppercase; color:var(--accent); margin-bottom:var(--hero-eyebrow-mb);
 }
 .hero-eyebrow::before { content:''; width:36px; height:1px; background:var(--accent); }
 .hero-h1 {
-  font-family:var(--fh); font-weight:700; line-height:.95;
-  letter-spacing:-0.04em; color:var(--fg); margin-bottom:28px;
-  font-size:clamp(56px,9vw,120px);
+  font-family:var(--fh); font-weight:700; line-height:var(--hero-h1-leading);
+  letter-spacing:-0.04em; color:var(--fg); margin-bottom:var(--hero-h1-mb);
+  font-size:var(--hero-h1-size);
 }
 .hero-h1 .accent { color:var(--accent); }
 .hero-bio {
-  font-family:var(--fb); font-size:17px; line-height:1.65;
-  color:var(--fg2); max-width:480px; margin-bottom:52px; font-weight:400;
+  font-family:var(--fb); font-size:var(--hero-bio-size); line-height:1.65;
+  color:var(--fg2); max-width:480px; margin-bottom:var(--hero-bio-mb); font-weight:400;
 }
-.hero-ctas { display:flex; gap:14px; flex-wrap:wrap; }
+.hero-ctas { display:flex; gap:var(--hero-cta-gap); flex-wrap:wrap; }
 .btn-p {
-  font-family:var(--fm); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  font-family:var(--fm); font-size:var(--nav-size); letter-spacing:.1em; text-transform:uppercase;
   background:var(--accent); color:var(--bg); border:none; padding:15px 36px;
   cursor:pointer; font-weight:600; border-radius:var(--r); text-decoration:none;
   display:inline-block; will-change:transform;
-  transition:opacity .2s, transform .4s cubic-bezier(.25,.46,.45,.94);
+  transition:opacity var(--dur-fast), transform .4s var(--ease);
 }
 .btn-p:hover { opacity:.85; }
 .btn-g {
-  font-family:var(--fm); font-size:12px; letter-spacing:.1em; text-transform:uppercase;
+  font-family:var(--fm); font-size:var(--nav-size); letter-spacing:.1em; text-transform:uppercase;
   background:transparent; color:var(--fg); border:1px solid var(--border); padding:15px 36px;
   cursor:pointer; border-radius:var(--r); text-decoration:none; display:inline-block;
   will-change:transform;
-  transition:border-color .2s, color .2s, transform .4s cubic-bezier(.25,.46,.45,.94);
+  transition:border-color var(--dur-fast), color var(--dur-fast), transform .4s var(--ease);
 }
 .btn-g:hover { border-color:var(--accent); color:var(--accent); }
 .hero-meta {
-  position:absolute; right:52px; bottom:0; top:80px;
+  position:absolute; right:var(--pad-x); bottom:0; top:var(--hero-pad-top);
   display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:52px;
-  gap:32px; z-index:2;
+  gap:var(--hero-stat-gap); z-index:2;
 }
 .hero-stat { text-align:right; }
-.hero-stat-n { font-family:var(--fh); font-size:36px; font-weight:700; color:var(--fg); letter-spacing:-0.04em; }
+.hero-stat-n { font-family:var(--fh); font-size:var(--stat-n-size); font-weight:700; color:var(--fg); letter-spacing:-0.04em; }
 .hero-stat-l { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--fg2); margin-top:4px; }
 .scroll-cue {
-  position:absolute; bottom:36px; left:52px; z-index:2;
+  position:absolute; bottom:36px; left:var(--pad-x); z-index:2;
   display:flex; align-items:center; gap:14px;
   font-family:var(--fm); font-size:10px; letter-spacing:.14em;
   text-transform:uppercase; color:var(--fg3);
 }
-.scroll-line { width:48px; height:1px; background:var(--accent); animation:scrollPulse 2.4s ease-in-out infinite; transform-origin:left; }
+.scroll-line { width:48px; height:1px; background:var(--accent); animation:scrollPulse var(--hero-pulse) ease-in-out infinite; transform-origin:left; }
 @keyframes scrollPulse { 0%,100%{transform:scaleX(.4);opacity:.4} 50%{transform:scaleX(1);opacity:1} }
 
 
 
 /* ── SECTIONS ───────────────────────────────────────── */
-.wrap { max-width:1200px; margin:0 auto; padding:0 52px; }
-.sec { padding:120px 0; border-top:1px solid var(--border2); }
+.wrap { max-width:var(--max-w); margin:0 auto; padding:0 var(--pad-x); }
+.sec { padding:var(--sec-pad) 0; border-top:1px solid var(--border2); }
 .sec-label {
   display:flex; align-items:center; gap:12px;
   font-family:var(--fm); font-size:10px; letter-spacing:.18em;
-  text-transform:uppercase; color:var(--accent); margin-bottom:18px;
+  text-transform:uppercase; color:var(--accent); margin-bottom:var(--sec-label-mb);
 }
 .sec-label::before { content:attr(data-n); opacity:.45; }
 .sec-title {
-  font-family:var(--fh); font-size:clamp(34px,4.5vw,56px);
+  font-family:var(--fh); font-size:var(--sec-title-size);
   font-weight:700; letter-spacing:-0.035em; color:var(--fg);
-  margin-bottom:64px; line-height:1.05;
+  margin-bottom:var(--sec-title-mb); line-height:1.05;
 }
 
 /* ── REVEAL ON SCROLL ───────────────────────────────── */
 .reveal-x {
   opacity:0; transform:translateX(-40px);
-  transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1);
+  transition:opacity var(--dur-slow) var(--ease-reveal), transform var(--dur-slow) var(--ease-reveal);
 }
 .reveal-x.in { opacity:1; transform:translateX(0); }
 .sec-title.reveal-x { transition-delay:.08s; }
@@ -198,27 +265,27 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 
 /* ── PROJECTS ───────────────────────────────────────── */
-.proj-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:2px; background:var(--border2); border:1px solid var(--border2); }
+.proj-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--card-gap); background:var(--border2); border:1px solid var(--border2); }
 .proj-card {
-  background:var(--bg); padding:44px; cursor:pointer;
-  transition:background .25s; position:relative; overflow:hidden;
+  background:var(--bg); padding:var(--card-pad); cursor:pointer;
+  transition:background var(--dur-fast); position:relative; overflow:hidden;
   display:flex; flex-direction:column;
 }
 .proj-card:hover { background:var(--bg2); }
 .proj-card::after {
   content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
   background:var(--accent); transform:scaleY(0); transform-origin:bottom;
-  transition:transform .3s ease;
+  transition:transform var(--dur-base) ease;
 }
 .proj-card:hover::after { transform:scaleY(1); }
 .proj-badge {
   display:inline-flex; align-items:center;
   font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
   color:var(--accent); border:1px solid var(--border); padding:5px 12px;
-  margin-bottom:28px; border-radius:var(--r); width:fit-content;
+  margin-bottom:var(--card-badge-mb); border-radius:var(--r); width:fit-content;
 }
 .proj-placeholder {
-  width:100%; height:180px; margin-bottom:28px;
+  width:100%; height:var(--viewer-h); margin-bottom:var(--card-badge-mb);
   background:repeating-linear-gradient(135deg,var(--bg2) 0,var(--bg2) 8px,var(--bg4) 8px,var(--bg4) 16px);
   border:1px solid var(--border2); border-radius:var(--r);
   display:flex; align-items:center; justify-content:center;
@@ -226,19 +293,19 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   text-transform:uppercase; color:var(--fg3); flex-shrink:0;
 }
 .proj-title { font-family:var(--fh); font-size:22px; font-weight:700; letter-spacing:-0.025em; color:var(--fg); margin-bottom:10px; }
-.proj-short { font-size:14px; color:var(--fg2); line-height:1.6; margin-bottom:24px; flex:1; }
+.proj-short { font-size:var(--small-size); color:var(--fg2); line-height:1.6; margin-bottom:24px; flex:1; }
 .proj-tags { display:flex; flex-wrap:wrap; gap:6px; }
 .proj-tag {
   font-family:var(--fm); font-size:10px; color:var(--fg2);
   padding:4px 9px; background:var(--bg3); border:1px solid var(--border2);
   border-radius:var(--r); letter-spacing:.04em;
 }
-.proj-arrow { position:absolute; bottom:32px; right:36px; color:var(--accent); font-size:22px; opacity:0; transition:opacity .2s,transform .2s; }
+.proj-arrow { position:absolute; bottom:32px; right:36px; color:var(--accent); font-size:22px; opacity:0; transition:opacity var(--dur-fast),transform var(--dur-fast); }
 .proj-card:hover .proj-arrow { opacity:1; transform:translate(3px,-3px); }
 
 /* ── 3D MODEL VIEWER ────────────────────────────────── */
 .model-viewer {
-  width:100%; height:180px; margin-bottom:28px;
+  width:100%; height:var(--viewer-h); margin-bottom:var(--card-badge-mb);
   background:repeating-linear-gradient(135deg,var(--bg2) 0,var(--bg2) 8px,var(--bg4) 8px,var(--bg4) 16px);
   border:1px solid var(--border2); border-radius:var(--r);
   position:relative; overflow:hidden; flex-shrink:0;
@@ -250,13 +317,13 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   font-family:var(--fm); font-size:10px; letter-spacing:.1em;
   text-transform:uppercase; color:var(--fg3);
 }
-.modal-viewer { height:320px; margin-bottom:40px; }
+.modal-viewer { height:var(--viewer-h-modal); margin-bottom:40px; }
 .proj-model-wrap { position:relative; }
 .reveal-hint {
   position:absolute; top:10px; left:12px; z-index:3;
   font-family:var(--fm); font-size:9px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--accent);
-  pointer-events:none; opacity:.55; transition:opacity .25s;
+  pointer-events:none; opacity:.55; transition:opacity var(--dur-fast);
   display:flex; align-items:center; gap:8px;
 }
 .reveal-hint::before { content:''; width:14px; height:1px; background:var(--accent); }
@@ -268,11 +335,11 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   background:color-mix(in srgb, var(--bg) 90%, transparent);
   border:1px solid var(--border); padding:6px 12px;
   border-radius:var(--r); cursor:pointer;
-  transition:color .2s,border-color .2s;
+  transition:color var(--dur-fast),border-color var(--dur-fast);
 }
 .viewer-toggle:hover { color:var(--accent); border-color:var(--accent); }
 .proj-card-active { grid-column:1/-1; }
-.proj-card-active .model-viewer { height:280px; }
+.proj-card-active .model-viewer { height:var(--viewer-h-active); }
 .proj-planned { opacity:.55; cursor:default; }
 .proj-planned .proj-arrow { display:none; }
 .proj-planned-badge {
@@ -289,7 +356,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   backdrop-filter:blur(8px);
   border:1px solid var(--border); padding:8px 18px;
   border-radius:var(--r); cursor:pointer;
-  transition:color .2s,border-color .2s,background .2s;
+  transition:color var(--dur-fast),border-color var(--dur-fast),background var(--dur-fast);
 }
 .cs-hero-toggle:hover { color:var(--accent); border-color:var(--accent); }
 .cs-hero-toggle.active { color:var(--accent); border-color:var(--accent); }
@@ -313,7 +380,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   float:right; margin-left:16px; background:none; border:1px solid var(--border);
   color:var(--fg2); padding:8px 18px; cursor:pointer; font-family:var(--fm);
   font-size:11px; letter-spacing:.1em; text-transform:uppercase; border-radius:var(--r);
-  transition:color .2s,border-color .2s;
+  transition:color var(--dur-fast),border-color var(--dur-fast);
 }
 .modal-close:hover { color:var(--accent); border-color:var(--accent); }
 .modal-tag { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
@@ -328,7 +395,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   text-transform:uppercase; color:var(--fg3);
 }
 .modal-sh { font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; margin-top:32px; }
-.modal-p { font-size:15px; line-height:1.75; color:var(--fg2); }
+.modal-p { font-size:var(--body-size); line-height:1.75; color:var(--fg2); }
 .modal-code {
   background:var(--bg4); border:1px solid var(--border2); padding:18px 22px;
   font-family:var(--fm); font-size:13px; color:var(--accent);
@@ -342,25 +409,25 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .cs-nav {
   position:fixed; top:0; left:0; right:0; z-index:100;
   display:flex; align-items:center; justify-content:space-between;
-  padding:22px 52px;
+  padding:var(--nav-y) var(--pad-x);
   background:color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter:blur(16px); border-bottom:1px solid var(--border2);
 }
 .cs-back {
   font-family:var(--fm); font-size:11px; letter-spacing:.1em;
   text-transform:uppercase; color:var(--fg2); text-decoration:none;
-  display:flex; align-items:center; gap:8px; transition:color .2s;
+  display:flex; align-items:center; gap:8px; transition:color var(--dur-fast);
 }
 .cs-back:hover { color:var(--accent); }
 .cs-hero {
-  width:100%; height:55vh; margin-top:72px;
+  width:100%; height:var(--viewer-h-study); margin-top:72px;
   border-bottom:1px solid var(--border2); overflow:hidden; position:relative;
 }
 .cs-hero .model-viewer,
 .cs-hero .modal-viewer { width:100%; height:100%; margin-bottom:0; border:none; border-radius:0; background:var(--bg2); }
 .cs-header {
-  max-width:1200px; margin:0 auto;
-  padding:56px 52px 56px;
+  max-width:var(--max-w); margin:0 auto;
+  padding:56px var(--pad-x) 56px;
   border-bottom:1px solid var(--border2);
 }
 .cs-tags-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
@@ -370,13 +437,13 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   line-height:1.0; margin-bottom:14px;
 }
 .cs-subtitle { font-size:16px; color:var(--fg2); line-height:1.6; max-width:600px; }
-.cs-body { max-width:1200px; margin:0 auto; padding:56px 52px 120px; }
+.cs-body { max-width:var(--max-w); margin:0 auto; padding:56px var(--pad-x) var(--sec-pad); }
 .cs-section { margin-top:52px; }
 .cs-sh {
   font-family:var(--fm); font-size:10px; letter-spacing:.16em;
   text-transform:uppercase; color:var(--accent); margin-bottom:14px;
 }
-.cs-p { font-size:15px; line-height:1.75; color:var(--fg2); }
+.cs-p { font-size:var(--body-size); line-height:1.75; color:var(--fg2); }
 .cs-code {
   background:var(--bg4); border:1px solid var(--border2); padding:18px 22px;
   font-family:var(--fm); font-size:13px; color:var(--accent);
@@ -401,7 +468,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .cs-link {
   font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
   color:var(--fg2); text-decoration:none; border:1px solid var(--border);
-  padding:10px 20px; border-radius:var(--r); transition:color .2s,border-color .2s;
+  padding:10px 20px; border-radius:var(--r); transition:color var(--dur-fast),border-color var(--dur-fast);
 }
 .cs-link:hover { color:var(--accent); border-color:var(--accent); }
 .cs-pagination {
@@ -424,7 +491,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 
 /* ── SKILLS ─────────────────────────────────────────── */
 .skills-wrap {
-  width:100%; height:460px; position:relative;
+  width:100%; height:var(--skills-h); position:relative;
   border-top:1px solid var(--border2); border-bottom:1px solid var(--border2);
   overflow:hidden; background:var(--bg2);
 }
@@ -453,12 +520,12 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .tl-desc { font-size:14px; color:var(--fg2); line-height:1.75; }
 
 /* ── CONTACT ────────────────────────────────────────── */
-.contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--border2); border:1px solid var(--border2); margin-top:64px; }
-.contact-cell { background:var(--bg); padding:44px; }
+.contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--card-gap); background:var(--border2); border:1px solid var(--border2); margin-top:64px; }
+.contact-cell { background:var(--bg); padding:var(--card-pad); }
 .contact-cell.accent-bg { background:var(--accent); }
 .contact-label { font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--fg2); margin-bottom:12px; }
 .contact-cell.accent-bg .contact-label { color:var(--bg); opacity:.7; }
-.contact-value { font-family:var(--fh); font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--fg); text-decoration:none; display:block; transition:opacity .2s; }
+.contact-value { font-family:var(--fh); font-size:22px; font-weight:700; letter-spacing:-0.02em; color:var(--fg); text-decoration:none; display:block; transition:opacity var(--dur-fast); }
 .contact-value:hover { opacity:.7; }
 .contact-cell.accent-bg .contact-value { color:var(--bg); }
 .contact-big { font-family:var(--fh); font-size:clamp(40px,6vw,72px); font-weight:700; letter-spacing:-0.04em; color:var(--fg); line-height:1; margin-bottom:24px; }
@@ -468,12 +535,12 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 /* ── FOOTER ─────────────────────────────────────────── */
 .footer-inner {
   display:flex; justify-content:space-between; align-items:center;
-  padding:40px 52px;
+  padding:40px var(--pad-x);
 }
 .footer-name { font-family:var(--fh); font-size:18px; font-weight:700; letter-spacing:-0.02em; }
 .footer-name span { color:var(--accent); }
 .footer-links { display:flex; gap:28px; }
-.footer-links a { font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--fg2); text-decoration:none; transition:color .2s; }
+.footer-links a { font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--fg2); text-decoration:none; transition:color var(--dur-fast); }
 .footer-links a:hover { color:var(--accent); }
 .footer-copy { font-family:var(--fm); font-size:10px; color:var(--fg3); letter-spacing:.06em; }
 
@@ -507,6 +574,106 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
+/* ═══════════════════════════════════════════════════════
+   CONFIG  —  JS runtime tuning (3D viewer & cursor)
+   ═══════════════════════════════════════════════════════ */
+const CONFIG = {
+  /* ── 3D MODEL ──────────────────────────────────────── */
+  spinSpeed:         0.005,  /* auto-rotate angular velocity (rad/frame) */
+
+  /* ── SPOTLIGHT REVEAL ───────────────────────────────── */
+  spotlightRadius:   52,     /* cursor reveal radius in CSS px (scaled by devicePixelRatio) */
+  spotlightFade:     [0.28, 0.46], /* [inner, outer] smoothstep fade edge */
+  trailLerp:         [0.45, 0.20, 0.12], /* comet trail lerp speeds [head, mid, tail] */
+  activateSpeed:     0.20,   /* reveal fade-in speed (lerp per frame toward 1) */
+  deactivateSpeed:   0.15,   /* reveal fade-out speed (lerp per frame toward 0) */
+};
+
+/* ── MODEL DISPLAY ─────────────────────────────────────
+   Tweak model placement here. Changes apply live on save.
+   Applies to both the project card AND the case study page.
+
+   cardScale    — model size in the project card          (default 2.0)
+   studyScale   — model size on the case study page       (default 1.8)
+   cardY        — vertical shift in card view             (default 0, + moves up)
+   studyY       — vertical shift on case study page       (default 0, + moves up)
+   cameraZ      — camera distance                         (default 3.2, lower = closer)
+   rotCenterY   — spin axis offset from bbox centre       (default 0, + axis moves up on model)
+   cardViewerH  — height of viewer box in card            (default null → CSS 180/280px)
+   studyViewerH — height of viewer box on case study page (default null → CSS 55vh)
+   orientX      — extra tilt forward/back in degrees      (default 0, applied after Z-up→Y-up base)
+   orientY      — extra rotation left/right in degrees    (default 0)
+   orientZ      — extra roll left/right in degrees        (default 0)
+─────────────────────────────────────────────────────── */
+const MODEL_DISPLAY = {
+  musiccontroller:    { cardScale:2.5, studyScale:1.8, cardY:0.4, studyY:0, cameraZ:4,   rotCenterY:0, cardViewerH:300, studyViewerH:null, orientX:85,  orientY:0, orientZ:0 },
+  selfbalancingrobot: { cardScale:2.0, studyScale:1.8, cardY:0.4, studyY:0, cameraZ:3.2, rotCenterY:0, cardViewerH:300, studyViewerH:null, orientX:0,   orientY:0, orientZ:0 },
+  arm:                { cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0, cardViewerH:50, studyViewerH:null, orientX:0,   orientY:0, orientZ:0 },
+  convoy:             { cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0, cardViewerH:50, studyViewerH:null, orientX:0,   orientY:0, orientZ:0 },
+};
+
+/* ═══════════════════════════════════════════════════════
+   CONTENT  —  all editable UI text in one place
+   ═══════════════════════════════════════════════════════ */
+const CONTENT = {
+
+  /* ── NAVIGATION ─────────────────────────────────────── */
+  nav: {
+    links: [
+      { label:"Work",       href:"#work"       },
+      { label:"Skills",     href:"#skills"     },
+      { label:"Experience", href:"#experience" },
+    ],
+    csBack: "← Work",
+  },
+
+  /* ── HERO ───────────────────────────────────────────── */
+  hero: {
+    locationTag: "NEWCASTLE UPON TYNE",
+    ctas: [
+      { label:"View Work",  href:"#work",       primary:true  },
+      { label:"Experience", href:"#experience", primary:false },
+    ],
+    scrollCue: "Scroll",
+  },
+
+  /* ── SECTION LABELS & TITLES ────────────────────────── */
+  sections: {
+    work:       { num:"01", label:"Projects",   title:"Selected Work"     },
+    skills:     { num:"02", label:"Skills",     title:"Technical Toolkit" },
+    experience: { num:"03", label:"Experience", title:"Career Timeline"   },
+    contact:    { num:"04", label:"Contact"                               },
+  },
+
+  /* ── PROJECTS ───────────────────────────────────────── */
+  projects: {
+    revealHint:    "Hover · Reveal Internals",
+    plannedBadge:  "Planned",
+    inDevelopment: "In Development",
+  },
+
+  /* ── CONTACT ────────────────────────────────────────── */
+  contact: {
+    heading:      "Let's work\ntogether.",
+    subtext:      "Open to freelance projects, collaborations, and full-time opportunities in design engineering, thermal management, and robotics.",
+    email:        "lewis@lewis-fowler.co.uk",
+    linkedin:     "https://linkedin.com/in/lewisfowler",
+    github:       "https://github.com/lewisfowler",
+    availability: "Open to freelance projects",
+    responseTime: "Within 48 hours",
+  },
+
+  /* ── FOOTER ─────────────────────────────────────────── */
+  footer: {
+    copy: "Design Engineer · Newcastle upon Tyne",
+    links: [
+      { label:"LinkedIn", href:"https://linkedin.com/in/lewisfowler", external:true  },
+      { label:"GitHub",   href:"https://github.com/lewisfowler",      external:true  },
+      { label:"Email",    href:"mailto:lewis@lewis-fowler.co.uk",     external:false },
+    ],
+  },
+};
+
 /* ── DATA ───────────────────────────────────────────── */
 const DATA = {
   profile: {
@@ -517,9 +684,7 @@ const DATA = {
     location: "Newcastle, UK",
   },
   stats: [
-    { n: "4+", l: "Years Experience" },
-    { n: "2", l: "Industries" },
-    { n: "MEng", l: "Glasgow" },
+    { n: "MEng", l: "University of Glasgow" },
   ],
   skills: [
     { name: "SolidWorks",   cat: "Software"   },
@@ -540,16 +705,8 @@ const DATA = {
     { id:4, title:"MEng Mechanical Engineering", place:"University of Glasgow", date:"2018 – 2023", desc:"Formula Student: Aerodynamics (CFD) & Control Teams. Final year project at Rolls-Royce designing high-performance heat exchangers." },
   ],
   projects: [
-    // ── display config reference ──────────────────────────────────────
-    // cardScale:   model size in the project card        (default 2.0)
-    // studyScale:  model size on the case study page     (default 1.8)
-    // cardY:       vertical offset in card view          (default 0, + = up)
-    // studyY:      vertical offset on case study page    (default 0, + = up)
-    // cameraZ:     camera distance — smaller = zoom in   (default 3.2)
-    // rotCenterY:  spin axis offset from bbox centre     (default 0, + = axis moves up)
-    // ─────────────────────────────────────────────────────────────────
-    { id:"sonos", status:"active",
-      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+    { id:"musiccontroller", status:"active",
+      display: MODEL_DISPLAY.musiccontroller,
       title:"Music Controller", short:"Haptic smart knob, Spotify over Thread, LVGL touchscreen — a physical antidote to the phone.", tags:["IoT","PCB Design","BLDC / FOC","C++","LVGL"],
       model: { path:"assets/models/MusicControllerExternal.glb", internalsPath:"assets/models/MusicControllerInternal.glb" },
       intro:"Phones are everything devices. They can't specialise, so they're mediocre at most things — including controlling music. This project is a dedicated physical controller built to do one thing well: make interacting with music enjoyable. Physical buttons that click, a haptic knob that resists and snaps, a 5\" screen worth looking at. V1 used a Cheap Yellow Display and a mechanical rotary encoder. V1 hit real limits fast. V2 replaces both with a 5\" ESP32-S3 IPS touchscreen and a SmartKnob-inspired BLDC motor assembly — elevating the volume knob from a component into an experience.",
@@ -568,8 +725,8 @@ const DATA = {
         { label:"Input",          value:"Smart knob (BLDC) + 4× mechanical switches" },
       ],
       timeline:null, links:null, images:null },
-    { id:"balance", status:"active",
-      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+    { id:"selfbalancingrobot", status:"active",
+      display: MODEL_DISPLAY.selfbalancingrobot,
       title:"Self-Balancing Robot", short:"PID control + EKF state estimation.", tags:["Robotics","Control Theory","3D Printing","ROS 2"],
       model: { path:"assets/models/Self-Balancing-Robot.glb", internalsPath:"assets/models/Self-Balancing-Robot-Internals.glb" },
       intro:"One of the fundamentals of control engineering is keeping an inherently unstable system stable.",
@@ -578,7 +735,7 @@ const DATA = {
       challenges:"Raw accelerometer data was too noisy for the D-term. A moving average filter resolved instability without adding lag.",
       results:null, specs:null, timeline:null, links:null, images:null },
     { id:"arm", status:"planned",
-      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+      display: MODEL_DISPLAY.arm,
       title:"Robotic Arm", short:"Inverse kinematics & precision path planning.", tags:["Robotics","MATLAB","Mechanical Design"],
       intro:"A desktop-scale manipulator to explore coordinate systems, actuator control, and trajectory planning.",
       tech:"Inverse kinematics via Jacobian Transpose to map (x,y,z) targets to joint angles. Smooth path planning with interpolated waypoints.",
@@ -586,7 +743,7 @@ const DATA = {
       challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop.",
       results:null, specs:null, timeline:null, links:null, images:null },
     { id:"convoy", status:"planned",
-      display:{ cardScale:2.0, studyScale:1.8, cardY:0, studyY:0, cameraZ:3.2, rotCenterY:0 },
+      display: MODEL_DISPLAY.convoy,
       title:"ConvoyLink", short:"Off-grid LoRa mesh for GPS tracking & voice.", tags:["RF","ESP32","React Native"],
       intro:"Mesh radio network for vehicle convoy tracking outside cell coverage areas.",
       tech:"LoRa 915MHz for long-range telemetry. Bluetooth bridge to React Native app. ESP32-S3 as processor.",
@@ -700,10 +857,17 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
       };
 
       const orientAndPair = (m) => {
-        m.quaternion.setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+        const baseQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI / 2, 0, 0));
+        const offQ  = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+          (display.orientX ?? 0) * Math.PI / 180,
+          (display.orientY ?? 0) * Math.PI / 180,
+          (display.orientZ ?? 0) * Math.PI / 180
+        ));
+        m.quaternion.multiplyQuaternions(baseQ, offQ);
         applyMaterialPairing(m);
       };
 
+      // fitInsideUnit only handles scale + centering; Y offsets go on the wrapper in finishWithGroup
       const fitInsideUnit = (root, targetSize) => {
         const box = new THREE.Box3().setFromObject(root);
         const size = new THREE.Vector3(); box.getSize(size);
@@ -712,8 +876,18 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         const scale = targetSize / maxDim;
         root.scale.setScalar(scale);
         root.position.sub(center.multiplyScalar(scale));
-        root.position.y += withControls ? STUDY_Y : CARD_Y;
         root.position.y -= ROT_CENTER_Y;
+      };
+
+      // Wraps the positioned child in a Group whose origin sits at the bbox centre.
+      // Rotating the wrapper spins around that centre, not the model's corner.
+      const finishWithGroup = (child) => {
+        const wrapper = new THREE.Group();
+        wrapper.add(child);
+        wrapper.position.y = withControls ? STUDY_Y : CARD_Y;
+        scene.add(wrapper);
+        model = wrapper;
+        setLoading(false);
       };
 
       const injectSpotlight = (mat, sp) => {
@@ -744,7 +918,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
                   float k = max(0.0, 1.0 - d / r);
                   field += k * k * uWeights[i];
                 }
-                gl_FragColor.a *= 1.0 - smoothstep(0.28, 0.46, field * uActive);
+                gl_FragColor.a *= 1.0 - smoothstep(${CONFIG.spotlightFade[0]}, ${CONFIG.spotlightFade[1]}, field * uActive);
               }`);
         };
         mat.needsUpdate = true;
@@ -753,12 +927,6 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
       const loadOne = (p) => new Promise((resolve, reject) => {
         new window.GLTFLoader().load(p, (gltf) => resolve(gltf.scene), undefined, reject);
       });
-
-      const finishWithGroup = (group) => {
-        scene.add(group);
-        model = group;
-        setLoading(false);
-      };
 
       if (revealPath) {
         Promise.all([loadOne(path), loadOne(revealPath)]).then(([shell, inner]) => {
@@ -782,7 +950,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
             manualPx: new THREE.Vector2(cw0 * 0.5, ch0 * 0.5),
             active: { value: 0 },
             cursorMode: false,
-            radiusPx: { value: 52 * renderer.getPixelRatio() },
+            radiusPx: { value: CONFIG.spotlightRadius * renderer.getPixelRatio() },
           };
           shell.traverse(c => {
             if (!c.isMesh) return;
@@ -826,11 +994,11 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         renderer.setSize(rw, rh);
         camera.aspect = rw / rh;
         camera.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = 52 * renderer.getPixelRatio();
+        if (spotlight) spotlight.radiusPx.value = CONFIG.spotlightRadius * renderer.getPixelRatio();
       });
       resizeObs.observe(mount);
 
-      const spinQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), 0.005);
+      const spinQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), CONFIG.spinSpeed);
 
       const tick = () => {
         if (disposed) return;
@@ -838,12 +1006,12 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         if (spotlight) {
           const pts = spotlight.pts;
           if (spotlight.cursorMode) {
-            pts[0].lerp(spotlight.manualPx, 0.45);
-            pts[1].lerp(pts[0], 0.20);
-            pts[2].lerp(pts[1], 0.12);
-            spotlight.active.value += (1.0 - spotlight.active.value) * 0.20;
+            pts[0].lerp(spotlight.manualPx, CONFIG.trailLerp[0]);
+            pts[1].lerp(pts[0],             CONFIG.trailLerp[1]);
+            pts[2].lerp(pts[1],             CONFIG.trailLerp[2]);
+            spotlight.active.value += (1.0 - spotlight.active.value) * CONFIG.activateSpeed;
           } else {
-            spotlight.active.value += (0.0 - spotlight.active.value) * 0.15;
+            spotlight.active.value += (0.0 - spotlight.active.value) * CONFIG.deactivateSpeed;
           }
         }
         if (controls) controls.update();
@@ -880,7 +1048,8 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
     };
   }, [path, revealPath, withControls, autoRotate]);
 
-  return <div ref={mountRef} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`}></div>;
+  const viewerH = withControls ? display.studyViewerH : display.cardViewerH;
+  return <div ref={mountRef} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`} style={viewerH ? {height: viewerH} : undefined}></div>;
 }
 
 /* ── HERO ───────────────────────────────────────────── */
@@ -929,15 +1098,16 @@ function Hero() {
         <div style={{position:'absolute',left:'50%',top:0,bottom:0,width:'1px',background:'var(--accent)'}}></div>
       </div>
       <div style={{position:'absolute',bottom:80,left:52,fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
-        NEWCASTLE UPON TYNE · EST. 2018
+        {CONTENT.hero.locationTag}
       </div>
       <div className="hero-inner">
         <div className="hero-eyebrow">{DATA.profile.current}</div>
         <h1 className="hero-h1">{first} {last}</h1>
         <p className="hero-bio">{DATA.profile.bio}</p>
         <div className="hero-ctas">
-          <a href="#work" className="btn-p">View Work</a>
-          <a href="#experience" className="btn-g">Experience</a>
+          {CONTENT.hero.ctas.map(c => (
+            <a key={c.label} href={c.href} className={c.primary ? 'btn-p' : 'btn-g'}>{c.label}</a>
+          ))}
         </div>
       </div>
       <div className="hero-meta">
@@ -950,7 +1120,7 @@ function Hero() {
       </div>
       <div className="scroll-cue">
         <div className="scroll-line"></div>
-        <span>Scroll</span>
+        <span>{CONTENT.hero.scrollCue}</span>
       </div>
     </section>
   );
@@ -966,18 +1136,16 @@ function Nav() {
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
+  const [first, last] = DATA.profile.name.split(' ');
   return (
     <nav className={`nav${scrolled?' scrolled':''}`}>
       <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
         <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
-        Lewis <span>Fowler</span>
+        {first} <span>{last}</span>
       </a>
       <div className="nav-links">
-        <a href="#work">Work</a>
-        <a href="#skills">Skills</a>
-        <a href="#experience">Experience</a>
+        {CONTENT.nav.links.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
       </div>
-
     </nav>
   );
 }
@@ -989,8 +1157,8 @@ function Projects() {
   return (
     <section id="work" className="sec">
       <div className="wrap">
-        <div className="sec-label" data-n="01 /">Projects</div>
-        <div className="sec-title">Selected Work</div>
+        <div className="sec-label" data-n={`${CONTENT.sections.work.num} /`}>{CONTENT.sections.work.label}</div>
+        <div className="sec-title">{CONTENT.sections.work.title}</div>
       </div>
       <div className="wrap" style={{paddingLeft:0,paddingRight:0}}>
         <div className="proj-grid">
@@ -1000,7 +1168,7 @@ function Projects() {
               {p.model
                 ? <div className="proj-model-wrap">
                     <ModelViewer path={p.model.path} revealPath={p.model.internalsPath || null} display={p.display} />
-                    {p.model.internalsPath && <div className="reveal-hint">Hover · Reveal Internals</div>}
+                    {p.model.internalsPath && <div className="reveal-hint">{CONTENT.projects.revealHint}</div>}
                   </div>
                 : <div className="proj-placeholder">3D model — {p.title}</div>}
               <div className="proj-title">{p.title}</div>
@@ -1012,11 +1180,11 @@ function Projects() {
           {planned.map(p => (
             <div key={p.id} className="proj-card proj-planned">
               <div className="proj-badge">{p.tags[0]}</div>
-              <div className="proj-placeholder">In Development</div>
+              <div className="proj-placeholder">{CONTENT.projects.inDevelopment}</div>
               <div className="proj-title">{p.title}</div>
               <div className="proj-short">{p.short}</div>
               <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
-              <div className="proj-planned-badge">Planned</div>
+              <div className="proj-planned-badge">{CONTENT.projects.plannedBadge}</div>
             </div>
           ))}
         </div>
@@ -1126,8 +1294,8 @@ function Skills({ themeKey }) {
   return (
     <section id="skills" className="sec" style={{paddingTop:120,paddingBottom:0,borderTop:'1px solid var(--border2)'}}>
       <div className="wrap" style={{paddingBottom:64}}>
-        <div className="sec-label" data-n="02 /">Skills</div>
-        <div className="sec-title" style={{marginBottom:0}}>Technical Toolkit</div>
+        <div className="sec-label" data-n={`${CONTENT.sections.skills.num} /`}>{CONTENT.sections.skills.label}</div>
+        <div className="sec-title" style={{marginBottom:0}}>{CONTENT.sections.skills.title}</div>
       </div>
       <div className="skills-wrap" ref={wrapRef}>
         <div className="skills-hint">Drag to interact</div>
@@ -1141,34 +1309,34 @@ function Contact() {
   return (
     <section id="contact" className="sec">
       <div className="wrap">
-        <div className="sec-label" data-n="04 /">Contact</div>
+        <div className="sec-label" data-n={`${CONTENT.sections.contact.num} /`}>{CONTENT.sections.contact.label}</div>
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:48,alignItems:'end',marginBottom:0}}>
           <div>
-            <div className="contact-big">Let's work<br/>together.</div>
-            <div className="contact-sub">Open to freelance projects, collaborations, and full-time opportunities in design engineering, thermal management, and robotics.</div>
+            <div className="contact-big">{CONTENT.contact.heading.split('\n').reduce((a,l,i)=>i===0?[l]:[...a,<br key={i}/>,l],[])}</div>
+            <div className="contact-sub">{CONTENT.contact.subtext}</div>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:12,alignItems:'flex-end'}}>
-            <a href="mailto:lewis@lewis-fowler.co.uk" className="btn-p" style={{textAlign:'center',minWidth:220}}>lewis@lewis-fowler.co.uk</a>
-            <a href="https://linkedin.com/in/lewisfowler" target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>LinkedIn ↗</a>
-            <a href="https://github.com/lewisfowler" target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>GitHub ↗</a>
+            <a href={`mailto:${CONTENT.contact.email}`} className="btn-p" style={{textAlign:'center',minWidth:220}}>{CONTENT.contact.email}</a>
+            <a href={CONTENT.contact.linkedin} target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>LinkedIn ↗</a>
+            <a href={CONTENT.contact.github} target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>GitHub ↗</a>
           </div>
         </div>
         <div className="contact-grid">
           <div className="contact-cell">
             <div className="contact-label">Currently</div>
-            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Design Engineer @ Boyd</span>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>{DATA.profile.current}</span>
           </div>
           <div className="contact-cell">
             <div className="contact-label">Location</div>
-            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Newcastle upon Tyne, UK</span>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>{DATA.profile.location}</span>
           </div>
           <div className="contact-cell accent-bg">
             <div className="contact-label">Availability</div>
-            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Open to freelance projects</span>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>{CONTENT.contact.availability}</span>
           </div>
           <div className="contact-cell">
             <div className="contact-label">Response time</div>
-            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>Within 48 hours</span>
+            <span className="contact-value" style={{fontSize:18,cursor:'default'}}>{CONTENT.contact.responseTime}</span>
           </div>
         </div>
       </div>
@@ -1181,8 +1349,8 @@ function Experience() {
   return (
     <section id="experience" className="sec">
       <div className="wrap">
-        <div className="sec-label" data-n="03 /">Experience</div>
-        <div className="sec-title">Career Timeline</div>
+        <div className="sec-label" data-n={`${CONTENT.sections.experience.num} /`}>{CONTENT.sections.experience.label}</div>
+        <div className="sec-title">{CONTENT.sections.experience.title}</div>
         <div className="timeline">
           {DATA.experience.map(e => (
             <div key={e.id} className="tl-item">
@@ -1327,11 +1495,13 @@ function CaseStudy({ proj }) {
   return (
     <div className="cs-page">
       <nav className="cs-nav">
-        <a href="#work" className="cs-back">← Work</a>
-        <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
-          <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
-          Lewis <span>Fowler</span>
-        </a>
+        <a href="#work" className="cs-back">{CONTENT.nav.csBack}</a>
+        {(() => { const [fn,ln] = DATA.profile.name.split(' '); return (
+          <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
+            <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
+            {fn} <span>{ln}</span>
+          </a>
+        ); })()}
       </nav>
 
       <div className="cs-hero">
@@ -1452,13 +1622,13 @@ function Portfolio() {
       <Contact />
       <footer style={{borderTop:'1px solid var(--border2)'}}>
         <div className="footer-inner">
-          <div className="footer-name">Lewis <span>Fowler</span></div>
+          {(() => { const [fn,ln] = DATA.profile.name.split(' '); return <div className="footer-name">{fn} <span>{ln}</span></div>; })()}
           <div className="footer-links">
-            <a href="https://linkedin.com/in/lewisfowler" target="_blank" rel="noopener">LinkedIn</a>
-            <a href="https://github.com/lewisfowler" target="_blank" rel="noopener">GitHub</a>
-            <a href="mailto:lewis@lewis-fowler.co.uk">Email</a>
+            {CONTENT.footer.links.map(l => (
+              <a key={l.label} href={l.href} {...(l.external ? {target:'_blank',rel:'noopener'} : {})}>{l.label}</a>
+            ))}
           </div>
-          <div className="footer-copy">Design Engineer · Newcastle upon Tyne</div>
+          <div className="footer-copy">{CONTENT.footer.copy}</div>
         </div>
       </footer>
     </>
