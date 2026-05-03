@@ -471,6 +471,17 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   padding:10px 20px; border-radius:var(--r); transition:color var(--dur-fast),border-color var(--dur-fast);
 }
 .cs-link:hover { color:var(--accent); border-color:var(--accent); }
+.cs-diagram-wrap {
+  margin-top:14px; border:1px solid var(--border2); border-radius:var(--r);
+  background:var(--bg2); overflow:hidden;
+}
+.cs-diagram-wrap img {
+  width:100%; height:auto; display:block;
+}
+.cs-diagram-label {
+  font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--fg3); padding:10px 16px; border-top:1px solid var(--border2);
+}
 .cs-pagination {
   border-top:1px solid var(--border2); margin-top:80px; padding-top:40px;
   display:flex; justify-content:space-between; align-items:center;
@@ -724,7 +735,10 @@ const DATA = {
         { label:"UI Framework",   value:"LVGL on ESP32-S3" },
         { label:"Input",          value:"Smart knob (BLDC) + 4× mechanical switches" },
       ],
-      timeline:null, links:null, images:null },
+      timeline:null, links:null, images:null,
+      diagrams:[
+        { label:"CYD Controller — Wiring Diagram", path:"assets/diagrams/CYD-Controller-Wiring-Diagram.svg" },
+      ]},
     { id:"selfbalancingrobot", status:"active",
       display: MODEL_DISPLAY.selfbalancingrobot,
       title:"Self-Balancing Robot", short:"PID control + EKF state estimation.", tags:["Robotics","Control Theory","3D Printing","ROS 2"],
@@ -1533,6 +1547,18 @@ function CaseStudy({ proj }) {
           <div className="cs-sh">Technical Approach</div>
           <p className="cs-p">{proj.tech}</p>
         </div>
+        {proj.diagrams && (
+          <div className="cs-section">
+            <div className="cs-sh">Wiring Diagrams</div>
+            {proj.diagrams.map((d, i) => (
+              <div key={i} className="cs-diagram-wrap">
+                <img src={d.path} alt={d.label} />
+                <div className="cs-diagram-label">{d.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="cs-section">
           <div className="cs-sh">Key Equation</div>
           <div className="cs-code">{proj.math}</div>
