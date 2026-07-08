@@ -425,6 +425,16 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .cs-hero-toggle:hover { color:var(--accent); border-color:var(--accent); }
 .cs-hero-toggle.active { color:var(--accent); border-color:var(--accent); }
+.cs-hero-toggle-left { right:auto; left:20px; }
+.viewer-load-btn {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:3;
+  font-family:var(--fm); font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--fg); background:color-mix(in srgb, var(--bg) 92%, transparent);
+  border:1px solid var(--border); padding:12px 22px;
+  border-radius:var(--r); cursor:pointer;
+  transition:color var(--dur-fast),border-color var(--dur-fast);
+}
+.viewer-load-btn:hover { color:var(--accent); border-color:var(--accent); }
 
 /* ── SHARED VIEWER SURFACES ─────────────────────────── */
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
@@ -527,7 +537,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .diagram-lb {
   position:fixed; inset:0; z-index:9000; background:rgba(26,18,8,.85);
   display:flex; align-items:center; justify-content:center;
-  animation:fadeIn var(--dur-fast) ease;
+  animation:fadeIn var(--dur-fast) ease; touch-action:none;
 }
 .diagram-lb-inner {
   position:relative; width:90vw; height:90vh;
@@ -535,7 +545,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   user-select:none; touch-action:none;
 }
 .diagram-lb img {
-  max-width:none; max-height:none; display:block;
+  max-width:100%; max-height:100%; display:block;
   transform-origin:center center; user-select:none; pointer-events:none;
 }
 .diagram-lb-close {
@@ -577,7 +587,10 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   .cs-nav { padding:18px 24px; }
   .cs-header, .cs-body { padding-left:24px; padding-right:24px; }
   .cs-specs { grid-template-columns:1fr; }
-  .cs-hero { height:40vh; }
+  .cs-hero { height:40vh; height:40svh; }
+  .cs-tl-item { grid-template-columns:76px 1px 1fr; column-gap:16px; }
+  .cs-pagination { gap:16px; flex-wrap:wrap; }
+  .cs-hero-toggle { padding:10px 16px; }
 }
 
 /* ── SKILLS ─────────────────────────────────────────── */
@@ -673,6 +686,23 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 @media(max-width:640px){
   .contact-grid{grid-template-columns:1fr;}
+}
+/* Compact hero spacing on short phone screens so nothing crowds the fold */
+@media(max-width:900px) and (max-height:740px){
+  :root{
+    --hero-pad-top:64px; --hero-eyebrow-mb:18px; --hero-h1-mb:18px;
+    --hero-bio-mb:32px; --hero-h1-size:clamp(44px,12vw,72px);
+  }
+  .scroll-cue{display:none;}
+}
+/* Comfortable tap targets on touch devices */
+@media(pointer:coarse){
+  .skills-replay{padding:12px 18px; font-size:11px;}
+  .diagram-lb-zoom button{width:44px; height:44px; font-size:16px;}
+  .diagram-lb-close{padding:12px 18px;}
+  .diagram-lb-hint{display:none;}
+  .footer-links{gap:32px;}
+  .footer-links a{padding:8px 0;}
 }
 </style>
 </head>
@@ -772,6 +802,9 @@ const CONTENT = {
     plannedBadge:  "Planned",
     inDevelopment: "In Development",
     loadingLabel:  "Loading 3D model…",
+    tapToLoad:     "Tap to load 3D model",
+    controlsOff:   "3D Controls: Off",
+    controlsOn:    "3D Controls: On",
   },
 
   /* ── SKILLS ─────────────────────────────────────────── */
@@ -892,10 +925,17 @@ const DATA = {
 /* ── MODEL VIEWER ───────────────────────────────────── */
 function ModelViewer({ path, revealPath = null, withControls = false, autoRotate = true, display = {} }) {
   const mountRef = useRef(null);
+  const apiRef = useRef(null);
   const [loading, setLoading] = useState(true);
+  // On touch devices, camera controls are opt-in: TrackballControls sets
+  // touch-action:none on the canvas, which would trap page scrolling.
+  const coarse = useState(() => window.matchMedia('(pointer: coarse)').matches)[0];
+  const [controlsOn, setControlsOn] = useState(false);
+  // Respect the browser's Data Saver mode: require a tap before fetching models.
+  const [gated, setGated] = useState(() => !!(navigator.connection && navigator.connection.saveData));
 
   useEffect(() => {
-    if (!path || !mountRef.current) return;
+    if (!path || !mountRef.current || gated) return;
 
     let disposed = false;
     let animId = null;
@@ -961,7 +1001,8 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
       const back = new THREE.DirectionalLight(0xffffff, 0.9);
       back.position.set(0, -2, -5); scene.add(back);
 
-      if (withControls && window.TrackballControls) {
+      const makeControls = () => {
+        if (controls || !window.TrackballControls) return;
         controls = new window.TrackballControls(camera, renderer.domElement);
         controls.rotateSpeed = 4.0;
         controls.zoomSpeed = 1.2;
@@ -971,7 +1012,16 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         controls.dynamicDampingFactor = 0.15;
         controls.minDistance = 1.5;
         controls.maxDistance = 8;
-      }
+      };
+      const dropControls = () => {
+        if (!controls) return;
+        controls.dispose();
+        controls = null;
+        renderer.domElement.style.touchAction = ''; // restore page scrolling over the canvas
+      };
+      apiRef.current = { setControls: (on) => { on ? makeControls() : dropControls(); } };
+      // Desktop: controls immediately. Touch: wait for the user to opt in via the toggle.
+      if (withControls && !coarse) makeControls();
 
 
       const matSat = (mat) => {
@@ -1157,7 +1207,10 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
 
       tickFn = () => {
         if (disposed) return;
-        if (model && autoRotate && !reduceMotion) model.quaternion.premultiply(spinQ);
+        // Idle spin: normal card auto-rotate, or a touch-device case-study
+        // hero whose camera controls are switched off.
+        const idleSpin = autoRotate || (withControls && coarse && !controls);
+        if (model && idleSpin && !reduceMotion) model.quaternion.premultiply(spinQ);
         if (spotlight) {
           const pts = spotlight.pts;
           if (spotlight.cursorMode) {
@@ -1176,16 +1229,18 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
       startLoop();
     };
 
-    // Defer init until the viewer approaches the viewport; pause rendering while off-screen.
+    // Defer init until the viewer approaches the viewport; pause rendering while
+    // off-screen. Tighter prefetch margin on touch devices to save mobile data.
     io = new IntersectionObserver((entries) => {
       visible = entries.some(e => e.isIntersecting);
       if (visible && !started) { started = true; init(); }
       else if (started) { visible ? startLoop() : stopLoop(); }
-    }, { rootMargin: '360px 0px' });
+    }, { rootMargin: coarse ? '120px 0px' : '360px 0px' });
     io.observe(mountRef.current);
 
     return () => {
       disposed = true;
+      apiRef.current = null;
       window.removeEventListener('three-ready', init);
       if (io) io.disconnect();
       if (animId) cancelAnimationFrame(animId);
@@ -1209,10 +1264,31 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         });
       }
     };
-  }, [path, revealPath, withControls, autoRotate]);
+  }, [path, revealPath, withControls, autoRotate, gated]);
+
+  const toggleTouchControls = () => {
+    const next = !controlsOn;
+    setControlsOn(next);
+    if (apiRef.current) apiRef.current.setControls(next);
+  };
 
   const viewerH = withControls ? display.studyViewerH : display.cardViewerH;
-  return <div ref={mountRef} data-loading={CONTENT.projects.loadingLabel} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`} style={viewerH ? {height: viewerH} : undefined}></div>;
+  return (
+    <>
+      <div ref={mountRef} data-loading={CONTENT.projects.loadingLabel} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading && !gated ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`} style={viewerH ? {height: viewerH} : undefined}></div>
+      {gated && (
+        <button className="viewer-load-btn" onClick={(e) => { e.stopPropagation(); setGated(false); }}>
+          {CONTENT.projects.tapToLoad}
+        </button>
+      )}
+      {withControls && coarse && !gated && (
+        <button
+          className={`cs-hero-toggle cs-hero-toggle-left${controlsOn ? ' active' : ''}`}
+          onClick={toggleTouchControls}
+        >{controlsOn ? CONTENT.projects.controlsOn : CONTENT.projects.controlsOff}</button>
+      )}
+    </>
+  );
 }
 
 /* ── HERO ───────────────────────────────────────────── */
@@ -1807,6 +1883,7 @@ function DiagramLightbox({ src, alt, onClose }) {
   const [pan, setPan]     = useState({ x:0, y:0 });
   const dragging          = useRef(false);
   const lastPos           = useRef({ x:0, y:0 });
+  const touchState        = useRef(null);
   const wrapRef           = useRef(null);
   const MIN = 0.5, MAX = 8;
 
@@ -1821,9 +1898,11 @@ function DiagramLightbox({ src, alt, onClose }) {
     const onKey = e => { if (e.key === 'Escape') onClose(); };
     el.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden'; // lock page scroll behind the lightbox
     return () => {
       el.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
     };
   }, [onClose]);
 
@@ -1842,12 +1921,43 @@ function DiagramLightbox({ src, alt, onClose }) {
   };
   const onMouseUp = () => { dragging.current = false; };
 
+  // Touch: one finger pans, two fingers pinch-zoom (touch-action:none on the
+  // container stops the browser from scrolling/zooming the page instead).
+  const onTouchStart = e => {
+    if (e.touches.length >= 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      touchState.current = { mode:'pinch', d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) };
+    } else if (e.touches.length === 1) {
+      touchState.current = { mode:'pan', x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  };
+  const onTouchMove = e => {
+    const s = touchState.current;
+    if (!s) return;
+    if (s.mode === 'pan' && e.touches.length === 1) {
+      const t = e.touches[0];
+      setPan(p => ({ x: p.x + t.clientX - s.x, y: p.y + t.clientY - s.y }));
+      s.x = t.clientX; s.y = t.clientY;
+    } else if (s.mode === 'pinch' && e.touches.length >= 2) {
+      const [a, b] = [e.touches[0], e.touches[1]];
+      const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (s.d > 0) setScale(sc => Math.min(MAX, Math.max(MIN, sc * (d / s.d))));
+      s.d = d;
+    }
+  };
+  const onTouchEnd = e => {
+    if (e.touches.length === 0) touchState.current = null;
+    else onTouchStart(e); // fingers lifted mid-gesture: re-anchor with the rest
+  };
+
   return ReactDOM.createPortal(
     <div ref={wrapRef} className="diagram-lb"
       onMouseMove={onMouseMove} onMouseUp={onMouseUp}
       onClick={e => { if (e.target === e.currentTarget && !dragging.current) onClose(); }}>
       <button className="diagram-lb-close" onClick={e => { e.stopPropagation(); onClose(); }}>✕ Close</button>
-      <div className="diagram-lb-inner" onMouseDown={onMouseDown} style={{ cursor:'grab' }}>
+      <div className="diagram-lb-inner" onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+        style={{ cursor:'grab' }}>
         <img src={src} alt={alt} draggable="false"
           style={{ pointerEvents:'none', display:'block',
             transform: `translate(${pan.x}px,${pan.y}px) scale(${scale})` }} />
