@@ -81,7 +81,6 @@ body { overflow-x: hidden; line-height: 1; }
   --border:rgba(26,18,8,.12); /* visible border */
   --border2:rgba(26,18,8,.06);/* hairline border */
   --grid:rgba(26,18,8,.04);   /* hero background grid lines */
-  --glow:rgba(184,50,50,.09); /* cursor glow tint */
   --skill-a:#b83232;          /* skills category colour A */
   --skill-b:#16a34a;          /* skills category colour B */
   --skill-c:#1e3a5f;          /* skills category colour C */
@@ -122,7 +121,6 @@ body { overflow-x: hidden; line-height: 1; }
   /* ── SIZING ─────────────────────────────────────────── */
   --max-w:1200px;             /* max content width */
   --grid-cell:52px;           /* hero background grid square size */
-  --glow-size:560px;          /* hero cursor glow circle diameter */
   --skills-h:460px;           /* height of the physics skills canvas */
   --scrollbar-w:5px;          /* scrollbar width */
   --viewer-h:180px;           /* 3D viewer height in project card */
@@ -242,12 +240,21 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
   -webkit-mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
 }
-.hero-glow {
-  position:absolute; z-index:1; width:var(--glow-size); height:var(--glow-size); border-radius:50%;
-  background:radial-gradient(circle,var(--glow) 0%,transparent 70%);
-  pointer-events:none; transform:translate(-50%,-50%);
-  transition:opacity .4s; opacity:0;
+.hero-canvas {
+  position:absolute; inset:0; z-index:1;
+  pointer-events:none; display:block; width:100%; height:100%;
 }
+@media (prefers-reduced-motion: reduce) { .hero-canvas { display:none; } }
+.hero-readout {
+  font-family:var(--fm); font-size:10px; letter-spacing:.08em;
+  color:var(--fg2); text-align:right; line-height:1.9;
+  font-variant-numeric:tabular-nums;
+}
+.hero-readout-label {
+  font-size:9px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--fg3); margin-bottom:2px;
+}
+.hero-readout-value { color:var(--accent); }
 .hero-inner {
   position:relative; z-index:2; padding:0 var(--pad-x); padding-top:var(--hero-pad-top);
   width:100%; max-width:var(--max-w); margin:0 auto;
@@ -737,6 +744,23 @@ const CONFIG = {
   trailLerp:         [0.45, 0.20, 0.12], /* comet trail lerp speeds [head, mid, tail] */
   activateSpeed:     0.20,   /* reveal fade-in speed (lerp per frame toward 1) */
   deactivateSpeed:   0.15,   /* reveal fade-out speed (lerp per frame toward 0) */
+
+  /* ── HERO WIND TUNNEL ───────────────────────────────────
+     Potential flow (uniform stream + doublet) around a cylinder
+     that follows the cursor. Streaklines heat up in the wake. */
+  flow: {
+    baseSpeed:  1.15,   /* free-stream velocity, px/frame @60fps */
+    radius:     46,     /* cursor cylinder radius, px */
+    density:    4800,   /* px² of hero area per particle (lower = more) */
+    maxN:       340,    /* particle cap */
+    fade:       0.035,  /* trail erase rate per frame (lower = longer trails) */
+    inkAlpha:   0.30,   /* streakline opacity (cold) */
+    heatGain:   0.12,   /* heating rate near the cylinder */
+    heatDecay:  0.982,  /* heat retained per frame (wake cool-down) */
+    buoyancy:   0.34,   /* upward drift of hot particles, px/frame at full heat */
+    noiseAmp:   0.22,   /* gentle large-scale unsteadiness */
+    probeLerp:  0.07,   /* cylinder chase speed toward cursor */
+  },
 };
 
 /* ── MODEL DISPLAY ─────────────────────────────────────
@@ -786,6 +810,7 @@ const CONTENT = {
       { label:"Experience", href:"#experience", primary:false },
     ],
     scrollCue: "Scroll",
+    readoutLabel: "Wind tunnel · cursor = probe",
   },
 
   /* ── SECTION LABELS & TITLES ────────────────────────── */
@@ -1292,34 +1317,183 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
 }
 
 /* ── HERO ───────────────────────────────────────────── */
+/* Background: 2D wind tunnel. Streaklines follow the exact potential-flow
+   solution for a uniform stream around a cylinder (doublet superposition);
+   the cylinder tracks the cursor and its wake carries heat that rises. */
 function Hero() {
   const heroRef = useRef(null);
-  const glowRef = useRef(null);
+  const canvasRef = useRef(null);
+  const tempRef = useRef(null);
+  const reRef = useRef(null);
 
   useEffect(() => {
     const hero = heroRef.current;
-    const glow = glowRef.current;
-    if (!hero || !glow) return;
-    let rafId = null;
-    let tx = hero.clientWidth / 2, ty = hero.clientHeight / 2;
+    const canvas = canvasRef.current;
+    if (!hero || !canvas) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const F = CONFIG.flow;
+    const ctx = canvas.getContext('2d');
+    let rafId = null, disposed = false, visible = true;
+    let W = 0, H = 0, dpr = 1;
+    let particles = [];
+    let time = 0;
+    let cursorIn = false;
+    let probeHeat = 0.12;
+    const probe = { x: 0, y: 0, tx: 0, ty: 0 };
+
+    // Reynolds number for the readout, from the sim's own scale (1px ≙ 1mm, air ν=1.5e-5)
+    if (reRef.current) {
+      const re = (F.baseSpeed * 60 * 0.001) * (2 * F.radius * 0.001) / 1.5e-5;
+      const exp = Math.floor(Math.log10(re));
+      reRef.current.textContent = `${(re / 10 ** exp).toFixed(1)}×10${exp === 2 ? '²' : exp === 3 ? '³' : '⁴'}`;
+    }
+
+    const cssColor = (v, fallback) => {
+      const raw = getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fallback;
+      const h = raw.replace('#', '');
+      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+      return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
+    };
+    const ink = cssColor('--fg', '#1a1208');
+    const hot = cssColor('--accent', '#b83232');
+
+    const makeParticle = () => {
+      const x = Math.random() * W, y = Math.random() * H;
+      return { x, y, px: x, py: y, heat: 0 };
+    };
+
+    const resize = () => {
+      W = hero.clientWidth; H = hero.clientHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      canvas.width = Math.round(W * dpr);
+      canvas.height = Math.round(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const n = Math.min(F.maxN, Math.max(120, Math.round((W * H) / F.density)));
+      particles = Array.from({ length: n }, makeParticle);
+      probe.x = probe.tx = W * 0.62; probe.y = probe.ty = H * 0.42;
+    };
+    resize();
+
+    const R = F.radius, R2 = R * R;
+    const step = (dt) => {
+      time += 0.016 * dt;
+
+      // cylinder chases the cursor, or drifts gently when idle
+      if (!cursorIn) {
+        probe.tx = W * 0.62 + Math.sin(time * 0.23) * W * 0.06;
+        probe.ty = H * 0.42 + Math.sin(time * 0.31 + 1.7) * H * 0.08;
+      }
+      probe.x += (probe.tx - probe.x) * F.probeLerp * dt;
+      probe.y += (probe.ty - probe.y) * F.probeLerp * dt;
+
+      probeHeat += ((cursorIn ? 1 : 0.12) - probeHeat) * 0.012 * dt;
+
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = `rgba(0,0,0,${F.fade * dt})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.lineCap = 'round';
+
+      const U = F.baseSpeed;
+      for (const p of particles) {
+        let dx = p.x - probe.x, dy = p.y - probe.y;
+        let r2 = dx * dx + dy * dy;
+
+        // solid boundary: slide particles that end up inside the cylinder
+        if (r2 < R2) {
+          const r = Math.sqrt(r2) || 1;
+          p.x = probe.x + (dx / r) * R;
+          p.y = probe.y + (dy / r) * R;
+          dx = p.x - probe.x; dy = p.y - probe.y;
+          r2 = R2;
+        }
+
+        // potential flow: uniform stream + doublet  (u,v) around the cylinder
+        const f = R2 / (r2 * r2);
+        let u = U * (1 - f * (dx * dx - dy * dy));
+        let v = U * (-f * 2 * dx * dy);
+
+        // gentle large-scale unsteadiness so the tunnel never looks frozen
+        u += F.noiseAmp * 0.4 * Math.sin(p.y * 0.010 - time * 0.7);
+        v += F.noiseAmp * Math.sin(p.x * 0.008 + time * 0.9) * 0.5;
+
+        // wake heating + buoyancy
+        const r = Math.sqrt(r2);
+        if (r < R * 2.2) p.heat = Math.min(1, p.heat + F.heatGain * (1 - r / (R * 2.2)) * dt);
+        p.heat *= Math.pow(F.heatDecay, dt);
+        v -= F.buoyancy * p.heat;
+
+        p.px = p.x; p.py = p.y;
+        p.x += u * dt; p.y += v * dt;
+
+        if (p.x > W + 6 || p.y < -10 || p.y > H + 10) {
+          p.x = -6; p.y = Math.random() * H; p.px = p.x; p.py = p.y; p.heat = 0;
+          continue;
+        }
+
+        const t = p.heat;
+        const cr = Math.round(ink[0] + (hot[0] - ink[0]) * t);
+        const cg = Math.round(ink[1] + (hot[1] - ink[1]) * t);
+        const cb = Math.round(ink[2] + (hot[2] - ink[2]) * t);
+        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${F.inkAlpha + t * 0.3})`;
+        ctx.lineWidth = 1 + t * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(p.px, p.py);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+      }
+    };
+
+    let last = performance.now(), frame = 0;
+    const tick = (now) => {
+      if (disposed) return;
+      const dt = Math.min((now - last) / 16.667, 2.5);
+      last = now;
+      step(dt);
+      if (++frame % 12 === 0 && tempRef.current) {
+        tempRef.current.textContent = `${(21 + probeHeat * 47).toFixed(0)}°C`;
+      }
+      rafId = visible ? requestAnimationFrame(tick) : null;
+    };
+    const startLoop = () => { if (!disposed && !rafId) { last = performance.now(); rafId = requestAnimationFrame(tick); } };
+    const stopLoop = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
 
     const onMove = e => {
       const r = hero.getBoundingClientRect();
-      tx = e.clientX - r.left; ty = e.clientY - r.top;
-      glow.style.opacity = '1';
-      if (!rafId) rafId = requestAnimationFrame(tick);
+      probe.tx = e.clientX - r.left;
+      probe.ty = e.clientY - r.top;
+      cursorIn = true;
     };
-    const tick = () => {
-      glow.style.transform = `translate(${tx}px, ${ty}px) translate(-50%, -50%)`;
-      rafId = null;
-    };
-    const onLeave = () => { glow.style.opacity = '0'; };
-    hero.addEventListener('mousemove', onMove);
+    const onLeave = () => { cursorIn = false; };
+    hero.addEventListener('mousemove', onMove, { passive: true });
     hero.addEventListener('mouseleave', onLeave);
+
+    // pause the tunnel when the hero is scrolled away
+    const io = new IntersectionObserver((entries) => {
+      visible = entries.some(e => e.isIntersecting);
+      visible ? startLoop() : stopLoop();
+    });
+    io.observe(hero);
+
+    let resizeTimer = null;
+    const ro = new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (Math.abs(hero.clientWidth - W) > 40 || Math.abs(hero.clientHeight - H) > 120) resize();
+      }, 250);
+    });
+    ro.observe(hero);
+
+    startLoop();
     return () => {
+      disposed = true;
+      stopLoop();
+      io.disconnect();
+      ro.disconnect();
+      clearTimeout(resizeTimer);
       hero.removeEventListener('mousemove', onMove);
       hero.removeEventListener('mouseleave', onLeave);
-      if (rafId) cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -1329,7 +1503,7 @@ function Hero() {
   return (
     <section className="hero" ref={heroRef}>
       <div className="hero-grid"></div>
-      <div className="hero-glow" ref={glowRef}></div>
+      <canvas className="hero-canvas" ref={canvasRef} aria-hidden="true"></canvas>
       {/* Industrial decoration */}
       <div aria-hidden="true" style={{position:'absolute',top:100,right:'var(--pad-x)',width:100,height:100,border:'1px solid var(--accent)',opacity:.2,zIndex:2}}>
         <div style={{position:'absolute',top:'25%',left:'25%',width:'50%',height:'50%',border:'1px solid var(--accent)'}}></div>
@@ -1350,6 +1524,10 @@ function Hero() {
         </div>
       </div>
       <div className="hero-meta">
+        <div className="hero-readout" aria-hidden="true">
+          <div className="hero-readout-label">{CONTENT.hero.readoutLabel}</div>
+          <div>Re ≈ <span className="hero-readout-value" ref={reRef}>—</span> · probe <span className="hero-readout-value" ref={tempRef}>21°C</span></div>
+        </div>
         {DATA.stats.map((s,i) => (
           <div className="hero-stat" key={i}>
             <div className="hero-stat-n">{s.n}</div>
