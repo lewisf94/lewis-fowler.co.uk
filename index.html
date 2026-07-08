@@ -4,8 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Lewis Fowler — Design Engineer specialising in thermal management, CFD, and robotics. Based in Newcastle upon Tyne.">
+<meta name="author" content="Lewis Fowler">
 <meta name="theme-color" content="#f4efe6">
 <title>Lewis Fowler — Design Engineer</title>
+<link rel="canonical" href="https://lewis-fowler.co.uk/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://lewis-fowler.co.uk/">
+<meta property="og:site_name" content="Lewis Fowler">
+<meta property="og:title" content="Lewis Fowler — Design Engineer">
+<meta property="og:description" content="Design Engineer specialising in thermal management, CFD, and robotics. Interactive 3D case studies of hardware projects.">
+<meta property="og:image" content="https://lewis-fowler.co.uk/assets/icons/favicon-192x192.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Lewis Fowler — Design Engineer">
+<meta name="twitter:description" content="Design Engineer specialising in thermal management, CFD, and robotics. Interactive 3D case studies of hardware projects.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Lewis Fowler",
+  "jobTitle": "Design Engineer",
+  "url": "https://lewis-fowler.co.uk/",
+  "address": { "@type": "PostalAddress", "addressLocality": "Newcastle upon Tyne", "addressCountry": "GB" },
+  "alumniOf": { "@type": "CollegeOrUniversity", "name": "University of Glasgow" },
+  "knowsAbout": ["Thermal Management", "CFD", "Robotics", "Mechanical Design", "3D Printing"]
+}
+</script>
 
 <link rel="icon" href="assets/icons/favicon.ico">
 <link rel="icon" type="image/svg+xml" href="assets/icons/logo.svg">
@@ -14,23 +39,25 @@
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&family=DM+Serif+Display&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="assets/fonts/dm-serif-display-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/dm-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/fira-code-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link href="assets/fonts/fonts.css" rel="stylesheet">
 
+<!-- All runtime libraries are vendored in assets/vendor/ — no third-party CDN dependency -->
 <script type="importmap">
 {
   "imports": {
-    "three": "https://esm.sh/three@0.160.0",
-    "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/"
+    "three": "./assets/vendor/three/three.module.js",
+    "three/addons/": "./assets/vendor/three/addons/"
   }
 }
 </script>
 
-<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<script src="assets/vendor/react.production.min.js"></script>
+<script src="assets/vendor/react-dom.production.min.js"></script>
+<script src="assets/vendor/babel.min.js"></script>
+<script src="assets/vendor/matter.min.js"></script>
 <style>
 /* ── RESET ──────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -150,6 +177,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   background:color-mix(in srgb, var(--bg) 82%, transparent);
   backdrop-filter:blur(16px); border-bottom:1px solid var(--border2);
 }
+.nav.menu-open { z-index:200; background:transparent; backdrop-filter:none; border-bottom-color:transparent; }
 .nav-logo {
   font-family:var(--fh); font-size:var(--logo-size); font-weight:700;
   letter-spacing:-0.02em; color:var(--fg); text-decoration:none;
@@ -161,12 +189,50 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   letter-spacing:.08em; text-transform:uppercase; font-family:var(--fm);
   transition:color var(--dur-fast);
 }
-.nav-links a:hover { color:var(--accent); }
+.nav-links a:hover, .nav-links a.active { color:var(--accent); }
 
+/* ── MOBILE MENU ────────────────────────────────────── */
+.nav-burger {
+  display:none; position:relative; z-index:160;
+  width:42px; height:42px; padding:0;
+  background:none; border:1px solid var(--border); border-radius:var(--r);
+  cursor:pointer; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+  transition:border-color var(--dur-fast);
+}
+.nav-burger:hover { border-color:var(--accent); }
+.nav-burger span {
+  display:block; width:16px; height:1.5px; background:var(--fg);
+  transition:transform .25s var(--ease), opacity .2s;
+}
+.nav-burger.open span:nth-child(1) { transform:translateY(6.5px) rotate(45deg); }
+.nav-burger.open span:nth-child(2) { opacity:0; }
+.nav-burger.open span:nth-child(3) { transform:translateY(-6.5px) rotate(-45deg); }
+.mobile-menu {
+  position:fixed; inset:0; z-index:150;
+  background:color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  display:flex; flex-direction:column; justify-content:center;
+  padding:0 32px; animation:fadeIn .22s ease;
+}
+.mobile-menu a {
+  display:flex; align-items:baseline; gap:16px;
+  font-family:var(--fh); font-size:36px; color:var(--fg);
+  text-decoration:none; padding:14px 0;
+  border-bottom:1px solid var(--border2);
+  opacity:0; transform:translateY(14px);
+  animation:menuItemIn .45s var(--ease) forwards;
+}
+.mobile-menu a:active { color:var(--accent); }
+.mobile-menu-n { font-family:var(--fm); font-size:11px; color:var(--accent); letter-spacing:.1em; }
+@keyframes menuItemIn { to { opacity:1; transform:translateY(0); } }
+@media(max-width:900px) { .nav-burger { display:flex; } }
+@media (prefers-reduced-motion: reduce) {
+  .mobile-menu, .mobile-menu a { animation:none; opacity:1; transform:none; }
+}
 
 /* ── HERO ───────────────────────────────────────────── */
 .hero {
-  position:relative; width:100%; height:100vh;
+  position:relative; width:100%; height:100vh; height:100svh;
   display:flex; align-items:center; overflow:hidden; background:var(--bg);
 }
 .hero-grid {
@@ -260,8 +326,15 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .reveal-x.in { opacity:1; transform:translateX(0); }
 .sec-title.reveal-x { transition-delay:.08s; }
+.reveal-y {
+  opacity:0; transform:translateY(26px);
+  transition:opacity var(--dur-slow) var(--ease-reveal), transform var(--dur-slow) var(--ease-reveal);
+}
+.reveal-y.in { opacity:1; transform:translateY(0); }
 @media (prefers-reduced-motion: reduce) {
-  .reveal-x { opacity:1; transform:none; transition:none; }
+  .reveal-x, .reveal-y { opacity:1; transform:none; transition:none; }
+  .scroll-line { animation:none; }
+  html { scroll-behavior:auto; }
 }
 
 /* ── PROJECTS ───────────────────────────────────────── */
@@ -272,6 +345,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   display:flex; flex-direction:column;
 }
 .proj-card:hover { background:var(--bg2); }
+.proj-card:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; background:var(--bg2); }
 .proj-card::after {
   content:''; position:absolute; top:0; left:0; bottom:0; width:3px;
   background:var(--accent); transform:scaleY(0); transform-origin:bottom;
@@ -312,7 +386,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .model-viewer canvas { display:block; width:100% !important; height:100% !important; }
 .model-viewer.loading::after {
-  content:'Loading 3D model…'; position:absolute; inset:0;
+  content:attr(data-loading); position:absolute; inset:0;
   display:flex; align-items:center; justify-content:center;
   font-family:var(--fm); font-size:10px; letter-spacing:.1em;
   text-transform:uppercase; color:var(--fg3);
@@ -328,16 +402,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .reveal-hint::before { content:''; width:14px; height:1px; background:var(--accent); }
 .proj-model-wrap:hover .reveal-hint { opacity:0; }
-.viewer-toggle {
-  position:absolute; bottom:12px; right:12px; z-index:2;
-  font-family:var(--fm); font-size:10px; letter-spacing:.1em;
-  text-transform:uppercase; color:var(--fg2);
-  background:color-mix(in srgb, var(--bg) 90%, transparent);
-  border:1px solid var(--border); padding:6px 12px;
-  border-radius:var(--r); cursor:pointer;
-  transition:color var(--dur-fast),border-color var(--dur-fast);
-}
-.viewer-toggle:hover { color:var(--accent); border-color:var(--accent); }
+@media (pointer: coarse) { .reveal-hint { display:none; } }
 .proj-card-active { grid-column:1/-1; }
 .proj-card-active .model-viewer { height:var(--viewer-h-active); }
 .proj-planned { opacity:.55; cursor:default; }
@@ -361,31 +426,8 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .cs-hero-toggle:hover { color:var(--accent); border-color:var(--accent); }
 .cs-hero-toggle.active { color:var(--accent); border-color:var(--accent); }
 
-/* ── MODAL ──────────────────────────────────────────── */
-.overlay {
-  position:fixed; inset:0; z-index:200;
-  background:rgba(0,0,0,.65); backdrop-filter:blur(10px);
-  display:flex; align-items:center; justify-content:center;
-  padding:24px; animation:fadeIn .2s ease;
-}
-.modal {
-  background:var(--bg2); border:1px solid var(--border);
-  width:100%; max-width:740px; max-height:88vh; overflow-y:auto;
-  padding:52px; border-radius:calc(var(--r)*3);
-  box-shadow:var(--sh); animation:slideUp .28s ease;
-}
+/* ── SHARED VIEWER SURFACES ─────────────────────────── */
 @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-@keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-.modal-close {
-  float:right; margin-left:16px; background:none; border:1px solid var(--border);
-  color:var(--fg2); padding:8px 18px; cursor:pointer; font-family:var(--fm);
-  font-size:11px; letter-spacing:.1em; text-transform:uppercase; border-radius:var(--r);
-  transition:color var(--dur-fast),border-color var(--dur-fast);
-}
-.modal-close:hover { color:var(--accent); border-color:var(--accent); }
-.modal-tag { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
-.modal-h { font-family:var(--fh); font-size:30px; font-weight:700; letter-spacing:-0.03em; color:var(--fg); margin-bottom:8px; }
-.modal-sub { font-size:14px; color:var(--fg2); margin-bottom:36px; }
 .modal-placeholder {
   width:100%; height:220px; margin-bottom:40px;
   background:repeating-linear-gradient(135deg,var(--bg) 0,var(--bg) 8px,var(--bg2) 8px,var(--bg2) 16px);
@@ -394,14 +436,6 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   font-family:var(--fm); font-size:11px; letter-spacing:.1em;
   text-transform:uppercase; color:var(--fg3);
 }
-.modal-sh { font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; margin-top:32px; }
-.modal-p { font-size:var(--body-size); line-height:1.75; color:var(--fg2); }
-.modal-code {
-  background:var(--bg4); border:1px solid var(--border2); padding:18px 22px;
-  font-family:var(--fm); font-size:13px; color:var(--accent);
-  border-radius:var(--r); margin:12px 0; overflow-x:auto; white-space:nowrap;
-}
-.modal-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:32px; }
 
 /* ── CASE STUDY ─────────────────────────────────────── */
 @keyframes csPageIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
@@ -528,7 +562,6 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   color:var(--fg3); background:var(--bg2); border:1px solid var(--border2);
   padding:6px 12px; border-radius:var(--r); white-space:nowrap; align-self:center;
 }
-@keyframes fadeIn { from{opacity:0} to{opacity:1} }
 .cs-pagination {
   border-top:1px solid var(--border2); margin-top:80px; padding-top:40px;
   display:flex; justify-content:space-between; align-items:center;
@@ -558,6 +591,24 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   font-family:var(--fm); font-size:10px; letter-spacing:.12em;
   text-transform:uppercase; color:var(--fg3);
 }
+@media (pointer: coarse) { .skills-hint { display:none; } }
+.skills-legend { display:flex; gap:24px; flex-wrap:wrap; margin-top:22px; }
+.skills-legend-item {
+  display:flex; align-items:center; gap:8px;
+  font-family:var(--fm); font-size:10px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--fg2);
+}
+.skills-legend-dot { width:9px; height:9px; border-radius:2px; }
+.skills-replay {
+  position:absolute; bottom:12px; left:24px; z-index:2;
+  font-family:var(--fm); font-size:10px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--fg2);
+  background:color-mix(in srgb, var(--bg) 90%, transparent);
+  border:1px solid var(--border); padding:6px 12px;
+  border-radius:var(--r); cursor:pointer;
+  transition:color var(--dur-fast),border-color var(--dur-fast);
+}
+.skills-replay:hover { color:var(--accent); border-color:var(--accent); }
 
 /* ── EXPERIENCE ─────────────────────────────────────── */
 .timeline { display:flex; flex-direction:column; }
@@ -578,6 +629,9 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 .tl-desc { font-size:14px; color:var(--fg2); line-height:1.75; }
 
 /* ── CONTACT ────────────────────────────────────────── */
+.contact-top { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:end; }
+.contact-links { display:flex; flex-direction:column; gap:12px; align-items:flex-end; }
+.contact-links .btn-p, .contact-links .btn-g { text-align:center; min-width:220px; }
 .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--card-gap); background:var(--border2); border:1px solid var(--border2); margin-top:64px; }
 .contact-cell { background:var(--bg); padding:var(--card-pad); }
 .contact-cell.accent-bg { background:var(--accent); }
@@ -604,6 +658,7 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 
 /* ── RESPONSIVE ─────────────────────────────────────── */
 @media(max-width:900px){
+  :root{ --card-pad:28px; --sec-pad:88px; }
   .nav{padding:18px 24px;} .nav-links{display:none;}
   .hero-inner{padding:0 24px; padding-top:80px;}
   .hero-meta{display:none;}
@@ -612,7 +667,12 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   .proj-grid{grid-template-columns:1fr;}
   .tl-item{grid-template-columns:100px 1px 1fr; column-gap:20px;}
   .footer-inner{flex-direction:column;gap:24px;text-align:center;padding:32px 24px;}
-  .modal{padding:32px 24px;}
+  .contact-top{grid-template-columns:1fr; gap:40px; align-items:start;}
+  .contact-links{align-items:stretch;}
+  .contact-links .btn-p, .contact-links .btn-g{min-width:0; width:100%;}
+}
+@media(max-width:640px){
+  .contact-grid{grid-template-columns:1fr;}
 }
 </style>
 </head>
@@ -623,9 +683,11 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   import * as THREE from 'three';
   import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   import { TrackballControls } from 'three/addons/controls/TrackballControls.js';
+  import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
   window.THREE = THREE;
   window.GLTFLoader = GLTFLoader;
   window.TrackballControls = TrackballControls;
+  window.MeshoptDecoder = MeshoptDecoder;
   window.dispatchEvent(new Event('three-ready'));
 </script>
 
@@ -681,6 +743,7 @@ const CONTENT = {
       { label:"Work",       href:"#work"       },
       { label:"Skills",     href:"#skills"     },
       { label:"Experience", href:"#experience" },
+      { label:"Contact",    href:"#contact"    },
     ],
     csBack: "← Work",
   },
@@ -708,6 +771,18 @@ const CONTENT = {
     revealHint:    "Hover · Reveal Internals",
     plannedBadge:  "Planned",
     inDevelopment: "In Development",
+    loadingLabel:  "Loading 3D model…",
+  },
+
+  /* ── SKILLS ─────────────────────────────────────────── */
+  skills: {
+    hint:   "Drag to interact",
+    replay: "↻ Replay",
+    legend: [
+      { label:"Software",   colorVar:"--skill-a" },
+      { label:"Mechanical", colorVar:"--skill-b" },
+      { label:"Embedded",   colorVar:"--skill-c" },
+    ],
   },
 
   /* ── CONTACT ────────────────────────────────────────── */
@@ -716,7 +791,7 @@ const CONTENT = {
     subtext:      "Open to freelance projects, collaborations, and full-time opportunities in design engineering, thermal management, and robotics.",
     email:        "lewis@lewis-fowler.co.uk",
     linkedin:     "https://linkedin.com/in/lewisfowler",
-    github:       "https://github.com/lewisfowler",
+    github:       "https://github.com/lewisf94",
     availability: "Open to freelance projects",
     responseTime: "Within 48 hours",
   },
@@ -726,7 +801,7 @@ const CONTENT = {
     copy: "Design Engineer · Newcastle upon Tyne",
     links: [
       { label:"LinkedIn", href:"https://linkedin.com/in/lewisfowler", external:true  },
-      { label:"GitHub",   href:"https://github.com/lewisfowler",      external:true  },
+      { label:"GitHub",   href:"https://github.com/lewisf94",      external:true  },
       { label:"Email",    href:"mailto:lewis@lewis-fowler.co.uk",     external:false },
     ],
   },
@@ -825,10 +900,27 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
     let disposed = false;
     let animId = null;
     let resizeObs = null;
+    let io = null;
+    let started = false;   // init has run (viewer entered viewport at least once)
+    let visible = false;   // currently near the viewport — render loop runs only then
+    let tickFn = null;
     let renderer, scene, camera, controls, model;
     let spotlight = null;
     let canvasRef = null;
     let onCanvasMove = null, onCanvasLeave = null;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const loadProgress = {};
+
+    const startLoop = () => { if (!disposed && !animId && tickFn) animId = requestAnimationFrame(tickFn); };
+    const stopLoop = () => { if (animId) { cancelAnimationFrame(animId); animId = null; } };
+
+    const reportProgress = (p, xhr) => {
+      if (!xhr.total || !mountRef.current) return;
+      loadProgress[p] = xhr.loaded / xhr.total;
+      const parts = Object.values(loadProgress);
+      const pct = Math.round(parts.reduce((a, b) => a + b, 0) / (revealPath ? 2 : 1) * 100);
+      mountRef.current.dataset.loading = `${CONTENT.projects.loadingLabel} ${Math.min(pct, 99)}%`;
+    };
 
     const init = () => {
       if (!window.THREE || !window.GLTFLoader) {
@@ -986,7 +1078,9 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
       };
 
       const loadOne = (p) => new Promise((resolve, reject) => {
-        new window.GLTFLoader().load(p, (gltf) => resolve(gltf.scene), undefined, reject);
+        const loader = new window.GLTFLoader();
+        if (window.MeshoptDecoder) loader.setMeshoptDecoder(window.MeshoptDecoder);
+        loader.load(p, (gltf) => resolve(gltf.scene), (xhr) => reportProgress(p, xhr), reject);
       });
 
       if (revealPath) {
@@ -1061,9 +1155,9 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
 
       const spinQ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), CONFIG.spinSpeed);
 
-      const tick = () => {
+      tickFn = () => {
         if (disposed) return;
-        if (model && autoRotate) model.quaternion.premultiply(spinQ);
+        if (model && autoRotate && !reduceMotion) model.quaternion.premultiply(spinQ);
         if (spotlight) {
           const pts = spotlight.pts;
           if (spotlight.cursorMode) {
@@ -1077,15 +1171,23 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
         }
         if (controls) controls.update();
         renderer.render(scene, camera);
-        animId = requestAnimationFrame(tick);
+        animId = visible ? requestAnimationFrame(tickFn) : null;
       };
-      tick();
+      startLoop();
     };
 
-    init();
+    // Defer init until the viewer approaches the viewport; pause rendering while off-screen.
+    io = new IntersectionObserver((entries) => {
+      visible = entries.some(e => e.isIntersecting);
+      if (visible && !started) { started = true; init(); }
+      else if (started) { visible ? startLoop() : stopLoop(); }
+    }, { rootMargin: '360px 0px' });
+    io.observe(mountRef.current);
 
     return () => {
       disposed = true;
+      window.removeEventListener('three-ready', init);
+      if (io) io.disconnect();
       if (animId) cancelAnimationFrame(animId);
       if (resizeObs) resizeObs.disconnect();
       if (controls) controls.dispose();
@@ -1110,7 +1212,7 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
   }, [path, revealPath, withControls, autoRotate]);
 
   const viewerH = withControls ? display.studyViewerH : display.cardViewerH;
-  return <div ref={mountRef} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`} style={viewerH ? {height: viewerH} : undefined}></div>;
+  return <div ref={mountRef} data-loading={CONTENT.projects.loadingLabel} className={`model-viewer${withControls ? ' modal-viewer' : ''}${loading ? ' loading' : ''}${revealPath ? ' reveal-viewer' : ''}`} style={viewerH ? {height: viewerH} : undefined}></div>;
 }
 
 /* ── HERO ───────────────────────────────────────────── */
@@ -1132,7 +1234,7 @@ function Hero() {
       if (!rafId) rafId = requestAnimationFrame(tick);
     };
     const tick = () => {
-      glow.style.left = tx + 'px'; glow.style.top = ty + 'px';
+      glow.style.transform = `translate(${tx}px, ${ty}px) translate(-50%, -50%)`;
       rafId = null;
     };
     const onLeave = () => { glow.style.opacity = '0'; };
@@ -1153,12 +1255,12 @@ function Hero() {
       <div className="hero-grid"></div>
       <div className="hero-glow" ref={glowRef}></div>
       {/* Industrial decoration */}
-      <div style={{position:'absolute',top:100,right:52,width:100,height:100,border:'1px solid var(--accent)',opacity:.2,zIndex:2}}>
+      <div aria-hidden="true" style={{position:'absolute',top:100,right:'var(--pad-x)',width:100,height:100,border:'1px solid var(--accent)',opacity:.2,zIndex:2}}>
         <div style={{position:'absolute',top:'25%',left:'25%',width:'50%',height:'50%',border:'1px solid var(--accent)'}}></div>
         <div style={{position:'absolute',top:'50%',left:0,right:0,height:'1px',background:'var(--accent)'}}></div>
         <div style={{position:'absolute',left:'50%',top:0,bottom:0,width:'1px',background:'var(--accent)'}}></div>
       </div>
-      <div style={{position:'absolute',bottom:80,left:52,fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
+      <div style={{position:'absolute',bottom:80,left:'var(--pad-x)',fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
         {CONTENT.hero.locationTag}
       </div>
       <div className="hero-inner">
@@ -1192,21 +1294,66 @@ function Hero() {
 /* ── NAV ────────────────────────────────────────────── */
 function Nav() {
   const [scrolled, setScrolled] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState('');
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
+
+  // Highlight the nav link of the section currently in view
+  useEffect(() => {
+    const secs = CONTENT.nav.links
+      .map(l => document.getElementById(l.href.slice(1)))
+      .filter(Boolean);
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) setActive('#' + e.target.id); });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    secs.forEach(s => io.observe(s));
+    return () => io.disconnect();
+  }, []);
+
+  // Mobile menu: lock scroll while open, close on Escape
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    const onKey = e => { if (e.key === 'Escape') setOpen(false); };
+    if (open) window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
   const [first, last] = DATA.profile.name.split(' ');
   return (
-    <nav className={`nav${scrolled?' scrolled':''}`}>
-      <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
-        <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
+    <nav className={`nav${scrolled?' scrolled':''}${open?' menu-open':''}`}>
+      <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}} onClick={() => setOpen(false)}>
+        <img src="assets/icons/logo-red.png" className="logo-img" alt="" width="28" height="28" />
         {first} <span>{last}</span>
       </a>
       <div className="nav-links">
-        {CONTENT.nav.links.map(l => <a key={l.label} href={l.href}>{l.label}</a>)}
+        {CONTENT.nav.links.map(l => (
+          <a key={l.label} href={l.href} className={active === l.href ? 'active' : ''}>{l.label}</a>
+        ))}
       </div>
+      <button
+        className={`nav-burger${open ? ' open' : ''}`}
+        aria-label={open ? 'Close menu' : 'Open menu'}
+        aria-expanded={open}
+        onClick={() => setOpen(v => !v)}
+      ><span></span><span></span><span></span></button>
+      {open && ReactDOM.createPortal(
+        <div className="mobile-menu" onClick={() => setOpen(false)}>
+          {CONTENT.nav.links.map((l, i) => (
+            <a key={l.label} href={l.href} style={{animationDelay:`${0.05 + i * 0.06}s`}} onClick={() => setOpen(false)}>
+              <span className="mobile-menu-n">0{i + 1}</span>{l.label}
+            </a>
+          ))}
+        </div>,
+        document.body
+      )}
     </nav>
   );
 }
@@ -1215,16 +1362,25 @@ function Nav() {
 function Projects() {
   const active  = DATA.projects.filter(p => p.status === 'active');
   const planned = DATA.projects.filter(p => p.status === 'planned');
+  const openCaseStudy = (p) => { window.location.hash = '#work/' + p.id; };
   return (
     <section id="work" className="sec">
       <div className="wrap">
         <div className="sec-label" data-n={`${CONTENT.sections.work.num} /`}>{CONTENT.sections.work.label}</div>
-        <div className="sec-title">{CONTENT.sections.work.title}</div>
+        <h2 className="sec-title">{CONTENT.sections.work.title}</h2>
       </div>
       <div className="wrap" style={{paddingLeft:0,paddingRight:0}}>
         <div className="proj-grid">
           {active.map(p => (
-            <div key={p.id} className="proj-card proj-card-active" onClick={() => { window.location.hash = '#work/' + p.id; }}>
+            <div
+              key={p.id}
+              className="proj-card proj-card-active"
+              role="link"
+              tabIndex={0}
+              aria-label={`${p.title} — open case study`}
+              onClick={() => openCaseStudy(p)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCaseStudy(p); } }}
+            >
               <div className="proj-badge">{p.tags[0]}</div>
               {p.model
                 ? <div className="proj-model-wrap">
@@ -1232,17 +1388,17 @@ function Projects() {
                     {p.model.internalsPath && <div className="reveal-hint">{CONTENT.projects.revealHint}</div>}
                   </div>
                 : <div className="proj-placeholder">3D model — {p.title}</div>}
-              <div className="proj-title">{p.title}</div>
+              <h3 className="proj-title">{p.title}</h3>
               <div className="proj-short">{p.short}</div>
               <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
-              <div className="proj-arrow">↗</div>
+              <div className="proj-arrow" aria-hidden="true">↗</div>
             </div>
           ))}
           {planned.map(p => (
             <div key={p.id} className="proj-card proj-planned">
               <div className="proj-badge">{p.tags[0]}</div>
               <div className="proj-placeholder">{CONTENT.projects.inDevelopment}</div>
-              <div className="proj-title">{p.title}</div>
+              <h3 className="proj-title">{p.title}</h3>
               <div className="proj-short">{p.short}</div>
               <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
               <div className="proj-planned-badge">{CONTENT.projects.plannedBadge}</div>
@@ -1255,111 +1411,183 @@ function Projects() {
 }
 
 /* ── SKILLS ─────────────────────────────────────────── */
-function Skills({ themeKey }) {
+function Skills() {
   const wrapRef = useRef(null);
+  const replayRef = useRef(null); // set once the sim is built
 
   useEffect(() => {
     if (!wrapRef.current || !window.Matter) return;
     const wrap = wrapRef.current;
     const { Engine, Render, World, Bodies, Mouse, MouseConstraint, Runner, Events } = Matter;
-    const W = wrap.clientWidth || 1100;
-    const H = 460;
 
-    const engine = Engine.create();
-    const render = Render.create({
-      element: wrap, engine,
-      options: { width: W, height: H, wireframes: false, background: 'transparent', pixelRatio: Math.min(window.devicePixelRatio, 2) }
-    });
+    let engine = null, render = null, runner = null;
+    let started = false;  // sim built (first time the section scrolled into view)
+    let running = false;  // loops currently active
+    let io = null, resizeObs = null, resizeTimer = null, builtWidth = 0;
 
-    const wall = { isStatic: true, render: { fillStyle: 'transparent', strokeStyle: 'transparent', lineWidth: 0 } };
-    World.add(engine.world, [
-      Bodies.rectangle(W/2, H+25, W, 50, wall),
-      Bodies.rectangle(-25,  H/2, 50, H,  wall),
-      Bodies.rectangle(W+25, H/2, 50, H,  wall),
-    ]);
-
-    // Read CSS skill category colors at runtime
-    const cs = getComputedStyle(document.documentElement);
-    const catColor = {
-      Software:   cs.getPropertyValue('--skill-a').trim() || '#3b82f6',
-      Mechanical: cs.getPropertyValue('--skill-b').trim() || '#f59e0b',
-      Embedded:   cs.getPropertyValue('--skill-c').trim() || '#10b981',
+    const spawnPills = () => {
+      const W = render.options.width;
+      const cs = getComputedStyle(document.documentElement);
+      const catColor = {
+        Software:   cs.getPropertyValue('--skill-a').trim() || '#b83232',
+        Mechanical: cs.getPropertyValue('--skill-b').trim() || '#16a34a',
+        Embedded:   cs.getPropertyValue('--skill-c').trim() || '#1e3a5f',
+      };
+      DATA.skills.forEach((s) => {
+        const tw = Math.max(120, s.name.length * 9 + 44);
+        const th = 46;
+        const x = Math.random() * Math.max(W - 180, 60) + 90;
+        const y = -Math.random() * 380 - 60;
+        const b = Bodies.rectangle(x, y, tw, th, {
+          restitution: .5, friction: .4,
+          chamfer: { radius: 8 },
+          label: s.name,
+          render: { visible: false },  // painted in afterRender — hides Matter's random debug colours
+          plugin: { color: catColor[s.cat] || '#64748b', w: tw, h: th },
+        });
+        World.add(engine.world, b);
+      });
     };
 
-    DATA.skills.forEach((s, i) => {
-      const tw = Math.max(120, s.name.length * 9 + 44);
-      const th = 46;
-      const x = Math.random() * (W - 180) + 90;
-      const y = -Math.random() * 380 - 60;
-      const b = Bodies.rectangle(x, y, tw, th, {
-        restitution: .5, friction: .4,
-        chamfer: { radius: 8 },
-        label: s.name,
-        plugin: { color: catColor[s.cat] || '#64748b', w: tw, h: th },
+    const startLoops = () => {
+      if (running || !render) return;
+      Runner.run(runner, engine);
+      Render.run(render);
+      running = true;
+    };
+    const stopLoops = () => {
+      if (!running || !render) return;
+      Render.stop(render);
+      Runner.stop(runner);
+      running = false;
+    };
+
+    const teardown = () => {
+      if (!render) return;
+      stopLoops();
+      World.clear(engine.world);
+      Engine.clear(engine);
+      if (render.canvas) render.canvas.remove();
+      engine = render = runner = null;
+    };
+
+    const build = () => {
+      const W = wrap.clientWidth || 1100;
+      const H = wrap.clientHeight || 460;
+      builtWidth = W;
+
+      engine = Engine.create();
+      render = Render.create({
+        element: wrap, engine,
+        options: { width: W, height: H, wireframes: false, background: 'transparent', pixelRatio: Math.min(window.devicePixelRatio, 2) }
       });
-      World.add(engine.world, b);
-    });
 
-    const mouse = Mouse.create(render.canvas);
-    mouse.pixelRatio = Math.min(window.devicePixelRatio, 2);
-    // Matter.js attaches mousewheel listeners that call preventDefault — strip them
-    // so the page can still scroll when the cursor is over the physics canvas.
-    mouse.element.removeEventListener('mousewheel', mouse.mousewheel);
-    mouse.element.removeEventListener('DOMMouseScroll', mouse.mousewheel);
-    const mc = MouseConstraint.create(engine, { mouse, constraint: { stiffness: .2, render: { visible: false } } });
-    World.add(engine.world, mc);
-    render.mouse = mouse;
+      const wall = { isStatic: true, render: { visible: false } };
+      World.add(engine.world, [
+        Bodies.rectangle(W/2, H+25, W, 50, wall),
+        Bodies.rectangle(-25,  H/2, 50, H,  wall),
+        Bodies.rectangle(W+25, H/2, 50, H,  wall),
+      ]);
 
-    Events.on(render, 'afterRender', () => {
-      const ctx = render.context;
-      const fgColor = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#fff';
-      const fontM = "'Fira Code', monospace";
-      engine.world.bodies.forEach(b => {
-        if (b.isStatic) return;
-        const { x, y } = b.position;
-        const a = b.angle;
-        const { color = '#64748b', w = 120, h = 46 } = b.plugin || {};
-        const r = 8;
-        ctx.save();
-        ctx.translate(x, y); ctx.rotate(a);
-        // pill bg
-        ctx.beginPath();
-        ctx.moveTo(-w/2+r,-h/2); ctx.lineTo(w/2-r,-h/2);
-        ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);
-        ctx.lineTo(w/2,h/2-r); ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);
-        ctx.lineTo(-w/2+r,h/2); ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);
-        ctx.lineTo(-w/2,-h/2+r); ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
-        ctx.closePath();
-        ctx.fillStyle = color + '28'; ctx.fill();
-        ctx.strokeStyle = color + '80'; ctx.lineWidth = 1; ctx.stroke();
-        // label
-        ctx.fillStyle = fgColor;
-        ctx.font = `500 12px ${fontM}`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(b.label, 0, 0);
-        ctx.restore();
+      spawnPills();
+
+      const mouse = Mouse.create(render.canvas);
+      mouse.pixelRatio = Math.min(window.devicePixelRatio, 2);
+      // Matter.js attaches wheel/touch listeners that call preventDefault — strip them
+      // so the page can still scroll when the pointer is over the physics canvas.
+      mouse.element.removeEventListener('mousewheel', mouse.mousewheel);
+      mouse.element.removeEventListener('DOMMouseScroll', mouse.mousewheel);
+      mouse.element.removeEventListener('touchstart', mouse.mousedown);
+      mouse.element.removeEventListener('touchmove', mouse.mousemove);
+      mouse.element.removeEventListener('touchend', mouse.mouseup);
+      const mc = MouseConstraint.create(engine, { mouse, constraint: { stiffness: .2, render: { visible: false } } });
+      World.add(engine.world, mc);
+      render.mouse = mouse;
+
+      Events.on(render, 'afterRender', () => {
+        const ctx = render.context;
+        const fgColor = getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#fff';
+        const fontM = "'Fira Code', monospace";
+        engine.world.bodies.forEach(b => {
+          if (b.isStatic) return;
+          const { x, y } = b.position;
+          const a = b.angle;
+          const { color = '#64748b', w = 120, h = 46 } = b.plugin || {};
+          const r = 8;
+          ctx.save();
+          ctx.translate(x, y); ctx.rotate(a);
+          // pill bg
+          ctx.beginPath();
+          ctx.moveTo(-w/2+r,-h/2); ctx.lineTo(w/2-r,-h/2);
+          ctx.quadraticCurveTo(w/2,-h/2,w/2,-h/2+r);
+          ctx.lineTo(w/2,h/2-r); ctx.quadraticCurveTo(w/2,h/2,w/2-r,h/2);
+          ctx.lineTo(-w/2+r,h/2); ctx.quadraticCurveTo(-w/2,h/2,-w/2,h/2-r);
+          ctx.lineTo(-w/2,-h/2+r); ctx.quadraticCurveTo(-w/2,-h/2,-w/2+r,-h/2);
+          ctx.closePath();
+          ctx.fillStyle = color + '28'; ctx.fill();
+          ctx.strokeStyle = color + '80'; ctx.lineWidth = 1; ctx.stroke();
+          // label
+          ctx.fillStyle = fgColor;
+          ctx.font = `500 12px ${fontM}`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(b.label, 0, 0);
+          ctx.restore();
+        });
       });
-    });
 
-    const runner = Runner.create();
-    Runner.run(runner, engine);
-    Render.run(render);
+      runner = Runner.create();
+      startLoops();
+    };
+
+    replayRef.current = () => {
+      if (!engine) return;
+      engine.world.bodies.filter(b => !b.isStatic).forEach(b => World.remove(engine.world, b));
+      spawnPills();
+    };
+
+    // Build (and drop the pills) only when the section scrolls into view; pause while away.
+    io = new IntersectionObserver((entries) => {
+      const visible = entries.some(e => e.isIntersecting);
+      if (visible && !started) { started = true; build(); }
+      else if (started) { visible ? startLoops() : stopLoops(); }
+    }, { threshold: 0.15 });
+    io.observe(wrap);
+
+    // Rebuild on significant width change (orientation change, window resize)
+    resizeObs = new ResizeObserver(() => {
+      if (!started) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (Math.abs(wrap.clientWidth - builtWidth) > 40) { teardown(); build(); }
+      }, 250);
+    });
+    resizeObs.observe(wrap);
 
     return () => {
-      Render.stop(render); Runner.stop(runner);
-      World.clear(engine.world); Engine.clear(engine);
-      if (render.canvas) render.canvas.remove();
+      if (io) io.disconnect();
+      if (resizeObs) resizeObs.disconnect();
+      clearTimeout(resizeTimer);
+      teardown();
     };
-  }, [themeKey]);
+  }, []);
 
   return (
-    <section id="skills" className="sec" style={{paddingTop:120,paddingBottom:0,borderTop:'1px solid var(--border2)'}}>
+    <section id="skills" className="sec" style={{paddingTop:'var(--sec-pad)',paddingBottom:0,borderTop:'1px solid var(--border2)'}}>
       <div className="wrap" style={{paddingBottom:64}}>
         <div className="sec-label" data-n={`${CONTENT.sections.skills.num} /`}>{CONTENT.sections.skills.label}</div>
-        <div className="sec-title" style={{marginBottom:0}}>{CONTENT.sections.skills.title}</div>
+        <h2 className="sec-title" style={{marginBottom:0}}>{CONTENT.sections.skills.title}</h2>
+        <div className="skills-legend">
+          {CONTENT.skills.legend.map(c => (
+            <div key={c.label} className="skills-legend-item">
+              <span className="skills-legend-dot" style={{background:`color-mix(in srgb, var(${c.colorVar}) 22%, transparent)`, border:`1px solid var(${c.colorVar})`}}></span>
+              {c.label}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="skills-wrap" ref={wrapRef}>
-        <div className="skills-hint">Drag to interact</div>
+        <button className="skills-replay" onClick={() => replayRef.current && replayRef.current()}>{CONTENT.skills.replay}</button>
+        <div className="skills-hint">{CONTENT.skills.hint}</div>
       </div>
     </section>
   );
@@ -1371,15 +1599,15 @@ function Contact() {
     <section id="contact" className="sec">
       <div className="wrap">
         <div className="sec-label" data-n={`${CONTENT.sections.contact.num} /`}>{CONTENT.sections.contact.label}</div>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:48,alignItems:'end',marginBottom:0}}>
+        <div className="contact-top">
           <div>
-            <div className="contact-big">{CONTENT.contact.heading.split('\n').reduce((a,l,i)=>i===0?[l]:[...a,<br key={i}/>,l],[])}</div>
+            <h2 className="contact-big">{CONTENT.contact.heading.split('\n').reduce((a,l,i)=>i===0?[l]:[...a,<br key={i}/>,l],[])}</h2>
             <div className="contact-sub">{CONTENT.contact.subtext}</div>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:12,alignItems:'flex-end'}}>
-            <a href={`mailto:${CONTENT.contact.email}`} className="btn-p" style={{textAlign:'center',minWidth:220}}>{CONTENT.contact.email}</a>
-            <a href={CONTENT.contact.linkedin} target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>LinkedIn ↗</a>
-            <a href={CONTENT.contact.github} target="_blank" rel="noopener" className="btn-g" style={{textAlign:'center',minWidth:220}}>GitHub ↗</a>
+          <div className="contact-links">
+            <a href={`mailto:${CONTENT.contact.email}`} className="btn-p">{CONTENT.contact.email}</a>
+            <a href={CONTENT.contact.linkedin} target="_blank" rel="noopener" className="btn-g">LinkedIn ↗</a>
+            <a href={CONTENT.contact.github} target="_blank" rel="noopener" className="btn-g">GitHub ↗</a>
           </div>
         </div>
         <div className="contact-grid">
@@ -1411,7 +1639,7 @@ function Experience() {
     <section id="experience" className="sec">
       <div className="wrap">
         <div className="sec-label" data-n={`${CONTENT.sections.experience.num} /`}>{CONTENT.sections.experience.label}</div>
-        <div className="sec-title">{CONTENT.sections.experience.title}</div>
+        <h2 className="sec-title">{CONTENT.sections.experience.title}</h2>
         <div className="timeline">
           {DATA.experience.map(e => (
             <div key={e.id} className="tl-item">
@@ -1419,7 +1647,7 @@ function Experience() {
               <div className="tl-line"><div className="tl-dot"></div></div>
               <div>
                 <div className="tl-place">{e.place}</div>
-                <div className="tl-title">{e.title}</div>
+                <h3 className="tl-title">{e.title}</h3>
                 <div className="tl-desc">{e.desc}</div>
               </div>
             </div>
@@ -1433,11 +1661,20 @@ function Experience() {
 
 
 /* ── APP ────────────────────────────────────────────── */
-/* ── SECTION TITLE REVEAL ───────────────────────────── */
+/* ── SCROLL REVEAL (section titles, cards, timeline) ── */
 function useSectionReveal() {
   useEffect(() => {
-    const targets = document.querySelectorAll('.sec-label, .sec-title');
-    targets.forEach(el => el.classList.add('reveal-x'));
+    const titles = document.querySelectorAll('.sec-label, .sec-title');
+    titles.forEach(el => el.classList.add('reveal-x'));
+    document.querySelectorAll('.proj-card').forEach((el, i) => {
+      el.classList.add('reveal-y');
+      el.style.transitionDelay = `${(i % 2) * 0.09}s`;
+    });
+    document.querySelectorAll('.tl-item').forEach((el, i) => {
+      el.classList.add('reveal-y');
+      el.style.transitionDelay = `${Math.min(i * 0.08, 0.32)}s`;
+    });
+    const targets = document.querySelectorAll('.reveal-x, .reveal-y');
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => {
         if (e.isIntersecting) {
@@ -1445,7 +1682,7 @@ function useSectionReveal() {
           io.unobserve(e.target);
         }
       });
-    }, { threshold: 0.2, rootMargin: '0px 0px -10% 0px' });
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
     targets.forEach(el => io.observe(el));
     return () => io.disconnect();
   }, []);
@@ -1455,29 +1692,37 @@ function useSectionReveal() {
 function useMagneticButtons() {
   useEffect(() => {
     if (!window.matchMedia('(hover: hover)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const RANGE = 85, STRENGTH = 0.38;
+    let raf = null, mx = 0, my = 0;
     const reset = () => {
       document.querySelectorAll('.btn-p, .btn-g').forEach(b => { b.style.transform = ''; });
     };
-    const onMove = (e) => {
+    const apply = () => {
+      raf = null;
       document.querySelectorAll('.btn-p, .btn-g').forEach(btn => {
         const r = btn.getBoundingClientRect();
-        const dx = e.clientX - (r.left + r.width / 2);
-        const dy = e.clientY - (r.top + r.height / 2);
+        const dx = mx - (r.left + r.width / 2);
+        const dy = my - (r.top + r.height / 2);
         const dist = Math.hypot(dx, dy);
         if (dist < RANGE) {
           const f = (1 - dist / RANGE) * STRENGTH;
           btn.style.transform = `translate(${dx * f}px, ${dy * f}px)`;
-        } else {
+        } else if (btn.style.transform) {
           btn.style.transform = '';
         }
       });
     };
-    window.addEventListener('mousemove', onMove);
+    const onMove = (e) => {
+      mx = e.clientX; my = e.clientY;
+      if (!raf) raf = requestAnimationFrame(apply);
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
     document.addEventListener('mouseleave', reset);
     return () => {
       window.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseleave', reset);
+      if (raf) cancelAnimationFrame(raf);
       reset();
     };
   }, []);
@@ -1488,6 +1733,7 @@ function CursorCrosshair() {
   const ref = useRef(null);
   useEffect(() => {
     if (!window.matchMedia('(hover: hover)').matches) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const el = ref.current;
     if (!el) return;
     let tx = 0, ty = 0, x = 0, y = 0, raf = null, started = false;
@@ -1506,7 +1752,7 @@ function CursorCrosshair() {
     const onLeave = () => { el.style.opacity = '0'; };
     const onOver = (e) => {
       const t = e.target;
-      const interactive = t.closest && t.closest('a, button, .proj, [role="button"]');
+      const interactive = t.closest && t.closest('a, button, .proj-card, [role="button"], [role="link"]');
       el.classList.toggle('hover', !!interactive);
     };
     window.addEventListener('mousemove', onMove);
@@ -1547,7 +1793,7 @@ function DiagramCard({ d }) {
   return (
     <>
       <div className="cs-diagram-wrap" onClick={() => setLb(true)}>
-        <img src={d.path} alt={d.label} />
+        <img src={d.path} alt={d.label} loading="lazy" />
         <span className="cs-diagram-hint">Click to zoom</span>
         <div className="cs-diagram-label">{d.label}</div>
       </div>
@@ -1634,7 +1880,7 @@ function CaseStudy({ proj }) {
         <a href="#work" className="cs-back">{CONTENT.nav.csBack}</a>
         {(() => { const [fn,ln] = DATA.profile.name.split(' '); return (
           <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
-            <img src="assets/icons/logo-red.png" className="logo-img" alt="" />
+            <img src="assets/icons/logo-red.png" className="logo-img" alt="" width="28" height="28" />
             {fn} <span>{ln}</span>
           </a>
         ); })()}
@@ -1656,22 +1902,22 @@ function CaseStudy({ proj }) {
         <div className="cs-tags-row">
           {proj.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}
         </div>
-        <div className="cs-title">{proj.title}</div>
+        <h1 className="cs-title">{proj.title}</h1>
         <div className="cs-subtitle">{proj.short}</div>
       </div>
 
       <div className="cs-body">
         <div className="cs-section">
-          <div className="cs-sh">Overview</div>
+          <h2 className="cs-sh">Overview</h2>
           <p className="cs-p">{proj.intro}</p>
         </div>
         <div className="cs-section">
-          <div className="cs-sh">Technical Approach</div>
+          <h2 className="cs-sh">Technical Approach</h2>
           <p className="cs-p">{proj.tech}</p>
         </div>
         {proj.diagrams && (
           <div className="cs-section">
-            <div className="cs-sh">Wiring Diagrams</div>
+            <h2 className="cs-sh">Wiring Diagrams</h2>
             {proj.diagrams.map((d, i) => (
               <DiagramCard key={i} d={d} />
             ))}
@@ -1679,17 +1925,17 @@ function CaseStudy({ proj }) {
         )}
 
         <div className="cs-section">
-          <div className="cs-sh">Key Equation</div>
+          <h2 className="cs-sh">Key Equation</h2>
           <div className="cs-code">{proj.math}</div>
         </div>
         <div className="cs-section">
-          <div className="cs-sh">Challenge & Solution</div>
+          <h2 className="cs-sh">Challenge & Solution</h2>
           <p className="cs-p">{proj.challenges}</p>
         </div>
 
         {proj.specs && (
           <div className="cs-section">
-            <div className="cs-sh">Specifications</div>
+            <h2 className="cs-sh">Specifications</h2>
             <div className="cs-specs">
               {proj.specs.map(s => (
                 <div key={s.label} className="cs-spec">
@@ -1703,14 +1949,14 @@ function CaseStudy({ proj }) {
 
         {proj.results && (
           <div className="cs-section">
-            <div className="cs-sh">Results</div>
+            <h2 className="cs-sh">Results</h2>
             <p className="cs-p">{proj.results}</p>
           </div>
         )}
 
         {proj.timeline && (
           <div className="cs-section">
-            <div className="cs-sh">Timeline</div>
+            <h2 className="cs-sh">Timeline</h2>
             <div className="cs-tl">
               {proj.timeline.map((t, i) => (
                 <div key={i} className="cs-tl-item">
@@ -1725,7 +1971,7 @@ function CaseStudy({ proj }) {
 
         {proj.links && (
           <div className="cs-section">
-            <div className="cs-sh">Links</div>
+            <h2 className="cs-sh">Links</h2>
             <div className="cs-links">
               {proj.links.github && <a href={proj.links.github} target="_blank" rel="noopener" className="cs-link">GitHub ↗</a>}
               {proj.links.demo && <a href={proj.links.demo} target="_blank" rel="noopener" className="cs-link">Live Demo ↗</a>}
@@ -1760,11 +2006,13 @@ function Portfolio() {
     <>
       <CursorCrosshair />
       <Nav />
-      <Hero />
-      <Projects />
-      <Skills />
-      <Experience />
-      <Contact />
+      <main>
+        <Hero />
+        <Projects />
+        <Skills />
+        <Experience />
+        <Contact />
+      </main>
       <footer style={{borderTop:'1px solid var(--border2)'}}>
         <div className="footer-inner">
           {(() => { const [fn,ln] = DATA.profile.name.split(' '); return <div className="footer-name">{fn} <span>{ln}</span></div>; })()}
@@ -1773,7 +2021,7 @@ function Portfolio() {
               <a key={l.label} href={l.href} {...(l.external ? {target:'_blank',rel:'noopener'} : {})}>{l.label}</a>
             ))}
           </div>
-          <div className="footer-copy">{CONTENT.footer.copy}</div>
+          <div className="footer-copy">© {new Date().getFullYear()} · {CONTENT.footer.copy}</div>
         </div>
       </footer>
     </>
