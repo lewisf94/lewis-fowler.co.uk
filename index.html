@@ -808,27 +808,20 @@ const CONFIG = {
   activateSpeed:     0.20,   /* reveal fade-in speed (lerp per frame toward 1) */
   deactivateSpeed:   0.15,   /* reveal fade-out speed (lerp per frame toward 0) */
 
-  /* ── HERO PCB AUTOROUTER ────────────────────────────────
-     Copper traces grow across the grid (orthogonal + 45° bends),
-     fanning out of IC footprints into pads and vias. The cursor is
-     a keep-out zone; signal pulses travel completed nets. */
+  /* ── HERO PCB (composed, near-static) ───────────────────
+     A deliberately hand-composed printed-circuit motif anchored right of
+     the copy: an MCU footprint, a via tap, a top rail, and a fan-out bus
+     into an edge connector. Mostly still — one slow pulse travels the bus
+     and the trace nearest the cursor gently lifts. */
   circuit: {
-    pitch:      30,     /* routing grid pitch, px (larger = more breathing room) */
-    areaPerNet: 52000,  /* px² of hero area per allowed net (higher = sparser) */
-    netCap:     22,     /* absolute max completed nets */
-    activeMax:  3,      /* routes growing simultaneously (fewer = calmer) */
-    growSpeed:  0.16,   /* cells per frame a route extends */
-    minLen:     6,      /* cells before a route may terminate */
-    maxLen:     30,     /* forced termination length */
-    clearance:  true,   /* keep parallel traces one cell apart (less clustered) */
-    keepOut:    62,     /* cursor keep-out radius, px */
-    probeRadius:118,    /* nets within this of the cursor energise (glow red) */
-    energyRise: 0.10,   /* how fast a probed net lights up (lerp/frame — smooth) */
-    energyFall: 0.045,  /* how fast it cools once the cursor leaves (smooth) */
-    reroute:    900,    /* frames between one slow re-route once the board is full */
-    pulseEvery: 84,     /* frames between ambient signal pulses (sparser = calmer) */
-    pulseSpeed: 2.4,    /* cells per frame a pulse travels */
-    inkAlpha:   0.30,   /* trace opacity */
+    module:     36,     /* layout grid the board snaps to (px) */
+    busLines:   5,      /* parallel traces in the fan-out bus */
+    trace:      0.24,   /* base trace opacity (faint) */
+    probeRadius:88,     /* how near the cursor must be to lift a trace */
+    energyRise: 0.12,   /* how fast the nearest trace lifts (smooth) */
+    energyFall: 0.05,   /* how fast it settles again (smooth) */
+    pulsePeriod:300,    /* frames of quiet between bus pulses (slow) */
+    pulseSpeed: 3.0,    /* px/frame a pulse travels */
   },
 
   /* ── WIND TUNNEL (experience pages) ─────────────────────
@@ -896,7 +889,7 @@ const CONTENT = {
       { label:"Experience", href:"#experience", primary:false },
     ],
     scrollCue: "Scroll",
-    readoutLabel: "Autorouter · cursor = keep-out",
+    readoutLabel: "Printed circuit · signal bus",
   },
 
   /* ── EXPERIENCE DETAIL PAGES ────────────────────────── */
@@ -1575,267 +1568,187 @@ function mountFlow(host, canvas, refs = {}) {
   return () => { cleanup(); host.removeEventListener('mousemove', onMove); host.removeEventListener('mouseleave', onLeave); };
 }
 
-/* ── PCB AUTOROUTER SIM (home hero) ─────────────────────
-   Copper traces grow across a routing grid out of IC footprints, taking
-   orthogonal and 45° steps, terminating in vias/pads. Completed nets carry
-   signal pulses. The cursor is a keep-out zone the router steers around. */
+/* ── PCB COMPOSITION (home hero) ────────────────────────
+   A deliberately composed, near-static printed-circuit motif anchored to
+   the right of the copy: an MCU footprint with pin rows, a via tap, a top
+   rail, and a fan-out bus into an edge connector. Mostly still — one slow
+   pulse travels the bus and the trace nearest the cursor gently lifts. */
 function mountCircuit(host, canvas, refs = {}) {
   const C = CONFIG.circuit;
   const ink = cssRGB('--fg', '#1a1208');
   const acc = cssRGB('--accent', '#b83232');
-  const P = C.pitch;
-  // 8 compass directions (45° apart), index 0 = east, going clockwise
-  const DIRS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  const bg  = cssRGB('--bg', '#f4efe6');
 
-  let cols = 0, rows = 0, frame = 0;
-  let occupied = new Map();   // "gx,gy" -> owner ('ic' or route.seq)
-  let ics = [];               // { gx, gy, w, h, pins:[{gx,gy,dir,used}] }
-  let routes = [];            // { pts:[{x,y}], dir, done, seq, len }
-  let active = [];            // routes still growing
-  let pulses = [];            // { route, d }  (d = px travelled)
-  let seq = 0;
-  const cursor = { px: -9999, py: -9999, on: false };
+  let W = 0, H = 0, frame = 0;
+  let traces = [];   // { pts:[{x,y}], energy, hot, len, main }
+  let ics = [];      // { x, y, w, h, pins:[{x,y,side}] }
+  let pads = [];     // edge-connector pads { x, y }
+  let vias = [];     // { x, y }
+  let pulse = null;  // { trace, d }
+  let pulseWait = 60;
+  const cursor = { x: -9999, y: -9999, on: false };
 
-  const kkey = (x, y) => x + ',' + y;
-  const cellFree = (x, y) => {
-    if (x < 1 || y < 1 || x >= cols - 1 || y >= rows - 1) return false;
-    if (occupied.has(kkey(x, y))) return false;
-    if (cursor.on) {
-      const dx = x * P - cursor.px, dy = y * P - cursor.py;
-      if (dx * dx + dy * dy < C.keepOut * C.keepOut) return false;
+  const traceLen = (pts) => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k].x - pts[k-1].x, pts[k].y - pts[k-1].y); return L; };
+  const addTrace = (pts, main = false) => { traces.push({ pts, energy: 0, hot: false, len: traceLen(pts), main }); };
+
+  const build = () => {
+    traces = []; ics = []; pads = []; vias = []; pulse = null; pulseWait = 60;
+    const M = Math.max(24, Math.min(40, Math.round(W / 42)));
+    const snap = v => Math.round(v / M) * M;
+
+    // ── MCU footprint, right-of-centre, vertically middling ──
+    const nH = 5, nV = 3;
+    const icW = M * 5, icH = M * 3.2;
+    // keep the whole footprint on-screen on narrow viewports (floor-snap the bound)
+    const icX = Math.min(snap(W * 0.62), Math.floor((W - M * 1.5 - icW) / M) * M);
+    const icY = snap(H * 0.22);
+    const pinsTop = [], pinsBottom = [], pinsLeft = [], pinsRight = [];
+    for (let i = 0; i < nH; i++) {
+      const px = snap(icX + ((i + 0.5) / nH) * icW);
+      pinsTop.push({ x: px, y: icY, side: 'T' });
+      pinsBottom.push({ x: px, y: icY + icH, side: 'B' });
     }
-    return true;
-  };
-  // clearance: keep one empty cell between traces of different nets so the
-  // board doesn't cluster (orthogonal neighbours only; IC-adjacency allowed)
-  const clearOf = (x, y, ownerSeq) => {
-    if (!C.clearance) return true;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const o = occupied.get(kkey(x + dx, y + dy));
-      if (typeof o === 'number' && o !== ownerSeq) return false;
+    for (let i = 0; i < nV; i++) {
+      const py = snap(icY + ((i + 0.5) / nV) * icH);
+      pinsLeft.push({ x: icX, y: py, side: 'L' });
+      pinsRight.push({ x: icX + icW, y: py, side: 'R' });
     }
-    return true;
-  };
+    ics.push({ x: icX, y: icY, w: icW, h: icH, pins: [...pinsTop, ...pinsBottom, ...pinsLeft, ...pinsRight] });
 
-  const placeICs = () => {
-    ics = []; occupied = new Map();
-    const nIC = Math.max(2, Math.min(4, Math.round((cols * rows) / 190)));
-    let tries = 0;
-    while (ics.length < nIC && tries++ < 60) {
-      const w = 3 + (Math.random() * 3 | 0), h = 2 + (Math.random() * 3 | 0);
-      const gx = 2 + (Math.random() * (cols - w - 4) | 0);
-      const gy = 2 + (Math.random() * (rows - h - 4) | 0);
-      let clash = false;
-      for (let x = gx - 3; x <= gx + w + 2 && !clash; x++)
-        for (let y = gy - 3; y <= gy + h + 2; y++)
-          if (occupied.has(kkey(x, y))) { clash = true; break; }
-      if (clash) continue;
-      const pins = [];
-      for (let x = gx; x < gx + w; x++) {
-        pins.push({ gx: x, gy: gy - 1, dir: 6, used: false });      // top → north
-        pins.push({ gx: x, gy: gy + h, dir: 2, used: false });      // bottom → south
-      }
-      for (let y = gy; y < gy + h; y++) {
-        pins.push({ gx: gx - 1, gy: y, dir: 4, used: false });      // left → west
-        pins.push({ gx: gx + w, gy: y, dir: 0, used: false });      // right → east
-      }
-      for (let x = gx; x < gx + w; x++) for (let y = gy; y < gy + h; y++) occupied.set(kkey(x, y), 'ic');
-      ics.push({ gx, gy, w, h, pins });
+    // ── fan-out bus: each bottom pin drops to its bus line, runs to the connector ──
+    const busN = Math.min(C.busLines, nH);
+    const pitch = Math.max(9, Math.round(M * 0.5));
+    const busY = snap(icY + icH + M * 1.5);
+    const RM = snap(W - M * 1.5);
+    for (let i = 0; i < busN; i++) {
+      const pin = pinsBottom[i];
+      const y = busY + i * pitch;
+      addTrace([{ x: pin.x, y: pin.y }, { x: pin.x, y }, { x: RM, y }], i === (busN >> 1));
+      vias.push({ x: pin.x, y });     // fan-out corner via
+      pads.push({ x: RM, y });        // edge-connector pad
     }
-  };
 
-  const spawnRoute = () => {
-    if (routes.length >= C.netCap || active.length >= C.activeMax) return;
-    const allPins = [];
-    ics.forEach(ic => ic.pins.forEach(pn => { if (!pn.used) allPins.push(pn); }));
-    if (!allPins.length) return;
-    const pin = allPins[Math.random() * allPins.length | 0];
-    if (!cellFree(pin.gx, pin.gy)) return;
-    const mySeq = seq++;
-    pin.used = true;
-    occupied.set(kkey(pin.gx, pin.gy), mySeq);
-    const route = { pts: [{ x: pin.gx, y: pin.gy }], dir: pin.dir, done: false, seq: mySeq, len: 0, energy: 0, hot: false, pin };
-    routes.push(route); active.push(route);
-  };
-
-  const finalize = (route) => {
-    route.done = true;
-    const i = active.indexOf(route);
-    if (i >= 0) active.splice(i, 1);
-    // precompute polyline length (px) for pulse animation
-    let L = 0;
-    for (let k = 1; k < route.pts.length; k++) {
-      const a = route.pts[k - 1], b = route.pts[k];
-      L += Math.hypot((b.x - a.x) * P, (b.y - a.y) * P);
+    // ── via tap: left pins run left to an aligned via column ──
+    const tapX = snap(icX - M * 1.4);
+    for (const pin of pinsLeft) {
+      addTrace([{ x: pin.x, y: pin.y }, { x: tapX, y: pin.y }]);
+      vias.push({ x: tapX, y: pin.y });
     }
-    route.len = L;
-  };
 
-  const grow = (route) => {
-    const head = route.pts[route.pts.length - 1];
-    // preference order: straight, ±45°, ±90°
-    const order = [0, 1, -1, 2, -2];
-    for (const turn of order) {
-      const d = (route.dir + turn + 8) % 8;
-      const nx = head.x + DIRS[d][0], ny = head.y + DIRS[d][1];
-      if (cellFree(nx, ny) && clearOf(nx, ny, route.seq)) {
-        occupied.set(kkey(nx, ny), route.seq);
-        route.pts.push({ x: nx, y: ny });
-        route.dir = d;
-        const n = route.pts.length;
-        if (n >= C.maxLen || (n >= C.minLen && Math.random() < 0.07)) finalize(route);
-        return;
-      }
+    // ── top rail: two top pins break up to a rail, then run right ──
+    const railY = snap(icY - M * 1.2);
+    for (let i = 0; i < 2; i++) {
+      const pin = pinsTop[i + 2];
+      const railX = snap(RM - i * M * 2);
+      addTrace([{ x: pin.x, y: pin.y }, { x: pin.x, y: railY }, { x: railX, y: railY }]);
+      vias.push({ x: railX, y: railY });
     }
-    finalize(route); // boxed in
+
+    // ── one 45° breakout from a right pin, for PCB flavour ──
+    const rp = pinsRight[0];
+    addTrace([{ x: rp.x, y: rp.y }, { x: rp.x + M, y: rp.y }, { x: rp.x + M * 2, y: rp.y - M }, { x: RM, y: rp.y - M }]);
+    vias.push({ x: RM, y: rp.y - M });
   };
 
-  const retireOldest = () => {
-    let oldest = null;
-    for (const r of routes) if (r.done && (!oldest || r.seq < oldest.seq)) oldest = r;
-    if (!oldest) return;
-    // free only the cells this net owns; release its pin for reuse; drop its pulses
-    for (const p of oldest.pts) {
-      const key = kkey(p.x, p.y);
-      if (occupied.get(key) === oldest.seq) occupied.delete(key);
+  const drawIC = (ctx, ic) => {
+    ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.5)`;
+    ctx.lineWidth = 1.2;
+    ctx.strokeRect(ic.x, ic.y, ic.w, ic.h);
+    ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.045)`;
+    ctx.fillRect(ic.x, ic.y, ic.w, ic.h);
+    ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.4)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for (const p of ic.pins) {
+      const l = 4;
+      if (p.side === 'T') { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - l); }
+      else if (p.side === 'B') { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y + l); }
+      else if (p.side === 'L') { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - l, p.y); }
+      else { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + l, p.y); }
     }
-    if (oldest.pin) oldest.pin.used = false;
-    routes = routes.filter(r => r !== oldest);
-    pulses = pulses.filter(pl => pl.route !== oldest);
+    ctx.stroke();
+    ctx.beginPath(); ctx.arc(ic.x + ic.w * 0.14, ic.y + ic.h * 0.22, 1.9, 0, 7);
+    ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.75)`; ctx.fill();
   };
 
-  const pulsePos = (route, d) => {
-    let acc = 0;
-    for (let k = 1; k < route.pts.length; k++) {
-      const a = route.pts[k - 1], b = route.pts[k];
-      const seg = Math.hypot((b.x - a.x) * P, (b.y - a.y) * P);
-      if (acc + seg >= d) {
-        const t = seg ? (d - acc) / seg : 0;
-        return [(a.x + (b.x - a.x) * t) * P, (a.y + (b.y - a.y) * t) * P];
-      }
-      acc += seg;
+  const posAlong = (t, d) => {
+    let a2 = 0;
+    for (let k = 1; k < t.pts.length; k++) {
+      const a = t.pts[k-1], b = t.pts[k], seg = Math.hypot(b.x - a.x, b.y - a.y);
+      if (a2 + seg >= d) { const u = seg ? (d - a2) / seg : 0; return [a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u]; }
+      a2 += seg;
     }
     return null;
   };
 
   const cleanup = mountCanvasSim(host, canvas, (st) => ({
-    resize() {
-      cols = Math.max(6, Math.floor(st.W / P));
-      rows = Math.max(6, Math.floor(st.H / P));
-      routes = []; active = []; pulses = []; seq = 0;
-      placeICs();
-      for (let i = 0; i < C.activeMax; i++) spawnRoute();
-    },
+    resize() { W = st.W; H = st.H; build(); },
     step(dt) {
-      const { ctx, W, H } = st;
+      const { ctx } = st;
       frame++;
 
-      // ── advance the router (lays the board out once, then holds) ──
-      spawnRoute();
-      for (const route of active.slice()) {
-        route.len = (route.len || 0) + C.growSpeed * dt;
-        while (route.len >= 1 && !route.done) { route.len -= 1; grow(route); }
-      }
-      // once full, retire a single old net very occasionally so the board
-      // stays subtly alive without the constant churn that felt busy
-      if (routes.length >= C.netCap && active.length === 0 && frame % C.reroute === 0) retireOldest();
-
-      // ── spawn + advance signal pulses on completed nets ──
-      if (frame % C.pulseEvery === 0) {
-        const done = routes.filter(r => r.done && r.len > P);
-        if (done.length) pulses.push({ route: done[Math.random() * done.length | 0], d: 0 });
-      }
-      for (const pl of pulses) pl.d += C.pulseSpeed * P * 0.2 * dt;
-      pulses = pulses.filter(pl => pl.route.done && pl.d <= pl.route.len);
-
-      // ── cursor probe: smoothly energise nearby nets by proximity, and fire
-      //    one pulse as a net first lights up (smooth ramp avoids twitchiness) ──
-      const PR = C.probeRadius, PR2 = PR * PR;
-      for (const route of routes) {
-        let target = 0;
-        if (cursor.on) {
-          let md2 = Infinity;
-          for (const pt of route.pts) {
-            const dx = pt.x * P - cursor.px, dy = pt.y * P - cursor.py;
-            const d2 = dx * dx + dy * dy;
-            if (d2 < md2) md2 = d2;
-          }
-          if (md2 < PR2) { const t = 1 - Math.sqrt(md2) / PR; target = t * t * (3 - 2 * t); }
-        }
-        const cur = route.energy || 0;
-        const rate = target > cur ? C.energyRise : C.energyFall;
-        route.energy = cur + (target - cur) * Math.min(1, rate * dt);
-        if (route.done && route.len > P) {
-          if (!route.hot && route.energy > 0.5) { pulses.push({ route, d: 0 }); route.hot = true; }
-          else if (route.energy < 0.2) route.hot = false;
+      // cursor: smoothly lift the single nearest trace
+      const PR2 = C.probeRadius * C.probeRadius;
+      let nearest = null, nd2 = PR2;
+      if (cursor.on) {
+        for (const t of traces) for (const pt of t.pts) {
+          const dx = pt.x - cursor.x, dy = pt.y - cursor.y, d2 = dx*dx + dy*dy;
+          if (d2 < nd2) { nd2 = d2; nearest = t; }
         }
       }
+      for (const t of traces) {
+        const target = t === nearest ? 1 : 0;
+        const rate = target > t.energy ? C.energyRise : C.energyFall;
+        t.energy += (target - t.energy) * Math.min(1, rate * dt);
+        if (t === nearest && !t.hot) { if (!pulse) pulse = { trace: t, d: 0 }; t.hot = true; }
+        else if (t.energy < 0.2) t.hot = false;
+      }
 
-      // ── draw ──
+      // one slow pulse on the main bus when idle
+      if (!pulse) { pulseWait -= dt; if (pulseWait <= 0) { const m = traces.find(t => t.main); if (m) pulse = { trace: m, d: 0 }; } }
+      if (pulse) { pulse.d += C.pulseSpeed * dt; if (pulse.d > pulse.trace.len) { pulse = null; pulseWait = C.pulsePeriod; } }
+
+      // ── draw (faint, composed) ──
       ctx.clearRect(0, 0, W, H);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
-      // traces — cold nets first, energised nets on top so their glow reads
-      const drawTrace = (route) => {
-        if (route.pts.length < 2) return;
-        const en = route.energy || 0;
-        ctx.strokeStyle = `rgba(${Math.round(ink[0] + (acc[0] - ink[0]) * en)},${Math.round(ink[1] + (acc[1] - ink[1]) * en)},${Math.round(ink[2] + (acc[2] - ink[2]) * en)},${C.inkAlpha + en * 0.5})`;
-        ctx.lineWidth = 1.4 + en * 1.2;
+      for (const t of traces) {
+        const en = t.energy;
+        ctx.strokeStyle = `rgba(${Math.round(ink[0]+(acc[0]-ink[0])*en)},${Math.round(ink[1]+(acc[1]-ink[1])*en)},${Math.round(ink[2]+(acc[2]-ink[2])*en)},${C.trace + en*0.55})`;
+        ctx.lineWidth = 1.3 + en * 1.1;
         ctx.beginPath();
-        ctx.moveTo(route.pts[0].x * P, route.pts[0].y * P);
-        for (let k = 1; k < route.pts.length; k++) ctx.lineTo(route.pts[k].x * P, route.pts[k].y * P);
+        ctx.moveTo(t.pts[0].x, t.pts[0].y);
+        for (let k = 1; k < t.pts.length; k++) ctx.lineTo(t.pts[k].x, t.pts[k].y);
         ctx.stroke();
-        if (route.done) {
-          const e = route.pts[route.pts.length - 1];
-          ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 3.4 + en * 1.4, 0, 7); ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},${0.85 + en * 0.15})`; ctx.fill();
-          ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 1.3, 0, 7); ctx.fillStyle = 'rgba(244,239,230,0.9)'; ctx.fill();
+      }
+
+      for (const v of vias) {
+        ctx.beginPath(); ctx.arc(v.x, v.y, 3, 0, 7); ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.42)`; ctx.fill();
+        ctx.beginPath(); ctx.arc(v.x, v.y, 1.3, 0, 7); ctx.fillStyle = `rgba(${bg[0]},${bg[1]},${bg[2]},0.95)`; ctx.fill();
+      }
+
+      for (const pd of pads) { ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.7)`; ctx.fillRect(pd.x - 2, pd.y - 3.4, 9, 6.8); }
+
+      for (const ic of ics) drawIC(ctx, ic);
+
+      if (pulse) {
+        const pos = posAlong(pulse.trace, pulse.d);
+        if (pos) {
+          const g = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], 8);
+          g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},0.95)`);
+          g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`);
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(pos[0], pos[1], 8, 0, 7); ctx.fill();
         }
-      };
-      for (const route of routes) if ((route.energy || 0) <= 0.15) drawTrace(route);
-      for (const route of routes) if ((route.energy || 0) > 0.15) drawTrace(route);
-
-      // IC footprints
-      for (const ic of ics) {
-        const x = ic.gx * P, y = ic.gy * P, w = (ic.w - 1) * P, h = (ic.h - 1) * P;
-        ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.5)`;
-        ctx.lineWidth = 1.2;
-        ctx.strokeRect(x - P * 0.4, y - P * 0.4, w + P * 0.8, h + P * 0.8);
-        ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.05)`;
-        ctx.fillRect(x - P * 0.4, y - P * 0.4, w + P * 0.8, h + P * 0.8);
-        // pin-1 marker
-        ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.7)`; ctx.fill();
       }
 
-      // signal pulses
-      for (const pl of pulses) {
-        const pos = pulsePos(pl.route, pl.d);
-        if (!pos) continue;
-        const g = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], 7);
-        g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},0.95)`);
-        g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`);
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(pos[0], pos[1], 7, 0, 7); ctx.fill();
-      }
-
-      // cursor probe: breathing keep-out field the router steers around
-      // (the site-wide crosshair already marks the exact cursor tip)
-      if (cursor.on) {
-        const breathe = C.keepOut + Math.sin(frame * 0.05) * 1.4;
-        ctx.strokeStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.38)`;
-        ctx.lineWidth = 1; ctx.setLineDash([3, 5]);
-        ctx.beginPath(); ctx.arc(cursor.px, cursor.py, breathe, 0, 7); ctx.stroke();
-        ctx.setLineDash([]);
-      }
-
-      if (frame % 14 === 0) {
-        const done = routes.filter(r => r.done);
-        if (refs.netsRef && refs.netsRef.current) refs.netsRef.current.textContent = String(done.length).padStart(2, '0');
-        if (refs.viasRef && refs.viasRef.current) refs.viasRef.current.textContent = String(done.length).padStart(2, '0');
+      if (frame % 40 === 0) {
+        if (refs.netsRef && refs.netsRef.current) refs.netsRef.current.textContent = String(traces.length).padStart(2, '0');
+        if (refs.viasRef && refs.viasRef.current) refs.viasRef.current.textContent = String(vias.length).padStart(2, '0');
       }
     },
   }));
 
-  const onMove = e => { const r = host.getBoundingClientRect(); cursor.px = e.clientX - r.left; cursor.py = e.clientY - r.top; cursor.on = true; };
+  const onMove = e => { const r = host.getBoundingClientRect(); cursor.x = e.clientX - r.left; cursor.y = e.clientY - r.top; cursor.on = true; };
   const onLeave = () => { cursor.on = false; };
   host.addEventListener('mousemove', onMove, { passive: true });
   host.addEventListener('mouseleave', onLeave);
@@ -1858,12 +1771,6 @@ function Hero() {
     <section className="hero" ref={heroRef}>
       <div className="hero-grid"></div>
       <canvas className="hero-canvas" ref={canvasRef} aria-hidden="true"></canvas>
-      {/* Industrial decoration */}
-      <div aria-hidden="true" style={{position:'absolute',top:100,right:'var(--pad-x)',width:100,height:100,border:'1px solid var(--accent)',opacity:.2,zIndex:2}}>
-        <div style={{position:'absolute',top:'25%',left:'25%',width:'50%',height:'50%',border:'1px solid var(--accent)'}}></div>
-        <div style={{position:'absolute',top:'50%',left:0,right:0,height:'1px',background:'var(--accent)'}}></div>
-        <div style={{position:'absolute',left:'50%',top:0,bottom:0,width:'1px',background:'var(--accent)'}}></div>
-      </div>
       <div style={{position:'absolute',bottom:80,left:'var(--pad-x)',fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
         {CONTENT.hero.locationTag}
       </div>
@@ -1880,7 +1787,7 @@ function Hero() {
       <div className="hero-meta">
         <div className="hero-readout" aria-hidden="true">
           <div className="hero-readout-label">{CONTENT.hero.readoutLabel}</div>
-          <div>nets <span className="hero-readout-value" ref={netsRef}>—</span> · vias <span className="hero-readout-value" ref={viasRef}>—</span> · 115200 8N1</div>
+          <div>traces <span className="hero-readout-value" ref={netsRef}>—</span> · vias <span className="hero-readout-value" ref={viasRef}>—</span> · 2-layer</div>
         </div>
         {DATA.stats.map((s,i) => (
           <div className="hero-stat" key={i}>
