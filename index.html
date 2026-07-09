@@ -813,20 +813,22 @@ const CONFIG = {
      fanning out of IC footprints into pads and vias. The cursor is
      a keep-out zone; signal pulses travel completed nets. */
   circuit: {
-    pitch:      26,     /* routing grid pitch, px (half the CSS grid cell) */
-    areaPerNet: 26000,  /* px² of hero area per allowed net (lower = denser) */
-    netCap:     44,     /* absolute max completed nets */
-    activeMax:  6,      /* routes growing simultaneously */
-    growSpeed:  0.26,   /* cells per frame a route extends */
-    minLen:     7,      /* cells before a route may terminate */
-    maxLen:     34,     /* forced termination length */
-    keepOut:    58,     /* cursor keep-out radius, px */
-    probeRadius:104,    /* nets within this of the cursor energise (glow red) */
-    energyDecay:0.90,   /* how fast a probed net cools once the cursor leaves */
-    retireEvery:150,    /* frames between retiring the oldest net once full */
-    pulseEvery: 42,     /* frames between ambient signal pulses */
-    pulseSpeed: 2.8,    /* cells per frame a pulse travels */
-    inkAlpha:   0.34,   /* trace opacity */
+    pitch:      30,     /* routing grid pitch, px (larger = more breathing room) */
+    areaPerNet: 52000,  /* px² of hero area per allowed net (higher = sparser) */
+    netCap:     22,     /* absolute max completed nets */
+    activeMax:  3,      /* routes growing simultaneously (fewer = calmer) */
+    growSpeed:  0.16,   /* cells per frame a route extends */
+    minLen:     6,      /* cells before a route may terminate */
+    maxLen:     30,     /* forced termination length */
+    clearance:  true,   /* keep parallel traces one cell apart (less clustered) */
+    keepOut:    62,     /* cursor keep-out radius, px */
+    probeRadius:118,    /* nets within this of the cursor energise (glow red) */
+    energyRise: 0.10,   /* how fast a probed net lights up (lerp/frame — smooth) */
+    energyFall: 0.045,  /* how fast it cools once the cursor leaves (smooth) */
+    reroute:    900,    /* frames between one slow re-route once the board is full */
+    pulseEvery: 84,     /* frames between ambient signal pulses (sparser = calmer) */
+    pulseSpeed: 2.4,    /* cells per frame a pulse travels */
+    inkAlpha:   0.30,   /* trace opacity */
   },
 
   /* ── WIND TUNNEL (experience pages) ─────────────────────
@@ -1586,7 +1588,7 @@ function mountCircuit(host, canvas, refs = {}) {
   const DIRS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
 
   let cols = 0, rows = 0, frame = 0;
-  let occupied = new Set();   // "gx,gy" taken by a trace cell or IC body
+  let occupied = new Map();   // "gx,gy" -> owner ('ic' or route.seq)
   let ics = [];               // { gx, gy, w, h, pins:[{gx,gy,dir,used}] }
   let routes = [];            // { pts:[{x,y}], dir, done, seq, len }
   let active = [];            // routes still growing
@@ -1604,18 +1606,28 @@ function mountCircuit(host, canvas, refs = {}) {
     }
     return true;
   };
+  // clearance: keep one empty cell between traces of different nets so the
+  // board doesn't cluster (orthogonal neighbours only; IC-adjacency allowed)
+  const clearOf = (x, y, ownerSeq) => {
+    if (!C.clearance) return true;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const o = occupied.get(kkey(x + dx, y + dy));
+      if (typeof o === 'number' && o !== ownerSeq) return false;
+    }
+    return true;
+  };
 
   const placeICs = () => {
-    ics = []; occupied = new Set();
-    const nIC = Math.max(2, Math.min(5, Math.round((cols * rows) / 150)));
+    ics = []; occupied = new Map();
+    const nIC = Math.max(2, Math.min(4, Math.round((cols * rows) / 190)));
     let tries = 0;
     while (ics.length < nIC && tries++ < 60) {
       const w = 3 + (Math.random() * 3 | 0), h = 2 + (Math.random() * 3 | 0);
       const gx = 2 + (Math.random() * (cols - w - 4) | 0);
       const gy = 2 + (Math.random() * (rows - h - 4) | 0);
       let clash = false;
-      for (let x = gx - 2; x <= gx + w + 1 && !clash; x++)
-        for (let y = gy - 2; y <= gy + h + 1; y++)
+      for (let x = gx - 3; x <= gx + w + 2 && !clash; x++)
+        for (let y = gy - 3; y <= gy + h + 2; y++)
           if (occupied.has(kkey(x, y))) { clash = true; break; }
       if (clash) continue;
       const pins = [];
@@ -1627,7 +1639,7 @@ function mountCircuit(host, canvas, refs = {}) {
         pins.push({ gx: gx - 1, gy: y, dir: 4, used: false });      // left → west
         pins.push({ gx: gx + w, gy: y, dir: 0, used: false });      // right → east
       }
-      for (let x = gx; x < gx + w; x++) for (let y = gy; y < gy + h; y++) occupied.add(kkey(x, y));
+      for (let x = gx; x < gx + w; x++) for (let y = gy; y < gy + h; y++) occupied.set(kkey(x, y), 'ic');
       ics.push({ gx, gy, w, h, pins });
     }
   };
@@ -1639,9 +1651,10 @@ function mountCircuit(host, canvas, refs = {}) {
     if (!allPins.length) return;
     const pin = allPins[Math.random() * allPins.length | 0];
     if (!cellFree(pin.gx, pin.gy)) return;
+    const mySeq = seq++;
     pin.used = true;
-    occupied.add(kkey(pin.gx, pin.gy));
-    const route = { pts: [{ x: pin.gx, y: pin.gy }], dir: pin.dir, done: false, seq: seq++, len: 0, energy: 0, hot: false };
+    occupied.set(kkey(pin.gx, pin.gy), mySeq);
+    const route = { pts: [{ x: pin.gx, y: pin.gy }], dir: pin.dir, done: false, seq: mySeq, len: 0, energy: 0, hot: false, pin };
     routes.push(route); active.push(route);
   };
 
@@ -1665,8 +1678,8 @@ function mountCircuit(host, canvas, refs = {}) {
     for (const turn of order) {
       const d = (route.dir + turn + 8) % 8;
       const nx = head.x + DIRS[d][0], ny = head.y + DIRS[d][1];
-      if (cellFree(nx, ny)) {
-        occupied.add(kkey(nx, ny));
+      if (cellFree(nx, ny) && clearOf(nx, ny, route.seq)) {
+        occupied.set(kkey(nx, ny), route.seq);
         route.pts.push({ x: nx, y: ny });
         route.dir = d;
         const n = route.pts.length;
@@ -1681,12 +1694,12 @@ function mountCircuit(host, canvas, refs = {}) {
     let oldest = null;
     for (const r of routes) if (r.done && (!oldest || r.seq < oldest.seq)) oldest = r;
     if (!oldest) return;
-    // free its trace cells (skip IC-body cells), drop its pulses
+    // free only the cells this net owns; release its pin for reuse; drop its pulses
     for (const p of oldest.pts) {
-      let onIC = false;
-      for (const ic of ics) if (p.x >= ic.gx && p.x < ic.gx + ic.w && p.y >= ic.gy && p.y < ic.gy + ic.h) { onIC = true; break; }
-      if (!onIC) occupied.delete(kkey(p.x, p.y));
+      const key = kkey(p.x, p.y);
+      if (occupied.get(key) === oldest.seq) occupied.delete(key);
     }
+    if (oldest.pin) oldest.pin.used = false;
     routes = routes.filter(r => r !== oldest);
     pulses = pulses.filter(pl => pl.route !== oldest);
   };
@@ -1717,13 +1730,15 @@ function mountCircuit(host, canvas, refs = {}) {
       const { ctx, W, H } = st;
       frame++;
 
-      // ── advance the router ──
+      // ── advance the router (lays the board out once, then holds) ──
       spawnRoute();
       for (const route of active.slice()) {
         route.len = (route.len || 0) + C.growSpeed * dt;
         while (route.len >= 1 && !route.done) { route.len -= 1; grow(route); }
       }
-      if (routes.length >= C.netCap && frame % C.retireEvery === 0) retireOldest();
+      // once full, retire a single old net very occasionally so the board
+      // stays subtly alive without the constant churn that felt busy
+      if (routes.length >= C.netCap && active.length === 0 && frame % C.reroute === 0) retireOldest();
 
       // ── spawn + advance signal pulses on completed nets ──
       if (frame % C.pulseEvery === 0) {
@@ -1733,22 +1748,26 @@ function mountCircuit(host, canvas, refs = {}) {
       for (const pl of pulses) pl.d += C.pulseSpeed * P * 0.2 * dt;
       pulses = pulses.filter(pl => pl.route.done && pl.d <= pl.route.len);
 
-      // ── cursor probe: energise nearby nets, fire a pulse on first contact ──
-      const PR2 = C.probeRadius * C.probeRadius;
+      // ── cursor probe: smoothly energise nearby nets by proximity, and fire
+      //    one pulse as a net first lights up (smooth ramp avoids twitchiness) ──
+      const PR = C.probeRadius, PR2 = PR * PR;
       for (const route of routes) {
-        let near = false;
+        let target = 0;
         if (cursor.on) {
+          let md2 = Infinity;
           for (const pt of route.pts) {
             const dx = pt.x * P - cursor.px, dy = pt.y * P - cursor.py;
-            if (dx * dx + dy * dy < PR2) { near = true; break; }
+            const d2 = dx * dx + dy * dy;
+            if (d2 < md2) md2 = d2;
           }
+          if (md2 < PR2) { const t = 1 - Math.sqrt(md2) / PR; target = t * t * (3 - 2 * t); }
         }
-        if (near) {
-          route.energy = 1;
-          if (!route.hot && route.done && route.len > P) { pulses.push({ route, d: 0 }); route.hot = true; }
-        } else {
-          route.energy = (route.energy || 0) * Math.pow(C.energyDecay, dt);
-          if (route.energy < 0.25) route.hot = false;
+        const cur = route.energy || 0;
+        const rate = target > cur ? C.energyRise : C.energyFall;
+        route.energy = cur + (target - cur) * Math.min(1, rate * dt);
+        if (route.done && route.len > P) {
+          if (!route.hot && route.energy > 0.5) { pulses.push({ route, d: 0 }); route.hot = true; }
+          else if (route.energy < 0.2) route.hot = false;
         }
       }
 
@@ -1801,9 +1820,9 @@ function mountCircuit(host, canvas, refs = {}) {
       // cursor probe: breathing keep-out field the router steers around
       // (the site-wide crosshair already marks the exact cursor tip)
       if (cursor.on) {
-        const breathe = C.keepOut + Math.sin(frame * 0.08) * 2.5;
-        ctx.strokeStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.45)`;
-        ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+        const breathe = C.keepOut + Math.sin(frame * 0.05) * 1.4;
+        ctx.strokeStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.38)`;
+        ctx.lineWidth = 1; ctx.setLineDash([3, 5]);
         ctx.beginPath(); ctx.arc(cursor.px, cursor.py, breathe, 0, 7); ctx.stroke();
         ctx.setLineDash([]);
       }
