@@ -1596,12 +1596,19 @@ function mountCircuit(host, canvas, refs = {}) {
     const M = Math.max(24, Math.min(40, Math.round(W / 42)));
     const snap = v => Math.round(v / M) * M;
 
-    // ── MCU footprint, right-of-centre, vertically middling ──
+    // ── anchors: real page elements the board wires into ──
+    const R = host.getBoundingClientRect();
+    const vis = el => el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none';
+    const rel = el => { const b = el.getBoundingClientRect(); return { x: b.left - R.left, y: b.top - R.top, w: b.width, h: b.height }; };
+    const pick = sel => { const el = document.querySelector(sel); return vis(el) ? rel(el) : null; };
+    const navLink = () => { const e = [...document.querySelectorAll('.nav .nav-links a')].find(a => a.textContent.trim() === 'Work') || document.querySelector('.nav .nav-links a'); return vis(e) ? rel(e) : null; };
+    const A = { logo: pick('.nav .nav-logo'), nav: navLink(), readout: pick('.hero .hero-readout') };
+
+    // ── MCU footprint, right-of-centre ──
     const nH = 5, nV = 3;
     const icW = M * 5, icH = M * 3.2;
-    // keep the whole footprint on-screen on narrow viewports (floor-snap the bound)
     const icX = Math.min(snap(W * 0.62), Math.floor((W - M * 1.5 - icW) / M) * M);
-    const icY = snap(H * 0.22);
+    const icY = snap(H * 0.30);
     const pinsTop = [], pinsBottom = [], pinsLeft = [], pinsRight = [];
     for (let i = 0; i < nH; i++) {
       const px = snap(icX + ((i + 0.5) / nH) * icW);
@@ -1615,39 +1622,55 @@ function mountCircuit(host, canvas, refs = {}) {
     }
     ics.push({ x: icX, y: icY, w: icW, h: icH, pins: [...pinsTop, ...pinsBottom, ...pinsLeft, ...pinsRight] });
 
-    // ── fan-out bus: each bottom pin drops to its bus line, runs to the connector ──
-    const busN = Math.min(C.busLines, nH);
     const pitch = Math.max(9, Math.round(M * 0.5));
-    const busY = snap(icY + icH + M * 1.5);
     const RM = snap(W - M * 1.5);
+    // top rail sits in the clear band below the nav, above the headline
+    const navB = Math.max(A.logo ? A.logo.y + A.logo.h : 0, A.nav ? A.nav.y + A.nav.h : 0);
+    const railY = navB ? snap(navB + M * 1.0) : snap(icY - M * 1.6);
+    const port = (a, fx, fy) => ({ x: snap(a.x + a.w * fx), y: snap(a.y + a.h * fy) });
+
+    // ── logo → MCU (the main net; the pulse runs this) ──
+    if (A.logo) {
+      const p = port(A.logo, 0.5, 1), tp = pinsTop[1];
+      addTrace([{ x: p.x, y: p.y }, { x: p.x, y: railY }, { x: tp.x, y: railY }, { x: tp.x, y: tp.y }], true);
+      pads.push({ x: p.x, y: p.y });
+      vias.push({ x: p.x, y: railY }, { x: tp.x, y: railY });
+    }
+    // ── nav "Work" → MCU (parallel rail just above) ──
+    if (A.nav) {
+      const p = port(A.nav, 0.5, 1), tp = pinsTop[3], ry = railY - pitch;
+      addTrace([{ x: p.x, y: p.y }, { x: p.x, y: ry }, { x: tp.x, y: ry }, { x: tp.x, y: tp.y }]);
+      pads.push({ x: p.x, y: p.y });
+      vias.push({ x: tp.x, y: ry });
+    }
+
+    // ── fan-out bus: MCU bottom pins → parallel bus → edge connector ──
+    const busN = Math.min(C.busLines, nH);
+    const busY = snap(icY + icH + M * 1.4);
     for (let i = 0; i < busN; i++) {
       const pin = pinsBottom[i];
       const y = busY + i * pitch;
-      addTrace([{ x: pin.x, y: pin.y }, { x: pin.x, y }, { x: RM, y }], i === (busN >> 1));
-      vias.push({ x: pin.x, y });     // fan-out corner via
-      pads.push({ x: RM, y });        // edge-connector pad
+      addTrace([{ x: pin.x, y: pin.y }, { x: pin.x, y }, { x: RM, y }]);
+      vias.push({ x: pin.x, y });
+      pads.push({ x: RM, y });
     }
 
-    // ── via tap: left pins run left to an aligned via column ──
+    // ── MCU → readout (the board drives the on-screen readout) ──
+    if (A.readout) {
+      const p = port(A.readout, 0.5, 0), sp = pinsRight[nV - 1];
+      const midX = snap(Math.max(sp.x + M, (sp.x + p.x) / 2));
+      addTrace([{ x: sp.x, y: sp.y }, { x: midX, y: sp.y }, { x: midX, y: p.y - M }, { x: p.x, y: p.y - M }, { x: p.x, y: p.y }]);
+      pads.push({ x: p.x, y: p.y });
+      vias.push({ x: midX, y: sp.y });
+    }
+
+    // ── a couple of left pins tap to aligned vias, for texture ──
     const tapX = snap(icX - M * 1.4);
-    for (const pin of pinsLeft) {
+    for (let i = 0; i < 2; i++) {
+      const pin = pinsLeft[i];
       addTrace([{ x: pin.x, y: pin.y }, { x: tapX, y: pin.y }]);
       vias.push({ x: tapX, y: pin.y });
     }
-
-    // ── top rail: two top pins break up to a rail, then run right ──
-    const railY = snap(icY - M * 1.2);
-    for (let i = 0; i < 2; i++) {
-      const pin = pinsTop[i + 2];
-      const railX = snap(RM - i * M * 2);
-      addTrace([{ x: pin.x, y: pin.y }, { x: pin.x, y: railY }, { x: railX, y: railY }]);
-      vias.push({ x: railX, y: railY });
-    }
-
-    // ── one 45° breakout from a right pin, for PCB flavour ──
-    const rp = pinsRight[0];
-    addTrace([{ x: rp.x, y: rp.y }, { x: rp.x + M, y: rp.y }, { x: rp.x + M * 2, y: rp.y - M }, { x: RM, y: rp.y - M }]);
-    vias.push({ x: RM, y: rp.y - M });
   };
 
   const drawIC = (ctx, ic) => {
