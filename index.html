@@ -259,6 +259,19 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   position:relative; z-index:2; padding:0 var(--pad-x); padding-top:var(--hero-pad-top);
   width:100%; max-width:var(--max-w); margin:0 auto;
 }
+/* Soft page-coloured halo behind the hero copy so the circuit reads as a
+   calm ground under the text but stays vivid in the cursor-play area at right. */
+.hero-inner::before {
+  content:''; position:absolute; z-index:-1; pointer-events:none;
+  left:calc(var(--pad-x) * -0.3); right:8%; top:-4%; bottom:-6%;
+  background:radial-gradient(ellipse 60% 80% at 33% 50%,
+    var(--bg) 0%, var(--bg) 48%,
+    color-mix(in srgb, var(--bg) 60%, transparent) 68%,
+    transparent 84%);
+}
+@media(max-width:900px){
+  .hero-inner::before { left:-20%; right:-20%; background:radial-gradient(ellipse 84% 74% at 42% 46%, var(--bg) 0%, var(--bg) 52%, color-mix(in srgb, var(--bg) 55%, transparent) 72%, transparent 88%); }
+}
 .hero-eyebrow {
   display:flex; align-items:center; gap:14px;
   font-family:var(--fm); font-size:11px; letter-spacing:.16em;
@@ -808,8 +821,10 @@ const CONFIG = {
     minLen:     7,      /* cells before a route may terminate */
     maxLen:     34,     /* forced termination length */
     keepOut:    58,     /* cursor keep-out radius, px */
+    probeRadius:104,    /* nets within this of the cursor energise (glow red) */
+    energyDecay:0.90,   /* how fast a probed net cools once the cursor leaves */
     retireEvery:150,    /* frames between retiring the oldest net once full */
-    pulseEvery: 42,     /* frames between signal pulses */
+    pulseEvery: 42,     /* frames between ambient signal pulses */
     pulseSpeed: 2.8,    /* cells per frame a pulse travels */
     inkAlpha:   0.34,   /* trace opacity */
   },
@@ -1626,7 +1641,7 @@ function mountCircuit(host, canvas, refs = {}) {
     if (!cellFree(pin.gx, pin.gy)) return;
     pin.used = true;
     occupied.add(kkey(pin.gx, pin.gy));
-    const route = { pts: [{ x: pin.gx, y: pin.gy }], dir: pin.dir, done: false, seq: seq++, len: 0 };
+    const route = { pts: [{ x: pin.gx, y: pin.gy }], dir: pin.dir, done: false, seq: seq++, len: 0, energy: 0, hot: false };
     routes.push(route); active.push(route);
   };
 
@@ -1718,26 +1733,47 @@ function mountCircuit(host, canvas, refs = {}) {
       for (const pl of pulses) pl.d += C.pulseSpeed * P * 0.2 * dt;
       pulses = pulses.filter(pl => pl.route.done && pl.d <= pl.route.len);
 
+      // ── cursor probe: energise nearby nets, fire a pulse on first contact ──
+      const PR2 = C.probeRadius * C.probeRadius;
+      for (const route of routes) {
+        let near = false;
+        if (cursor.on) {
+          for (const pt of route.pts) {
+            const dx = pt.x * P - cursor.px, dy = pt.y * P - cursor.py;
+            if (dx * dx + dy * dy < PR2) { near = true; break; }
+          }
+        }
+        if (near) {
+          route.energy = 1;
+          if (!route.hot && route.done && route.len > P) { pulses.push({ route, d: 0 }); route.hot = true; }
+        } else {
+          route.energy = (route.energy || 0) * Math.pow(C.energyDecay, dt);
+          if (route.energy < 0.25) route.hot = false;
+        }
+      }
+
       // ── draw ──
       ctx.clearRect(0, 0, W, H);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
 
-      // traces
-      for (const route of routes) {
-        if (route.pts.length < 2) continue;
-        ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.inkAlpha})`;
-        ctx.lineWidth = 1.4;
+      // traces — cold nets first, energised nets on top so their glow reads
+      const drawTrace = (route) => {
+        if (route.pts.length < 2) return;
+        const en = route.energy || 0;
+        ctx.strokeStyle = `rgba(${Math.round(ink[0] + (acc[0] - ink[0]) * en)},${Math.round(ink[1] + (acc[1] - ink[1]) * en)},${Math.round(ink[2] + (acc[2] - ink[2]) * en)},${C.inkAlpha + en * 0.5})`;
+        ctx.lineWidth = 1.4 + en * 1.2;
         ctx.beginPath();
         ctx.moveTo(route.pts[0].x * P, route.pts[0].y * P);
         for (let k = 1; k < route.pts.length; k++) ctx.lineTo(route.pts[k].x * P, route.pts[k].y * P);
         ctx.stroke();
-        // via/pad at the terminated end
         if (route.done) {
           const e = route.pts[route.pts.length - 1];
-          ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 3.4, 0, 7); ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.85)`; ctx.fill();
+          ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 3.4 + en * 1.4, 0, 7); ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},${0.85 + en * 0.15})`; ctx.fill();
           ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 1.3, 0, 7); ctx.fillStyle = 'rgba(244,239,230,0.9)'; ctx.fill();
         }
-      }
+      };
+      for (const route of routes) if ((route.energy || 0) <= 0.15) drawTrace(route);
+      for (const route of routes) if ((route.energy || 0) > 0.15) drawTrace(route);
 
       // IC footprints
       for (const ic of ics) {
@@ -1762,11 +1798,13 @@ function mountCircuit(host, canvas, refs = {}) {
         ctx.beginPath(); ctx.arc(pos[0], pos[1], 7, 0, 7); ctx.fill();
       }
 
-      // cursor keep-out ring
+      // cursor probe: breathing keep-out field the router steers around
+      // (the site-wide crosshair already marks the exact cursor tip)
       if (cursor.on) {
-        ctx.strokeStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.4)`;
+        const breathe = C.keepOut + Math.sin(frame * 0.08) * 2.5;
+        ctx.strokeStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.45)`;
         ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
-        ctx.beginPath(); ctx.arc(cursor.px, cursor.py, C.keepOut, 0, 7); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cursor.px, cursor.py, breathe, 0, 7); ctx.stroke();
         ctx.setLineDash([]);
       }
 
