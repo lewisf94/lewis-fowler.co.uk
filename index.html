@@ -645,8 +645,58 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   background:var(--accent); border:2px solid var(--bg);
 }
 .tl-place { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
-.tl-title { font-family:var(--fh); font-size:20px; font-weight:600; letter-spacing:-0.02em; color:var(--fg); margin-bottom:10px; }
+.tl-title { font-family:var(--fh); font-size:20px; font-weight:600; letter-spacing:-0.02em; color:var(--fg); margin-bottom:10px; transition:color var(--dur-fast); }
 .tl-desc { font-size:14px; color:var(--fg2); line-height:1.75; }
+/* ── clickable timeline entries (open experience detail pages) ── */
+.tl-item-link { cursor:pointer; }
+.tl-item-link .tl-line { transition:background var(--dur-base); }
+.tl-item-link:hover .tl-title, .tl-item-link:focus-visible .tl-title { color:var(--accent); }
+.tl-item-link:hover .tl-line { background:color-mix(in srgb, var(--accent) 40%, var(--border2)); }
+.tl-item-link:focus-visible { outline:2px solid var(--accent); outline-offset:8px; border-radius:var(--r); }
+.tl-more {
+  display:inline-flex; align-items:center; gap:7px; margin-top:14px;
+  font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--accent); opacity:0; transform:translateX(-5px);
+  transition:opacity var(--dur-fast), transform var(--dur-fast);
+}
+.tl-item-link:hover .tl-more, .tl-item-link:focus-visible .tl-more { opacity:1; transform:none; }
+@media (hover: none) { .tl-more { opacity:.8; transform:none; } }
+
+/* ── EXPERIENCE DETAIL PAGE ─────────────────────────── */
+.exp-hero {
+  position:relative; width:100%; height:44vh; height:44svh; min-height:300px;
+  margin-top:72px; border-bottom:1px solid var(--border2);
+  overflow:hidden; background:var(--bg);
+}
+.exp-hero .hero-grid { z-index:0; }
+.exp-hero .hero-canvas { z-index:1; }
+.exp-hero-tag {
+  position:absolute; left:var(--pad-x); top:22px; z-index:2;
+  font-family:var(--fm); font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); display:flex; align-items:center; gap:12px;
+}
+.exp-hero-tag::before { content:''; width:26px; height:1px; background:var(--accent); }
+.exp-hero-readout {
+  position:absolute; right:var(--pad-x); bottom:20px; z-index:2; pointer-events:none;
+  font-family:var(--fm); font-size:10px; letter-spacing:.08em;
+  color:var(--fg2); text-align:right; line-height:1.9; font-variant-numeric:tabular-nums;
+}
+.exp-focus { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.exp-focus-tag {
+  font-family:var(--fm); font-size:11px; letter-spacing:.04em; color:var(--fg2);
+  padding:7px 14px; background:var(--bg3); border:1px solid var(--border2); border-radius:var(--r);
+}
+.exp-highlights { list-style:none; margin-top:16px; display:flex; flex-direction:column; gap:12px; }
+.exp-highlights li {
+  position:relative; padding-left:22px; font-size:var(--body-size);
+  line-height:1.7; color:var(--fg2);
+}
+.exp-highlights li::before {
+  content:''; position:absolute; left:0; top:9px;
+  width:7px; height:7px; background:var(--accent); border-radius:1px;
+}
+@media(max-width:900px){ .exp-hero{ height:34vh; height:34svh; margin-top:64px; } }
+@media (prefers-reduced-motion: reduce){ .exp-hero .hero-canvas{ display:none; } }
 
 /* ── CONTACT ────────────────────────────────────────── */
 .contact-top { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:end; }
@@ -745,7 +795,26 @@ const CONFIG = {
   activateSpeed:     0.20,   /* reveal fade-in speed (lerp per frame toward 1) */
   deactivateSpeed:   0.15,   /* reveal fade-out speed (lerp per frame toward 0) */
 
-  /* ── HERO WIND TUNNEL ───────────────────────────────────
+  /* ── HERO PCB AUTOROUTER ────────────────────────────────
+     Copper traces grow across the grid (orthogonal + 45° bends),
+     fanning out of IC footprints into pads and vias. The cursor is
+     a keep-out zone; signal pulses travel completed nets. */
+  circuit: {
+    pitch:      26,     /* routing grid pitch, px (half the CSS grid cell) */
+    areaPerNet: 26000,  /* px² of hero area per allowed net (lower = denser) */
+    netCap:     44,     /* absolute max completed nets */
+    activeMax:  6,      /* routes growing simultaneously */
+    growSpeed:  0.26,   /* cells per frame a route extends */
+    minLen:     7,      /* cells before a route may terminate */
+    maxLen:     34,     /* forced termination length */
+    keepOut:    58,     /* cursor keep-out radius, px */
+    retireEvery:150,    /* frames between retiring the oldest net once full */
+    pulseEvery: 42,     /* frames between signal pulses */
+    pulseSpeed: 2.8,    /* cells per frame a pulse travels */
+    inkAlpha:   0.34,   /* trace opacity */
+  },
+
+  /* ── WIND TUNNEL (experience pages) ─────────────────────
      Potential flow (uniform stream + doublet) around a cylinder
      that follows the cursor. Streaklines heat up in the wake. */
   flow: {
@@ -810,7 +879,16 @@ const CONTENT = {
       { label:"Experience", href:"#experience", primary:false },
     ],
     scrollCue: "Scroll",
-    readoutLabel: "Wind tunnel · cursor = probe",
+    readoutLabel: "Autorouter · cursor = keep-out",
+  },
+
+  /* ── EXPERIENCE DETAIL PAGES ────────────────────────── */
+  experiencePage: {
+    back:        "← Experience",
+    overview:    "Overview",
+    focus:       "Focus Areas",
+    detailsHint: "View details",
+    flowLabel:   "Wind tunnel · cursor = probe",
   },
 
   /* ── SECTION LABELS & TITLES ────────────────────────── */
@@ -870,7 +948,7 @@ const DATA = {
   profile: {
     name: "Lewis Fowler",
     role: "Design Engineer",
-    bio: "Based in Newcastle upon Tyne. Designing bespoke thermal management solutions for automotive and space industries. Background in CFD, robotics, and fabrication.",
+    bio: "Building mechatronic hardware — embedded electronics, motor control, and robotics. By day, designing thermal management solutions for automotive and space at Boyd. Based in Newcastle upon Tyne.",
     current: "Design Engineer @ Boyd",
     location: "Newcastle, UK",
   },
@@ -889,11 +967,29 @@ const DATA = {
     { name: "Arduino",      cat: "Embedded"   },
     { name: "ROS 2",        cat: "Embedded"   },
   ],
+  /* Each entry can open a detail page at #experience/<slug>.
+     sim:'flow' gives that page the wind-tunnel hero (thermal / aero roles). */
   experience: [
-    { id:1, title:"Design Engineer", place:"Boyd", date:"Jan 2025 – Present", desc:"Designing bespoke cold plate solutions for thermal management in automotive and space sectors. Managing projects from concept to delivery via 3D CAD, CFD analysis, and DFM." },
-    { id:2, title:"Data Engineer", place:"ROSEN (UK)", date:"Sep 2023 – Dec 2024", desc:"Authored technical reports and analysed In-Line Inspection data. Liaised with engineering disciplines on technical calculations and industry standards." },
-    { id:3, title:"External Placement", place:"Rolls-Royce", date:"May 2022 – Jan 2023", desc:"Designed novel high-performance heat exchangers to improve aircraft system efficiency. Conducted risk assessments and delivered regular technical presentations." },
-    { id:4, title:"MEng Mechanical Engineering", place:"University of Glasgow", date:"2018 – 2023", desc:"Formula Student: Aerodynamics (CFD) & Control Teams. Final year project at Rolls-Royce designing high-performance heat exchangers." },
+    { id:1, slug:"boyd", title:"Design Engineer", place:"Boyd", date:"Jan 2025 – Present", sim:"flow",
+      focus:["Cold Plates","Thermal Management","CFD Analysis","3D CAD","DFM"],
+      desc:"Designing bespoke cold plate solutions for thermal management in automotive and space sectors. Managing projects from concept to delivery via 3D CAD, CFD analysis, and DFM.",
+      detail:"At Boyd I design bespoke liquid cold plates and thermal-management assemblies for demanding automotive and aerospace applications. The work runs the full cycle: translating a customer's heat load and packaging constraints into a 3D CAD design, validating it with CFD to predict flow distribution and thermal resistance, then iterating toward a manufacturable part with DFM front of mind. It sits right at the intersection of fluid dynamics, mechanical design, and real-world production.",
+      highlights:["Liquid cold-plate & thermal assembly design","CFD-driven validation of flow and thermal resistance","Ownership from concept through DFM to delivery"] },
+    { id:2, slug:"rosen", title:"Data Engineer", place:"ROSEN (UK)", date:"Sep 2023 – Dec 2024", sim:null,
+      focus:["In-Line Inspection","Technical Reporting","Engineering Calculations","Industry Standards"],
+      desc:"Authored technical reports and analysed In-Line Inspection data. Liaised with engineering disciplines on technical calculations and industry standards.",
+      detail:"At ROSEN I worked with In-Line Inspection data from pipeline-integrity runs — authoring technical reports and supporting engineering calculations against industry standards. It sharpened my data-analysis instincts and taught me how much rigour sits behind a single reported figure.",
+      highlights:["In-Line Inspection data analysis","Technical report authoring","Cross-discipline engineering calculations"] },
+    { id:3, slug:"rolls-royce", title:"External Placement", place:"Rolls-Royce", date:"May 2022 – Jan 2023", sim:"flow",
+      focus:["Heat Exchangers","Aircraft Systems","Risk Assessment","Technical Presentations"],
+      desc:"Designed novel high-performance heat exchangers to improve aircraft system efficiency. Conducted risk assessments and delivered regular technical presentations.",
+      detail:"During my placement year at Rolls-Royce I worked on novel high-performance heat exchangers aimed at improving aircraft system efficiency. Alongside the design work I carried out risk assessments and presented progress regularly to senior engineers — an early lesson in communicating technical trade-offs clearly to a room.",
+      highlights:["Novel high-performance heat-exchanger design","Risk assessment & compliance","Regular technical presentations to senior engineers"] },
+    { id:4, slug:"glasgow", title:"MEng Mechanical Engineering", place:"University of Glasgow", date:"2018 – 2023", sim:"flow",
+      focus:["Formula Student","Aerodynamics (CFD)","Control Systems","Heat Exchanger Design"],
+      desc:"Formula Student: Aerodynamics (CFD) & Control Teams. Final year project at Rolls-Royce designing high-performance heat exchangers.",
+      detail:"My MEng at Glasgow is where the mechatronics bug bit. On Formula Student I split time between the Aerodynamics team — running CFD to shape bodywork and manage downforce — and the Control team on the systems side. My final-year project, carried out with Rolls-Royce, focused on high-performance heat-exchanger design.",
+      highlights:["Formula Student — Aerodynamics (CFD)","Formula Student — Control systems","MEng · final-year Rolls-Royce heat-exchanger project"] },
   ],
   projects: [
     { id:"musiccontroller", status:"active",
@@ -1316,186 +1412,387 @@ function ModelViewer({ path, revealPath = null, withControls = false, autoRotate
   );
 }
 
+/* ── SIM HELPERS ────────────────────────────────────── */
+/* Read a CSS custom property as an [r,g,b] triple. */
+function cssRGB(v, fallback) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fallback;
+  const h = raw.replace('#', '');
+  const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+  return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
+}
+
+/* Shared lifecycle for a full-bleed background canvas sim: sizes to the host,
+   pauses when scrolled off-screen, rebuilds on significant resize. `build`
+   returns { step(dt), resize() }. Returns a cleanup function. */
+function mountCanvasSim(host, canvas, build) {
+  if (!host || !canvas) return () => {};
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
+  const ctx = canvas.getContext('2d');
+  let rafId = null, disposed = false, visible = true, last = 0;
+  const state = { W: 0, H: 0, dpr: 1, ctx };
+
+  const doResize = () => {
+    state.W = host.clientWidth; state.H = host.clientHeight;
+    state.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(state.W * state.dpr);
+    canvas.height = Math.round(state.H * state.dpr);
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    sim.resize();
+  };
+  const sim = build(state);
+  doResize();
+
+  const tick = (now) => {
+    if (disposed) return;
+    const dt = Math.min((now - last) / 16.667, 2.5);
+    last = now;
+    sim.step(dt);
+    rafId = visible ? requestAnimationFrame(tick) : null;
+  };
+  const start = () => { if (!disposed && !rafId) { last = performance.now(); rafId = requestAnimationFrame(tick); } };
+  const stop = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
+
+  const io = new IntersectionObserver((entries) => {
+    visible = entries.some(e => e.isIntersecting);
+    visible ? start() : stop();
+  });
+  io.observe(host);
+
+  let resizeTimer = null;
+  const ro = new ResizeObserver(() => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (Math.abs(host.clientWidth - state.W) > 40 || Math.abs(host.clientHeight - state.H) > 120) doResize();
+    }, 250);
+  });
+  ro.observe(host);
+
+  start();
+  return () => {
+    disposed = true; stop();
+    io.disconnect(); ro.disconnect();
+    clearTimeout(resizeTimer);
+  };
+}
+
+/* ── WIND TUNNEL SIM (experience detail pages) ──────────
+   Streaklines follow the exact potential-flow solution for a uniform stream
+   around a cylinder (doublet superposition); the cylinder tracks the cursor
+   and its wake carries heat that rises. */
+function mountFlow(host, canvas, refs = {}) {
+  const F = CONFIG.flow;
+  const ink = cssRGB('--fg', '#1a1208');
+  const hot = cssRGB('--accent', '#b83232');
+  let particles = [], time = 0, cursorIn = false, probeHeat = 0.12, frame = 0;
+  const probe = { x: 0, y: 0, tx: 0, ty: 0 };
+
+  if (refs.reRef && refs.reRef.current) {
+    const re = (F.baseSpeed * 60 * 0.001) * (2 * F.radius * 0.001) / 1.5e-5;
+    const exp = Math.floor(Math.log10(re));
+    refs.reRef.current.textContent = `${(re / 10 ** exp).toFixed(1)}×10${exp === 2 ? '²' : exp === 3 ? '³' : '⁴'}`;
+  }
+
+  const cleanup = mountCanvasSim(host, canvas, (st) => {
+    const makeParticle = () => { const x = Math.random() * st.W, y = Math.random() * st.H; return { x, y, px: x, py: y, heat: 0 }; };
+    const R = F.radius, R2 = R * R;
+    return {
+      resize() {
+        const n = Math.min(F.maxN, Math.max(120, Math.round((st.W * st.H) / F.density)));
+        particles = Array.from({ length: n }, makeParticle);
+        probe.x = probe.tx = st.W * 0.62; probe.y = probe.ty = st.H * 0.42;
+      },
+      step(dt) {
+        const { ctx, W, H } = st;
+        time += 0.016 * dt;
+        if (!cursorIn) {
+          probe.tx = W * 0.62 + Math.sin(time * 0.23) * W * 0.06;
+          probe.ty = H * 0.42 + Math.sin(time * 0.31 + 1.7) * H * 0.08;
+        }
+        probe.x += (probe.tx - probe.x) * F.probeLerp * dt;
+        probe.y += (probe.ty - probe.y) * F.probeLerp * dt;
+        probeHeat += ((cursorIn ? 1 : 0.12) - probeHeat) * 0.012 * dt;
+
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = `rgba(0,0,0,${F.fade * dt})`;
+        ctx.fillRect(0, 0, W, H);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.lineCap = 'round';
+
+        const U = F.baseSpeed;
+        for (const p of particles) {
+          let dx = p.x - probe.x, dy = p.y - probe.y;
+          let r2 = dx * dx + dy * dy;
+          if (r2 < R2) {
+            const r = Math.sqrt(r2) || 1;
+            p.x = probe.x + (dx / r) * R; p.y = probe.y + (dy / r) * R;
+            dx = p.x - probe.x; dy = p.y - probe.y; r2 = R2;
+          }
+          const f = R2 / (r2 * r2);
+          let u = U * (1 - f * (dx * dx - dy * dy));
+          let v = U * (-f * 2 * dx * dy);
+          u += F.noiseAmp * 0.4 * Math.sin(p.y * 0.010 - time * 0.7);
+          v += F.noiseAmp * Math.sin(p.x * 0.008 + time * 0.9) * 0.5;
+          const r = Math.sqrt(r2);
+          if (r < R * 2.2) p.heat = Math.min(1, p.heat + F.heatGain * (1 - r / (R * 2.2)) * dt);
+          p.heat *= Math.pow(F.heatDecay, dt);
+          v -= F.buoyancy * p.heat;
+          p.px = p.x; p.py = p.y;
+          p.x += u * dt; p.y += v * dt;
+          if (p.x > W + 6 || p.y < -10 || p.y > H + 10) { p.x = -6; p.y = Math.random() * H; p.px = p.x; p.py = p.y; p.heat = 0; continue; }
+          const t = p.heat;
+          ctx.strokeStyle = `rgba(${Math.round(ink[0] + (hot[0] - ink[0]) * t)},${Math.round(ink[1] + (hot[1] - ink[1]) * t)},${Math.round(ink[2] + (hot[2] - ink[2]) * t)},${F.inkAlpha + t * 0.3})`;
+          ctx.lineWidth = 1 + t * 0.6;
+          ctx.beginPath(); ctx.moveTo(p.px, p.py); ctx.lineTo(p.x, p.y); ctx.stroke();
+        }
+        if (++frame % 12 === 0 && refs.tempRef && refs.tempRef.current) {
+          refs.tempRef.current.textContent = `${(21 + probeHeat * 47).toFixed(0)}°C`;
+        }
+      },
+    };
+  });
+
+  const onMove = e => { const r = host.getBoundingClientRect(); probe.tx = e.clientX - r.left; probe.ty = e.clientY - r.top; cursorIn = true; };
+  const onLeave = () => { cursorIn = false; };
+  host.addEventListener('mousemove', onMove, { passive: true });
+  host.addEventListener('mouseleave', onLeave);
+  return () => { cleanup(); host.removeEventListener('mousemove', onMove); host.removeEventListener('mouseleave', onLeave); };
+}
+
+/* ── PCB AUTOROUTER SIM (home hero) ─────────────────────
+   Copper traces grow across a routing grid out of IC footprints, taking
+   orthogonal and 45° steps, terminating in vias/pads. Completed nets carry
+   signal pulses. The cursor is a keep-out zone the router steers around. */
+function mountCircuit(host, canvas, refs = {}) {
+  const C = CONFIG.circuit;
+  const ink = cssRGB('--fg', '#1a1208');
+  const acc = cssRGB('--accent', '#b83232');
+  const P = C.pitch;
+  // 8 compass directions (45° apart), index 0 = east, going clockwise
+  const DIRS = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+
+  let cols = 0, rows = 0, frame = 0;
+  let occupied = new Set();   // "gx,gy" taken by a trace cell or IC body
+  let ics = [];               // { gx, gy, w, h, pins:[{gx,gy,dir,used}] }
+  let routes = [];            // { pts:[{x,y}], dir, done, seq, len }
+  let active = [];            // routes still growing
+  let pulses = [];            // { route, d }  (d = px travelled)
+  let seq = 0;
+  const cursor = { px: -9999, py: -9999, on: false };
+
+  const kkey = (x, y) => x + ',' + y;
+  const cellFree = (x, y) => {
+    if (x < 1 || y < 1 || x >= cols - 1 || y >= rows - 1) return false;
+    if (occupied.has(kkey(x, y))) return false;
+    if (cursor.on) {
+      const dx = x * P - cursor.px, dy = y * P - cursor.py;
+      if (dx * dx + dy * dy < C.keepOut * C.keepOut) return false;
+    }
+    return true;
+  };
+
+  const placeICs = () => {
+    ics = []; occupied = new Set();
+    const nIC = Math.max(2, Math.min(5, Math.round((cols * rows) / 150)));
+    let tries = 0;
+    while (ics.length < nIC && tries++ < 60) {
+      const w = 3 + (Math.random() * 3 | 0), h = 2 + (Math.random() * 3 | 0);
+      const gx = 2 + (Math.random() * (cols - w - 4) | 0);
+      const gy = 2 + (Math.random() * (rows - h - 4) | 0);
+      let clash = false;
+      for (let x = gx - 2; x <= gx + w + 1 && !clash; x++)
+        for (let y = gy - 2; y <= gy + h + 1; y++)
+          if (occupied.has(kkey(x, y))) { clash = true; break; }
+      if (clash) continue;
+      const pins = [];
+      for (let x = gx; x < gx + w; x++) {
+        pins.push({ gx: x, gy: gy - 1, dir: 6, used: false });      // top → north
+        pins.push({ gx: x, gy: gy + h, dir: 2, used: false });      // bottom → south
+      }
+      for (let y = gy; y < gy + h; y++) {
+        pins.push({ gx: gx - 1, gy: y, dir: 4, used: false });      // left → west
+        pins.push({ gx: gx + w, gy: y, dir: 0, used: false });      // right → east
+      }
+      for (let x = gx; x < gx + w; x++) for (let y = gy; y < gy + h; y++) occupied.add(kkey(x, y));
+      ics.push({ gx, gy, w, h, pins });
+    }
+  };
+
+  const spawnRoute = () => {
+    if (routes.length >= C.netCap || active.length >= C.activeMax) return;
+    const allPins = [];
+    ics.forEach(ic => ic.pins.forEach(pn => { if (!pn.used) allPins.push(pn); }));
+    if (!allPins.length) return;
+    const pin = allPins[Math.random() * allPins.length | 0];
+    if (!cellFree(pin.gx, pin.gy)) return;
+    pin.used = true;
+    occupied.add(kkey(pin.gx, pin.gy));
+    const route = { pts: [{ x: pin.gx, y: pin.gy }], dir: pin.dir, done: false, seq: seq++, len: 0 };
+    routes.push(route); active.push(route);
+  };
+
+  const finalize = (route) => {
+    route.done = true;
+    const i = active.indexOf(route);
+    if (i >= 0) active.splice(i, 1);
+    // precompute polyline length (px) for pulse animation
+    let L = 0;
+    for (let k = 1; k < route.pts.length; k++) {
+      const a = route.pts[k - 1], b = route.pts[k];
+      L += Math.hypot((b.x - a.x) * P, (b.y - a.y) * P);
+    }
+    route.len = L;
+  };
+
+  const grow = (route) => {
+    const head = route.pts[route.pts.length - 1];
+    // preference order: straight, ±45°, ±90°
+    const order = [0, 1, -1, 2, -2];
+    for (const turn of order) {
+      const d = (route.dir + turn + 8) % 8;
+      const nx = head.x + DIRS[d][0], ny = head.y + DIRS[d][1];
+      if (cellFree(nx, ny)) {
+        occupied.add(kkey(nx, ny));
+        route.pts.push({ x: nx, y: ny });
+        route.dir = d;
+        const n = route.pts.length;
+        if (n >= C.maxLen || (n >= C.minLen && Math.random() < 0.07)) finalize(route);
+        return;
+      }
+    }
+    finalize(route); // boxed in
+  };
+
+  const retireOldest = () => {
+    let oldest = null;
+    for (const r of routes) if (r.done && (!oldest || r.seq < oldest.seq)) oldest = r;
+    if (!oldest) return;
+    // free its trace cells (skip IC-body cells), drop its pulses
+    for (const p of oldest.pts) {
+      let onIC = false;
+      for (const ic of ics) if (p.x >= ic.gx && p.x < ic.gx + ic.w && p.y >= ic.gy && p.y < ic.gy + ic.h) { onIC = true; break; }
+      if (!onIC) occupied.delete(kkey(p.x, p.y));
+    }
+    routes = routes.filter(r => r !== oldest);
+    pulses = pulses.filter(pl => pl.route !== oldest);
+  };
+
+  const pulsePos = (route, d) => {
+    let acc = 0;
+    for (let k = 1; k < route.pts.length; k++) {
+      const a = route.pts[k - 1], b = route.pts[k];
+      const seg = Math.hypot((b.x - a.x) * P, (b.y - a.y) * P);
+      if (acc + seg >= d) {
+        const t = seg ? (d - acc) / seg : 0;
+        return [(a.x + (b.x - a.x) * t) * P, (a.y + (b.y - a.y) * t) * P];
+      }
+      acc += seg;
+    }
+    return null;
+  };
+
+  const cleanup = mountCanvasSim(host, canvas, (st) => ({
+    resize() {
+      cols = Math.max(6, Math.floor(st.W / P));
+      rows = Math.max(6, Math.floor(st.H / P));
+      routes = []; active = []; pulses = []; seq = 0;
+      placeICs();
+      for (let i = 0; i < C.activeMax; i++) spawnRoute();
+    },
+    step(dt) {
+      const { ctx, W, H } = st;
+      frame++;
+
+      // ── advance the router ──
+      spawnRoute();
+      for (const route of active.slice()) {
+        route.len = (route.len || 0) + C.growSpeed * dt;
+        while (route.len >= 1 && !route.done) { route.len -= 1; grow(route); }
+      }
+      if (routes.length >= C.netCap && frame % C.retireEvery === 0) retireOldest();
+
+      // ── spawn + advance signal pulses on completed nets ──
+      if (frame % C.pulseEvery === 0) {
+        const done = routes.filter(r => r.done && r.len > P);
+        if (done.length) pulses.push({ route: done[Math.random() * done.length | 0], d: 0 });
+      }
+      for (const pl of pulses) pl.d += C.pulseSpeed * P * 0.2 * dt;
+      pulses = pulses.filter(pl => pl.route.done && pl.d <= pl.route.len);
+
+      // ── draw ──
+      ctx.clearRect(0, 0, W, H);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+      // traces
+      for (const route of routes) {
+        if (route.pts.length < 2) continue;
+        ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.inkAlpha})`;
+        ctx.lineWidth = 1.4;
+        ctx.beginPath();
+        ctx.moveTo(route.pts[0].x * P, route.pts[0].y * P);
+        for (let k = 1; k < route.pts.length; k++) ctx.lineTo(route.pts[k].x * P, route.pts[k].y * P);
+        ctx.stroke();
+        // via/pad at the terminated end
+        if (route.done) {
+          const e = route.pts[route.pts.length - 1];
+          ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 3.4, 0, 7); ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.85)`; ctx.fill();
+          ctx.beginPath(); ctx.arc(e.x * P, e.y * P, 1.3, 0, 7); ctx.fillStyle = 'rgba(244,239,230,0.9)'; ctx.fill();
+        }
+      }
+
+      // IC footprints
+      for (const ic of ics) {
+        const x = ic.gx * P, y = ic.gy * P, w = (ic.w - 1) * P, h = (ic.h - 1) * P;
+        ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.5)`;
+        ctx.lineWidth = 1.2;
+        ctx.strokeRect(x - P * 0.4, y - P * 0.4, w + P * 0.8, h + P * 0.8);
+        ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.05)`;
+        ctx.fillRect(x - P * 0.4, y - P * 0.4, w + P * 0.8, h + P * 0.8);
+        // pin-1 marker
+        ctx.beginPath(); ctx.arc(x, y, 1.6, 0, 7); ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.7)`; ctx.fill();
+      }
+
+      // signal pulses
+      for (const pl of pulses) {
+        const pos = pulsePos(pl.route, pl.d);
+        if (!pos) continue;
+        const g = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], 7);
+        g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},0.95)`);
+        g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`);
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(pos[0], pos[1], 7, 0, 7); ctx.fill();
+      }
+
+      // cursor keep-out ring
+      if (cursor.on) {
+        ctx.strokeStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.4)`;
+        ctx.lineWidth = 1; ctx.setLineDash([3, 4]);
+        ctx.beginPath(); ctx.arc(cursor.px, cursor.py, C.keepOut, 0, 7); ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      if (frame % 14 === 0) {
+        const done = routes.filter(r => r.done);
+        if (refs.netsRef && refs.netsRef.current) refs.netsRef.current.textContent = String(done.length).padStart(2, '0');
+        if (refs.viasRef && refs.viasRef.current) refs.viasRef.current.textContent = String(done.length).padStart(2, '0');
+      }
+    },
+  }));
+
+  const onMove = e => { const r = host.getBoundingClientRect(); cursor.px = e.clientX - r.left; cursor.py = e.clientY - r.top; cursor.on = true; };
+  const onLeave = () => { cursor.on = false; };
+  host.addEventListener('mousemove', onMove, { passive: true });
+  host.addEventListener('mouseleave', onLeave);
+  return () => { cleanup(); host.removeEventListener('mousemove', onMove); host.removeEventListener('mouseleave', onLeave); };
+}
+
 /* ── HERO ───────────────────────────────────────────── */
-/* Background: 2D wind tunnel. Streaklines follow the exact potential-flow
-   solution for a uniform stream around a cylinder (doublet superposition);
-   the cylinder tracks the cursor and its wake carries heat that rises. */
 function Hero() {
   const heroRef = useRef(null);
   const canvasRef = useRef(null);
-  const tempRef = useRef(null);
-  const reRef = useRef(null);
+  const netsRef = useRef(null);
+  const viasRef = useRef(null);
 
-  useEffect(() => {
-    const hero = heroRef.current;
-    const canvas = canvasRef.current;
-    if (!hero || !canvas) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const F = CONFIG.flow;
-    const ctx = canvas.getContext('2d');
-    let rafId = null, disposed = false, visible = true;
-    let W = 0, H = 0, dpr = 1;
-    let particles = [];
-    let time = 0;
-    let cursorIn = false;
-    let probeHeat = 0.12;
-    const probe = { x: 0, y: 0, tx: 0, ty: 0 };
-
-    // Reynolds number for the readout, from the sim's own scale (1px ≙ 1mm, air ν=1.5e-5)
-    if (reRef.current) {
-      const re = (F.baseSpeed * 60 * 0.001) * (2 * F.radius * 0.001) / 1.5e-5;
-      const exp = Math.floor(Math.log10(re));
-      reRef.current.textContent = `${(re / 10 ** exp).toFixed(1)}×10${exp === 2 ? '²' : exp === 3 ? '³' : '⁴'}`;
-    }
-
-    const cssColor = (v, fallback) => {
-      const raw = getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fallback;
-      const h = raw.replace('#', '');
-      const n = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
-      return [parseInt(n.slice(0, 2), 16), parseInt(n.slice(2, 4), 16), parseInt(n.slice(4, 6), 16)];
-    };
-    const ink = cssColor('--fg', '#1a1208');
-    const hot = cssColor('--accent', '#b83232');
-
-    const makeParticle = () => {
-      const x = Math.random() * W, y = Math.random() * H;
-      return { x, y, px: x, py: y, heat: 0 };
-    };
-
-    const resize = () => {
-      W = hero.clientWidth; H = hero.clientHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      canvas.width = Math.round(W * dpr);
-      canvas.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.min(F.maxN, Math.max(120, Math.round((W * H) / F.density)));
-      particles = Array.from({ length: n }, makeParticle);
-      probe.x = probe.tx = W * 0.62; probe.y = probe.ty = H * 0.42;
-    };
-    resize();
-
-    const R = F.radius, R2 = R * R;
-    const step = (dt) => {
-      time += 0.016 * dt;
-
-      // cylinder chases the cursor, or drifts gently when idle
-      if (!cursorIn) {
-        probe.tx = W * 0.62 + Math.sin(time * 0.23) * W * 0.06;
-        probe.ty = H * 0.42 + Math.sin(time * 0.31 + 1.7) * H * 0.08;
-      }
-      probe.x += (probe.tx - probe.x) * F.probeLerp * dt;
-      probe.y += (probe.ty - probe.y) * F.probeLerp * dt;
-
-      probeHeat += ((cursorIn ? 1 : 0.12) - probeHeat) * 0.012 * dt;
-
-      ctx.globalCompositeOperation = 'destination-out';
-      ctx.fillStyle = `rgba(0,0,0,${F.fade * dt})`;
-      ctx.fillRect(0, 0, W, H);
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.lineCap = 'round';
-
-      const U = F.baseSpeed;
-      for (const p of particles) {
-        let dx = p.x - probe.x, dy = p.y - probe.y;
-        let r2 = dx * dx + dy * dy;
-
-        // solid boundary: slide particles that end up inside the cylinder
-        if (r2 < R2) {
-          const r = Math.sqrt(r2) || 1;
-          p.x = probe.x + (dx / r) * R;
-          p.y = probe.y + (dy / r) * R;
-          dx = p.x - probe.x; dy = p.y - probe.y;
-          r2 = R2;
-        }
-
-        // potential flow: uniform stream + doublet  (u,v) around the cylinder
-        const f = R2 / (r2 * r2);
-        let u = U * (1 - f * (dx * dx - dy * dy));
-        let v = U * (-f * 2 * dx * dy);
-
-        // gentle large-scale unsteadiness so the tunnel never looks frozen
-        u += F.noiseAmp * 0.4 * Math.sin(p.y * 0.010 - time * 0.7);
-        v += F.noiseAmp * Math.sin(p.x * 0.008 + time * 0.9) * 0.5;
-
-        // wake heating + buoyancy
-        const r = Math.sqrt(r2);
-        if (r < R * 2.2) p.heat = Math.min(1, p.heat + F.heatGain * (1 - r / (R * 2.2)) * dt);
-        p.heat *= Math.pow(F.heatDecay, dt);
-        v -= F.buoyancy * p.heat;
-
-        p.px = p.x; p.py = p.y;
-        p.x += u * dt; p.y += v * dt;
-
-        if (p.x > W + 6 || p.y < -10 || p.y > H + 10) {
-          p.x = -6; p.y = Math.random() * H; p.px = p.x; p.py = p.y; p.heat = 0;
-          continue;
-        }
-
-        const t = p.heat;
-        const cr = Math.round(ink[0] + (hot[0] - ink[0]) * t);
-        const cg = Math.round(ink[1] + (hot[1] - ink[1]) * t);
-        const cb = Math.round(ink[2] + (hot[2] - ink[2]) * t);
-        ctx.strokeStyle = `rgba(${cr},${cg},${cb},${F.inkAlpha + t * 0.3})`;
-        ctx.lineWidth = 1 + t * 0.6;
-        ctx.beginPath();
-        ctx.moveTo(p.px, p.py);
-        ctx.lineTo(p.x, p.y);
-        ctx.stroke();
-      }
-    };
-
-    let last = performance.now(), frame = 0;
-    const tick = (now) => {
-      if (disposed) return;
-      const dt = Math.min((now - last) / 16.667, 2.5);
-      last = now;
-      step(dt);
-      if (++frame % 12 === 0 && tempRef.current) {
-        tempRef.current.textContent = `${(21 + probeHeat * 47).toFixed(0)}°C`;
-      }
-      rafId = visible ? requestAnimationFrame(tick) : null;
-    };
-    const startLoop = () => { if (!disposed && !rafId) { last = performance.now(); rafId = requestAnimationFrame(tick); } };
-    const stopLoop = () => { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } };
-
-    const onMove = e => {
-      const r = hero.getBoundingClientRect();
-      probe.tx = e.clientX - r.left;
-      probe.ty = e.clientY - r.top;
-      cursorIn = true;
-    };
-    const onLeave = () => { cursorIn = false; };
-    hero.addEventListener('mousemove', onMove, { passive: true });
-    hero.addEventListener('mouseleave', onLeave);
-
-    // pause the tunnel when the hero is scrolled away
-    const io = new IntersectionObserver((entries) => {
-      visible = entries.some(e => e.isIntersecting);
-      visible ? startLoop() : stopLoop();
-    });
-    io.observe(hero);
-
-    let resizeTimer = null;
-    const ro = new ResizeObserver(() => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        if (Math.abs(hero.clientWidth - W) > 40 || Math.abs(hero.clientHeight - H) > 120) resize();
-      }, 250);
-    });
-    ro.observe(hero);
-
-    startLoop();
-    return () => {
-      disposed = true;
-      stopLoop();
-      io.disconnect();
-      ro.disconnect();
-      clearTimeout(resizeTimer);
-      hero.removeEventListener('mousemove', onMove);
-      hero.removeEventListener('mouseleave', onLeave);
-    };
-  }, []);
+  useEffect(() => mountCircuit(heroRef.current, canvasRef.current, { netsRef, viasRef }), []);
 
   const name = DATA.profile.name;
   const [first, last] = name.split(' ');
@@ -1526,7 +1823,7 @@ function Hero() {
       <div className="hero-meta">
         <div className="hero-readout" aria-hidden="true">
           <div className="hero-readout-label">{CONTENT.hero.readoutLabel}</div>
-          <div>Re ≈ <span className="hero-readout-value" ref={reRef}>—</span> · probe <span className="hero-readout-value" ref={tempRef}>21°C</span></div>
+          <div>nets <span className="hero-readout-value" ref={netsRef}>—</span> · vias <span className="hero-readout-value" ref={viasRef}>—</span> · 115200 8N1</div>
         </div>
         {DATA.stats.map((s,i) => (
           <div className="hero-stat" key={i}>
@@ -1889,6 +2186,7 @@ function Contact() {
 
 /* ── EXPERIENCE ─────────────────────────────────────── */
 function Experience() {
+  const open = (e) => { window.location.hash = '#experience/' + e.slug; };
   return (
     <section id="experience" className="sec">
       <div className="wrap">
@@ -1896,13 +2194,22 @@ function Experience() {
         <h2 className="sec-title">{CONTENT.sections.experience.title}</h2>
         <div className="timeline">
           {DATA.experience.map(e => (
-            <div key={e.id} className="tl-item">
+            <div
+              key={e.id}
+              className="tl-item tl-item-link"
+              role="link"
+              tabIndex={0}
+              aria-label={`${e.title} at ${e.place} — view details`}
+              onClick={() => open(e)}
+              onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); open(e); } }}
+            >
               <div className="tl-date">{e.date}</div>
               <div className="tl-line"><div className="tl-dot"></div></div>
               <div>
                 <div className="tl-place">{e.place}</div>
                 <h3 className="tl-title">{e.title}</h3>
                 <div className="tl-desc">{e.desc}</div>
+                <span className="tl-more">{CONTENT.experiencePage.detailsHint} →</span>
               </div>
             </div>
           ))}
@@ -2287,6 +2594,104 @@ function CaseStudy({ proj }) {
   );
 }
 
+/* ── EXPERIENCE DETAIL PAGE ─────────────────────────── */
+function ExperienceHero({ exp }) {
+  const hostRef = useRef(null);
+  const canvasRef = useRef(null);
+  const tempRef = useRef(null);
+  const reRef = useRef(null);
+  const isFlow = exp.sim === 'flow';
+
+  useEffect(() => {
+    if (!isFlow) return;
+    return mountFlow(hostRef.current, canvasRef.current, { tempRef, reRef });
+  }, [exp.slug, isFlow]);
+
+  return (
+    <div className="exp-hero" ref={hostRef}>
+      <div className="hero-grid"></div>
+      {isFlow && <canvas className="hero-canvas" ref={canvasRef} aria-hidden="true"></canvas>}
+      <div className="exp-hero-tag">{exp.place}</div>
+      {isFlow && (
+        <div className="exp-hero-readout" aria-hidden="true">
+          <div className="hero-readout-label">{CONTENT.experiencePage.flowLabel}</div>
+          <div>Re ≈ <span className="hero-readout-value" ref={reRef}>—</span> · probe <span className="hero-readout-value" ref={tempRef}>21°C</span></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExperiencePage({ exp }) {
+  const idx = DATA.experience.findIndex(e => e.slug === exp.slug);
+  const prev = DATA.experience[idx - 1] || null;
+  const next = DATA.experience[idx + 1] || null;
+
+  useEffect(() => { window.scrollTo(0, 0); }, [exp.slug]);
+
+  return (
+    <div className="cs-page">
+      <nav className="cs-nav">
+        <a href="#experience" className="cs-back">{CONTENT.experiencePage.back}</a>
+        {(() => { const [fn,ln] = DATA.profile.name.split(' '); return (
+          <a href="#" className="nav-logo" style={{display:'flex',alignItems:'center',gap:10}}>
+            <img src="assets/icons/logo-red.png" className="logo-img" alt="" width="28" height="28" />
+            {fn} <span>{ln}</span>
+          </a>
+        ); })()}
+      </nav>
+
+      <ExperienceHero exp={exp} />
+
+      <div className="cs-header">
+        <div className="cs-tags-row"><span className="proj-tag">{exp.date}</span></div>
+        <h1 className="cs-title">{exp.title}</h1>
+        <div className="cs-subtitle">{exp.place}</div>
+      </div>
+
+      <div className="cs-body">
+        <div className="cs-section">
+          <h2 className="cs-sh">{CONTENT.experiencePage.overview}</h2>
+          <p className="cs-p">{exp.detail || exp.desc}</p>
+        </div>
+
+        {exp.highlights && (
+          <div className="cs-section">
+            <h2 className="cs-sh">Highlights</h2>
+            <ul className="exp-highlights">
+              {exp.highlights.map((h, i) => <li key={i}>{h}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {exp.focus && (
+          <div className="cs-section">
+            <h2 className="cs-sh">{CONTENT.experiencePage.focus}</h2>
+            <div className="exp-focus">
+              {exp.focus.map(f => <span key={f} className="exp-focus-tag">{f}</span>)}
+            </div>
+          </div>
+        )}
+
+        <div className="cs-pagination">
+          {prev
+            ? <a href={'#experience/' + prev.slug} className="cs-pag-link">
+                <span className="cs-pag-dir">← Previous</span>
+                <span className="cs-pag-title">{prev.place}</span>
+              </a>
+            : <span />}
+          {next
+            ? <a href={'#experience/' + next.slug} className="cs-pag-link" style={{textAlign:'right'}}>
+                <span className="cs-pag-dir">Next →</span>
+                <span className="cs-pag-title">{next.place}</span>
+              </a>
+            : <span />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Portfolio() {
   useMagneticButtons();
   useSectionReveal();
@@ -2322,6 +2727,11 @@ function App() {
   if (csMatch) {
     const proj = DATA.projects.find(p => p.id === csMatch[1]);
     if (proj) return <CaseStudy proj={proj} />;
+  }
+  const expMatch = hash.match(/^#experience\/(.+)$/);
+  if (expMatch) {
+    const exp = DATA.experience.find(e => e.slug === expMatch[1]);
+    if (exp) return <ExperiencePage exp={exp} />;
   }
   return <Portfolio />;
 }
