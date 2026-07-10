@@ -263,14 +263,14 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
    calm ground under the text but stays vivid in the cursor-play area at right. */
 .hero-inner::before {
   content:''; position:absolute; z-index:-1; pointer-events:none;
-  left:calc(var(--pad-x) * -0.3); right:8%; top:-4%; bottom:-6%;
-  background:radial-gradient(ellipse 60% 80% at 33% 50%,
-    var(--bg) 0%, var(--bg) 48%,
+  left:calc(var(--pad-x) * -0.3); right:45%; top:-4%; bottom:-6%;
+  background:radial-gradient(ellipse 75% 80% at 40% 50%,
+    var(--bg) 0%, var(--bg) 46%,
     color-mix(in srgb, var(--bg) 60%, transparent) 68%,
-    transparent 84%);
+    transparent 86%);
 }
 @media(max-width:900px){
-  .hero-inner::before { left:-20%; right:-20%; background:radial-gradient(ellipse 84% 74% at 42% 46%, var(--bg) 0%, var(--bg) 52%, color-mix(in srgb, var(--bg) 55%, transparent) 72%, transparent 88%); }
+  .hero-inner::before { left:-20%; right:-20%; top:20%; bottom:-6%; background:radial-gradient(ellipse 84% 70% at 42% 42%, var(--bg) 0%, var(--bg) 52%, color-mix(in srgb, var(--bg) 55%, transparent) 72%, transparent 88%); }
 }
 .hero-eyebrow {
   display:flex; align-items:center; gap:14px;
@@ -808,20 +808,21 @@ const CONFIG = {
   activateSpeed:     0.20,   /* reveal fade-in speed (lerp per frame toward 1) */
   deactivateSpeed:   0.15,   /* reveal fade-out speed (lerp per frame toward 0) */
 
-  /* ── HERO PCB (composed, near-static) ───────────────────
-     A deliberately hand-composed printed-circuit motif anchored right of
-     the copy: an MCU footprint, a via tap, a top rail, and a fan-out bus
-     into an edge connector. Mostly still — one slow pulse travels the bus
-     and the trace nearest the cursor gently lifts. */
-  circuit: {
-    module:     36,     /* layout grid the board snaps to (px) */
-    busLines:   5,      /* parallel traces in the fan-out bus */
-    trace:      0.24,   /* base trace opacity (faint) */
-    probeRadius:88,     /* how near the cursor must be to lift a trace */
-    energyRise: 0.12,   /* how fast the nearest trace lifts (smooth) */
-    energyFall: 0.05,   /* how fast it settles again (smooth) */
-    pulsePeriod:300,    /* frames of quiet between bus pulses (slow) */
-    pulseSpeed: 3.0,    /* px/frame a pulse travels */
+  /* ── HERO SCHEMATIC (Music Controller torque loop) ──────
+     A labeled block diagram of the flagship project's real architecture:
+     ESP32-S3 —UART→ RP2040 (FOC) —6·PWM→ TMC6300 —U·V·W→ motor, shaft-
+     coupled to the MT6701 encoder, SSI feedback closing the loop. One
+     pulse circulates the loop; hovering a block gently highlights it. */
+  schematic: {
+    lineAlpha:  0.55,   /* diagram ink opacity (reads as the object) */
+    fillAlpha:  0.035,  /* block fill */
+    labelAlpha: 0.85,   /* component name opacity */
+    subAlpha:   0.5,    /* secondary line under the name */
+    wireLabel:  0.55,   /* bus label opacity */
+    pulseSpeed: 1.6,    /* px/frame the loop signal travels */
+    hoverPad:   14,     /* px around a block that counts as hover */
+    energyRise: 0.10,   /* hover highlight fade-in (lerp/frame) */
+    energyFall: 0.05,   /* hover highlight fade-out */
   },
 
   /* ── WIND TUNNEL (experience pages) ─────────────────────
@@ -889,7 +890,7 @@ const CONTENT = {
       { label:"Experience", href:"#experience", primary:false },
     ],
     scrollCue: "Scroll",
-    readoutLabel: "Printed circuit · signal bus",
+    readoutLabel: "Fig. 01 · Music Controller",
   },
 
   /* ── EXPERIENCE DETAIL PAGES ────────────────────────── */
@@ -1568,205 +1569,205 @@ function mountFlow(host, canvas, refs = {}) {
   return () => { cleanup(); host.removeEventListener('mousemove', onMove); host.removeEventListener('mouseleave', onLeave); };
 }
 
-/* ── PCB COMPOSITION (home hero) ────────────────────────
-   A deliberately composed, near-static printed-circuit motif anchored to
-   the right of the copy: an MCU footprint with pin rows, a via tap, a top
-   rail, and a fan-out bus into an edge connector. Mostly still — one slow
-   pulse travels the bus and the trace nearest the cursor gently lifts. */
-function mountCircuit(host, canvas, refs = {}) {
-  const C = CONFIG.circuit;
+/* ── HERO SCHEMATIC (home hero) ─────────────────────────
+   Fig. 01: the Music Controller's real closed-loop haptic architecture,
+   drawn as a labeled block diagram. ESP32-S3 —UART→ RP2040 (FOC 5 kHz)
+   —6·PWM→ TMC6300 —U·V·W→ BLDC motor, shaft-coupled to the MT6701
+   encoder, with SSI feedback closing the loop back into the RP2040.
+   One signal pulse circulates the loop; hovering a block highlights it. */
+function mountCircuit(host, canvas) {
+  const C = CONFIG.schematic;
   const ink = cssRGB('--fg', '#1a1208');
   const acc = cssRGB('--accent', '#b83232');
-  const bg  = cssRGB('--bg', '#f4efe6');
 
   let W = 0, H = 0, frame = 0;
-  let traces = [];   // { pts:[{x,y}], energy, hot, len, main }
-  let ics = [];      // { x, y, w, h, pins:[{x,y,side}] }
-  let pads = [];     // edge-connector pads { x, y }
-  let vias = [];     // { x, y }
-  let pulse = null;  // { trace, d }
-  let pulseWait = 60;
+  let blocks = [];   // { id, label, sub, x, y, w, h, energy }  (motor: circle w/ r)
+  let wires = [];    // { pts:[{x,y}], label, lx, ly, arrow, dashed }
+  let loop = null;   // { segs:[wire pts], lens:[], total }  pulse path
+  let pulseD = 0;
+  let caption = null;
   const cursor = { x: -9999, y: -9999, on: false };
 
-  const traceLen = (pts) => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k].x - pts[k-1].x, pts[k].y - pts[k-1].y); return L; };
-  const addTrace = (pts, main = false) => { traces.push({ pts, energy: 0, hot: false, len: traceLen(pts), main }); };
-
   const build = () => {
-    traces = []; ics = []; pads = []; vias = []; pulse = null; pulseWait = 60;
-    const M = Math.max(24, Math.min(40, Math.round(W / 42)));
-    const snap = v => Math.round(v / M) * M;
+    blocks = []; wires = []; loop = null; pulseD = 0; caption = null;
 
-    // ── anchors: real page elements the board wires into ──
-    const R = host.getBoundingClientRect();
-    const vis = el => el && el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).display !== 'none';
-    const rel = el => { const b = el.getBoundingClientRect(); return { x: b.left - R.left, y: b.top - R.top, w: b.width, h: b.height }; };
-    const pick = sel => { const el = document.querySelector(sel); return vis(el) ? rel(el) : null; };
-    const navLink = () => { const e = [...document.querySelectorAll('.nav .nav-links a')].find(a => a.textContent.trim() === 'Work') || document.querySelector('.nav .nav-links a'); return vis(e) ? rel(e) : null; };
-    const A = { logo: pick('.nav .nav-logo'), nav: navLink(), readout: pick('.hero .hero-readout') };
+    const compact = W < 900;
+    // design-space layout (units), then scale + translate into the hero
+    const D = { w: 585, h: compact ? 262 : 352 };
+    const s = compact
+      ? Math.min((W - 48) / D.w, 175 / D.h)
+      : Math.min(1.02, Math.max(0.58, (W * 0.365) / D.w));
+    const ox = compact ? Math.max(24, W - 24 - D.w * s) : W - Math.max(56, W * 0.05) - D.w * s;
+    const oy = compact ? 78 : Math.max(112, H * 0.30);
+    const P = (x, y) => ({ x: ox + x * s, y: oy + y * s });
 
-    // ── MCU footprint, right-of-centre ──
-    const nH = 5, nV = 3;
-    const icW = M * 5, icH = M * 3.2;
-    const icX = Math.min(snap(W * 0.62), Math.floor((W - M * 1.5 - icW) / M) * M);
-    const icY = snap(H * 0.30);
-    const pinsTop = [], pinsBottom = [], pinsLeft = [], pinsRight = [];
-    for (let i = 0; i < nH; i++) {
-      const px = snap(icX + ((i + 0.5) / nH) * icW);
-      pinsTop.push({ x: px, y: icY, side: 'T' });
-      pinsBottom.push({ x: px, y: icY + icH, side: 'B' });
-    }
-    for (let i = 0; i < nV; i++) {
-      const py = snap(icY + ((i + 0.5) / nV) * icH);
-      pinsLeft.push({ x: icX, y: py, side: 'L' });
-      pinsRight.push({ x: icX + icW, y: py, side: 'R' });
-    }
-    ics.push({ x: icX, y: icY, w: icW, h: icH, pins: [...pinsTop, ...pinsBottom, ...pinsLeft, ...pinsRight] });
+    const yTop = compact ? -900 : 0;         // ESP32 row (hidden when compact)
+    const yMain = compact ? 10 : 150;        // main loop row
+    const yEnc = yMain + 130;                // encoder row
 
-    const pitch = Math.max(9, Math.round(M * 0.5));
-    const RM = snap(W - M * 1.5);
-    // top rail sits in the clear band below the nav, above the headline
-    const navB = Math.max(A.logo ? A.logo.y + A.logo.h : 0, A.nav ? A.nav.y + A.nav.h : 0);
-    const railY = navB ? snap(navB + M * 1.0) : snap(icY - M * 1.6);
-    const port = (a, fx, fy) => ({ x: snap(a.x + a.w * fx), y: snap(a.y + a.h * fy) });
+    const B = (id, label, sub, x, y, w, h) => {
+      const p = P(x, y);
+      const b = { id, label, sub: compact ? null : sub, x: p.x, y: p.y, w: w * s, h: h * s, energy: 0 };
+      blocks.push(b); return b;
+    };
 
-    // ── logo → MCU (the main net; the pulse runs this) ──
-    if (A.logo) {
-      const p = port(A.logo, 0.5, 1), tp = pinsTop[1];
-      addTrace([{ x: p.x, y: p.y }, { x: p.x, y: railY }, { x: tp.x, y: railY }, { x: tp.x, y: tp.y }], true);
-      pads.push({ x: p.x, y: p.y });
-      vias.push({ x: p.x, y: railY }, { x: tp.x, y: railY });
-    }
-    // ── nav "Work" → MCU (parallel rail just above) ──
-    if (A.nav) {
-      const p = port(A.nav, 0.5, 1), tp = pinsTop[3], ry = railY - pitch;
-      addTrace([{ x: p.x, y: p.y }, { x: p.x, y: ry }, { x: tp.x, y: ry }, { x: tp.x, y: tp.y }]);
-      pads.push({ x: p.x, y: p.y });
-      vias.push({ x: tp.x, y: ry });
-    }
+    let esp = null;
+    if (!compact) esp = B('U1', 'ESP32-S3', 'UI · Wi-Fi', 0, yTop, 150, 56);
+    const rp  = B('U2', 'RP2040',  'FOC · 5 kHz',   0,   yMain, 150, 64);
+    const tmc = B('U3', 'TMC6300', 'gate driver',   225, yMain, 140, 64);
+    const mot = { id: 'M1', label: 'M', sub: compact ? null : 'BLDC', cx: P(495, yMain + 32).x, cy: P(495, yMain + 32).y, r: 30 * s, energy: 0 };
+    blocks.push(mot);
+    const enc = B('U4', 'MT6701', 'encoder', 355, yEnc, 140, 52);
 
-    // ── fan-out bus: MCU bottom pins → parallel bus → edge connector ──
-    const busN = Math.min(C.busLines, nH);
-    const busY = snap(icY + icH + M * 1.4);
-    for (let i = 0; i < busN; i++) {
-      const pin = pinsBottom[i];
-      const y = busY + i * pitch;
-      addTrace([{ x: pin.x, y: pin.y }, { x: pin.x, y }, { x: RM, y }]);
-      vias.push({ x: pin.x, y });
-      pads.push({ x: RM, y });
-    }
+    const midY = rp.y + rp.h / 2;
+    const encMidY = enc.y + enc.h / 2;
 
-    // ── MCU → readout (the board drives the on-screen readout) ──
-    if (A.readout) {
-      const p = port(A.readout, 0.5, 0), sp = pinsRight[nV - 1];
-      const midX = snap(Math.max(sp.x + M, (sp.x + p.x) / 2));
-      addTrace([{ x: sp.x, y: sp.y }, { x: midX, y: sp.y }, { x: midX, y: p.y - M }, { x: p.x, y: p.y - M }, { x: p.x, y: p.y }]);
-      pads.push({ x: p.x, y: p.y });
-      vias.push({ x: midX, y: sp.y });
-    }
+    // wires (design left→right, arrows show signal direction)
+    if (esp) wires.push({ pts: [{ x: esp.x + esp.w / 2, y: esp.y + esp.h }, { x: rp.x + rp.w / 2, y: rp.y }], label: 'UART', lx: esp.x + esp.w / 2 + 9 * s, ly: (esp.y + esp.h + rp.y) / 2, align: 'left', arrow: true });
+    const w2 = { pts: [{ x: rp.x + rp.w, y: midY }, { x: tmc.x, y: midY }], label: '6·PWM', lx: (rp.x + rp.w + tmc.x) / 2, ly: midY - 8 * s, align: 'center', arrow: true };
+    const w3 = { pts: [{ x: tmc.x + tmc.w, y: midY }, { x: mot.cx - mot.r, y: midY }], label: 'U·V·W', lx: (tmc.x + tmc.w + mot.cx - mot.r) / 2, ly: midY - 8 * s, align: 'center', arrow: true };
+    const w4 = { pts: [{ x: mot.cx, y: mot.cy + mot.r }, { x: mot.cx, y: enc.y }], label: 'shaft', lx: mot.cx + 9 * s, ly: (mot.cy + mot.r + enc.y) / 2, align: 'left', dashed: true };
+    const fbX = rp.x + rp.w * 0.5;
+    const w5 = { pts: [{ x: enc.x, y: encMidY }, { x: fbX, y: encMidY }, { x: fbX, y: rp.y + rp.h }], label: 'SSI', lx: (enc.x + fbX) / 2, ly: encMidY - 8 * s, align: 'center', arrow: true };
+    wires.push(w2, w3, w4, w5);
 
-    // ── a couple of left pins tap to aligned vias, for texture ──
-    const tapX = snap(icX - M * 1.4);
-    for (let i = 0; i < 2; i++) {
-      const pin = pinsLeft[i];
-      addTrace([{ x: pin.x, y: pin.y }, { x: tapX, y: pin.y }]);
-      vias.push({ x: tapX, y: pin.y });
-    }
+    // pulse circulates the closed loop (gaps inside components are skipped)
+    const segs = [w2.pts, w3.pts, w4.pts, w5.pts];
+    const lens = segs.map(pts => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y); return L; });
+    loop = { segs, lens, total: lens.reduce((a, b) => a + b, 0) };
+
+    caption = { x: rp.x, y: (compact ? P(0, yEnc + 92).y : P(0, yEnc + 100).y), s };
+    caption.text = 'FIG. 01 — HAPTIC TORQUE CONTROL LOOP';
   };
 
-  const drawIC = (ctx, ic) => {
-    ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.5)`;
-    ctx.lineWidth = 1.2;
-    ctx.strokeRect(ic.x, ic.y, ic.w, ic.h);
-    ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.045)`;
-    ctx.fillRect(ic.x, ic.y, ic.w, ic.h);
-    ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.4)`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for (const p of ic.pins) {
-      const l = 4;
-      if (p.side === 'T') { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y - l); }
-      else if (p.side === 'B') { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x, p.y + l); }
-      else if (p.side === 'L') { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - l, p.y); }
-      else { ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + l, p.y); }
-    }
-    ctx.stroke();
-    ctx.beginPath(); ctx.arc(ic.x + ic.w * 0.14, ic.y + ic.h * 0.22, 1.9, 0, 7);
-    ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.75)`; ctx.fill();
-  };
-
-  const posAlong = (t, d) => {
-    let a2 = 0;
-    for (let k = 1; k < t.pts.length; k++) {
-      const a = t.pts[k-1], b = t.pts[k], seg = Math.hypot(b.x - a.x, b.y - a.y);
-      if (a2 + seg >= d) { const u = seg ? (d - a2) / seg : 0; return [a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u]; }
-      a2 += seg;
+  const loopPos = (d) => {
+    d = ((d % loop.total) + loop.total) % loop.total;
+    for (let i = 0; i < loop.segs.length; i++) {
+      if (d > loop.lens[i]) { d -= loop.lens[i]; continue; }
+      const pts = loop.segs[i];
+      for (let k = 1; k < pts.length; k++) {
+        const a = pts[k - 1], b = pts[k], L = Math.hypot(b.x - a.x, b.y - a.y);
+        if (d <= L) { const t = L ? d / L : 0; return [a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t]; }
+        d -= L;
+      }
     }
     return null;
   };
+
+  const mix = (t) => `rgba(${Math.round(ink[0] + (acc[0] - ink[0]) * t)},${Math.round(ink[1] + (acc[1] - ink[1]) * t)},${Math.round(ink[2] + (acc[2] - ink[2]) * t)},`;
 
   const cleanup = mountCanvasSim(host, canvas, (st) => ({
     resize() { W = st.W; H = st.H; build(); },
     step(dt) {
       const { ctx } = st;
       frame++;
+      pulseD += C.pulseSpeed * dt;
 
-      // cursor: smoothly lift the single nearest trace
-      const PR2 = C.probeRadius * C.probeRadius;
-      let nearest = null, nd2 = PR2;
-      if (cursor.on) {
-        for (const t of traces) for (const pt of t.pts) {
-          const dx = pt.x - cursor.x, dy = pt.y - cursor.y, d2 = dx*dx + dy*dy;
-          if (d2 < nd2) { nd2 = d2; nearest = t; }
+      // hover: gently highlight the block under the cursor
+      for (const b of blocks) {
+        let over = false;
+        if (cursor.on) {
+          if (b.r) over = Math.hypot(cursor.x - b.cx, cursor.y - b.cy) < b.r + C.hoverPad;
+          else over = cursor.x > b.x - C.hoverPad && cursor.x < b.x + b.w + C.hoverPad && cursor.y > b.y - C.hoverPad && cursor.y < b.y + b.h + C.hoverPad;
         }
-      }
-      for (const t of traces) {
-        const target = t === nearest ? 1 : 0;
-        const rate = target > t.energy ? C.energyRise : C.energyFall;
-        t.energy += (target - t.energy) * Math.min(1, rate * dt);
-        if (t === nearest && !t.hot) { if (!pulse) pulse = { trace: t, d: 0 }; t.hot = true; }
-        else if (t.energy < 0.2) t.hot = false;
+        const target = over ? 1 : 0;
+        const rate = target > b.energy ? C.energyRise : C.energyFall;
+        b.energy += (target - b.energy) * Math.min(1, rate * dt);
       }
 
-      // one slow pulse on the main bus when idle
-      if (!pulse) { pulseWait -= dt; if (pulseWait <= 0) { const m = traces.find(t => t.main); if (m) pulse = { trace: m, d: 0 }; } }
-      if (pulse) { pulse.d += C.pulseSpeed * dt; if (pulse.d > pulse.trace.len) { pulse = null; pulseWait = C.pulsePeriod; } }
-
-      // ── draw (faint, composed) ──
       ctx.clearRect(0, 0, W, H);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const s = caption ? caption.s : 1;
+      const fPx = n => Math.max(8, Math.round(n * s));
 
-      for (const t of traces) {
-        const en = t.energy;
-        ctx.strokeStyle = `rgba(${Math.round(ink[0]+(acc[0]-ink[0])*en)},${Math.round(ink[1]+(acc[1]-ink[1])*en)},${Math.round(ink[2]+(acc[2]-ink[2])*en)},${C.trace + en*0.55})`;
-        ctx.lineWidth = 1.3 + en * 1.1;
+      // ── wires + arrowheads + bus labels ──
+      for (const w of wires) {
+        ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.lineAlpha})`;
+        ctx.lineWidth = 1.3;
+        if (w.dashed) ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        ctx.moveTo(t.pts[0].x, t.pts[0].y);
-        for (let k = 1; k < t.pts.length; k++) ctx.lineTo(t.pts[k].x, t.pts[k].y);
+        ctx.moveTo(w.pts[0].x, w.pts[0].y);
+        for (let k = 1; k < w.pts.length; k++) ctx.lineTo(w.pts[k].x, w.pts[k].y);
         ctx.stroke();
-      }
-
-      for (const v of vias) {
-        ctx.beginPath(); ctx.arc(v.x, v.y, 3, 0, 7); ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.42)`; ctx.fill();
-        ctx.beginPath(); ctx.arc(v.x, v.y, 1.3, 0, 7); ctx.fillStyle = `rgba(${bg[0]},${bg[1]},${bg[2]},0.95)`; ctx.fill();
-      }
-
-      for (const pd of pads) { ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},0.7)`; ctx.fillRect(pd.x - 2, pd.y - 3.4, 9, 6.8); }
-
-      for (const ic of ics) drawIC(ctx, ic);
-
-      if (pulse) {
-        const pos = posAlong(pulse.trace, pulse.d);
-        if (pos) {
-          const g = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], 8);
-          g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},0.95)`);
-          g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`);
-          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(pos[0], pos[1], 8, 0, 7); ctx.fill();
+        ctx.setLineDash([]);
+        if (w.arrow) {
+          const a = w.pts[w.pts.length - 2], b = w.pts[w.pts.length - 1];
+          const ang = Math.atan2(b.y - a.y, b.x - a.x), L = 6;
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - L * Math.cos(ang - 0.45), b.y - L * Math.sin(ang - 0.45));
+          ctx.moveTo(b.x, b.y); ctx.lineTo(b.x - L * Math.cos(ang + 0.45), b.y - L * Math.sin(ang + 0.45));
+          ctx.stroke();
+        }
+        if (w.label) {
+          ctx.font = `${fPx(9)}px 'Fira Code', monospace`;
+          ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.wireLabel})`;
+          ctx.textAlign = w.align || 'center'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(w.label, w.lx, w.ly);
         }
       }
 
-      if (frame % 40 === 0) {
-        if (refs.netsRef && refs.netsRef.current) refs.netsRef.current.textContent = String(traces.length).padStart(2, '0');
-        if (refs.viasRef && refs.viasRef.current) refs.viasRef.current.textContent = String(vias.length).padStart(2, '0');
+      // ── blocks ──
+      for (const b of blocks) {
+        const en = b.energy;
+        if (b.r) { // motor
+          ctx.strokeStyle = mix(en) + `${C.lineAlpha + en * 0.35})`;
+          ctx.lineWidth = 1.3 + en * 0.7;
+          ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.fillAlpha})`;
+          ctx.beginPath(); ctx.arc(b.cx, b.cy, b.r, 0, 7); ctx.fill(); ctx.stroke();
+          ctx.font = `${fPx(15)}px 'Fira Code', monospace`;
+          ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.labelAlpha})`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(b.label, b.cx, b.cy + 1);
+          ctx.font = `${fPx(8.5)}px 'Fira Code', monospace`;
+          ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},${0.7 + en * 0.3})`;
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          ctx.fillText(b.id, b.cx - b.r, b.cy - b.r - 5);
+          if (b.sub) {
+            ctx.font = `${fPx(8.5)}px 'Fira Code', monospace`;
+            ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.subAlpha})`;
+            ctx.textAlign = 'center';
+            ctx.fillText(b.sub, b.cx, b.cy + b.r + 13);
+          }
+          continue;
+        }
+        ctx.strokeStyle = mix(en) + `${C.lineAlpha + en * 0.35})`;
+        ctx.lineWidth = 1.3 + en * 0.7;
+        ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.fillAlpha})`;
+        ctx.fillRect(b.x, b.y, b.w, b.h);
+        ctx.strokeRect(b.x, b.y, b.w, b.h);
+        ctx.font = `${fPx(8.5)}px 'Fira Code', monospace`;
+        ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},${0.7 + en * 0.3})`;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(b.id, b.x, b.y - 5);
+        ctx.font = `${fPx(11)}px 'Fira Code', monospace`;
+        ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.labelAlpha})`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(b.label, b.x + b.w / 2, b.y + b.h / 2 - (b.sub ? 6 * s : 0));
+        if (b.sub) {
+          ctx.font = `${fPx(8.5)}px 'Fira Code', monospace`;
+          ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.subAlpha})`;
+          ctx.fillText(b.sub, b.x + b.w / 2, b.y + b.h / 2 + 11 * s);
+        }
+      }
+
+      // ── circulating loop pulse ──
+      if (loop && loop.total > 0) {
+        const pos = loopPos(pulseD);
+        if (pos) {
+          const g = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], 7);
+          g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},0.95)`);
+          g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`);
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(pos[0], pos[1], 7, 0, 7); ctx.fill();
+        }
+      }
+
+      // ── figure caption ──
+      if (caption) {
+        ctx.font = `${fPx(9)}px 'Fira Code', monospace`;
+        ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.45)`;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        ctx.fillText(caption.text, caption.x, caption.y);
       }
     },
   }));
@@ -1782,10 +1783,8 @@ function mountCircuit(host, canvas, refs = {}) {
 function Hero() {
   const heroRef = useRef(null);
   const canvasRef = useRef(null);
-  const netsRef = useRef(null);
-  const viasRef = useRef(null);
 
-  useEffect(() => mountCircuit(heroRef.current, canvasRef.current, { netsRef, viasRef }), []);
+  useEffect(() => mountCircuit(heroRef.current, canvasRef.current), []);
 
   const name = DATA.profile.name;
   const [first, last] = name.split(' ');
@@ -1810,7 +1809,7 @@ function Hero() {
       <div className="hero-meta">
         <div className="hero-readout" aria-hidden="true">
           <div className="hero-readout-label">{CONTENT.hero.readoutLabel}</div>
-          <div>traces <span className="hero-readout-value" ref={netsRef}>—</span> · vias <span className="hero-readout-value" ref={viasRef}>—</span> · 2-layer</div>
+          <div>FOC <span className="hero-readout-value">5 kHz</span> · enc <span className="hero-readout-value">SSI</span> · <span className="hero-readout-value">UART</span></div>
         </div>
         {DATA.stats.map((s,i) => (
           <div className="hero-stat" key={i}>
