@@ -259,19 +259,6 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   position:relative; z-index:2; padding:0 var(--pad-x); padding-top:var(--hero-pad-top);
   width:100%; max-width:var(--max-w); margin:0 auto;
 }
-/* Soft page-coloured halo behind the hero copy so the circuit reads as a
-   calm ground under the text but stays vivid in the cursor-play area at right. */
-.hero-inner::before {
-  content:''; position:absolute; z-index:-1; pointer-events:none;
-  left:calc(var(--pad-x) * -0.3); right:45%; top:-4%; bottom:-6%;
-  background:radial-gradient(ellipse 75% 80% at 40% 50%,
-    var(--bg) 0%, var(--bg) 46%,
-    color-mix(in srgb, var(--bg) 60%, transparent) 68%,
-    transparent 86%);
-}
-@media(max-width:900px){
-  .hero-inner::before { left:-20%; right:-20%; top:20%; bottom:-6%; background:radial-gradient(ellipse 84% 70% at 42% 42%, var(--bg) 0%, var(--bg) 52%, color-mix(in srgb, var(--bg) 55%, transparent) 72%, transparent 88%); }
-}
 .hero-eyebrow {
   display:flex; align-items:center; gap:14px;
   font-family:var(--fm); font-size:11px; letter-spacing:.16em;
@@ -554,6 +541,13 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   font-family:var(--fm); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
   color:var(--fg3); padding:10px 16px; border-top:1px solid var(--border2);
 }
+.cs-schematic {
+  position:relative; height:440px; margin-top:14px;
+  border:1px solid var(--border2); border-radius:var(--r);
+  background:var(--bg2); overflow:hidden;
+}
+.cs-schematic canvas { position:absolute; inset:0; width:100%; height:100%; }
+@media(max-width:900px){ .cs-schematic { height:300px; } }
 .diagram-lb {
   position:fixed; inset:0; z-index:9000; background:rgba(26,18,8,.85);
   display:flex; align-items:center; justify-content:center;
@@ -808,18 +802,16 @@ const CONFIG = {
   activateSpeed:     0.20,   /* reveal fade-in speed (lerp per frame toward 1) */
   deactivateSpeed:   0.15,   /* reveal fade-out speed (lerp per frame toward 0) */
 
-  /* ── HERO SCHEMATIC (Music Controller torque loop) ──────
-     A labeled block diagram of the flagship project's real architecture:
-     ESP32-S3 —UART→ RP2040 (FOC) —6·PWM→ TMC6300 —U·V·W→ motor, shaft-
-     coupled to the MT6701 encoder, SSI feedback closing the loop. One
-     pulse circulates the loop; hovering a block gently highlights it. */
+  /* ── SYSTEM SCHEMATIC (Home Controller case study figure) ──
+     A labeled block diagram of the project's real architecture, rendered
+     as Fig. 01 inside the case study. Static drawing; hovering a block
+     gently highlights it. */
   schematic: {
     lineAlpha:  0.55,   /* diagram ink opacity (reads as the object) */
     fillAlpha:  0.035,  /* block fill */
     labelAlpha: 0.85,   /* component name opacity */
     subAlpha:   0.5,    /* secondary line under the name */
     wireLabel:  0.55,   /* bus label opacity */
-    pulseSpeed: 1.6,    /* px/frame the loop signal travels */
     hoverPad:   14,     /* px around a block that counts as hover */
     energyRise: 0.10,   /* hover highlight fade-in (lerp/frame) */
     energyFall: 0.05,   /* hover highlight fade-out */
@@ -890,7 +882,6 @@ const CONTENT = {
       { label:"Experience", href:"#experience", primary:false },
     ],
     scrollCue: "Scroll",
-    readoutLabel: "Fig. 01 · Home Controller",
   },
 
   /* ── EXPERIENCE DETAIL PAGES ────────────────────────── */
@@ -1003,7 +994,7 @@ const DATA = {
       highlights:["Formula Student — Aerodynamics (CFD)","Formula Student — Control systems","MEng · final-year Rolls-Royce heat-exchanger project"] },
   ],
   projects: [
-    { id:"musiccontroller", status:"active",
+    { id:"musiccontroller", status:"active", schematic:true,
       display: MODEL_DISPLAY.musiccontroller,
       title:"Music Controller", short:"Haptic smart knob, Spotify over Thread, LVGL touchscreen — a physical antidote to the phone.", tags:["IoT","PCB Design","BLDC / FOC","C++","LVGL"],
       model: { path:"assets/models/MusicControllerExternal.glb", internalsPath:"assets/models/MusicControllerInternal.glb" },
@@ -1434,13 +1425,26 @@ function cssRGB(v, fallback) {
 
 /* Shared lifecycle for a full-bleed background canvas sim: sizes to the host,
    pauses when scrolled off-screen, rebuilds on significant resize. `build`
-   returns { step(dt), resize() }. Returns a cleanup function. */
-function mountCanvasSim(host, canvas, build) {
+   returns { step(dt), resize() }. Returns a cleanup function.
+   opts.staticFallback: under prefers-reduced-motion, draw one static frame
+   instead of nothing (for content figures, not ambient effects). */
+function mountCanvasSim(host, canvas, build, opts = {}) {
   if (!host || !canvas) return () => {};
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {};
   const ctx = canvas.getContext('2d');
-  let rafId = null, disposed = false, visible = true, last = 0;
   const state = { W: 0, H: 0, dpr: 1, ctx };
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (!opts.staticFallback) return () => {};
+    const sim = build(state);
+    state.W = host.clientWidth; state.H = host.clientHeight;
+    state.dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(state.W * state.dpr);
+    canvas.height = Math.round(state.H * state.dpr);
+    ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+    sim.resize();
+    sim.step(1);
+    return () => {};
+  }
+  let rafId = null, disposed = false, visible = true, last = 0;
 
   const doResize = () => {
     state.W = host.clientWidth; state.H = host.clientHeight;
@@ -1569,16 +1573,16 @@ function mountFlow(host, canvas, refs = {}) {
   return () => { cleanup(); host.removeEventListener('mousemove', onMove); host.removeEventListener('mouseleave', onLeave); };
 }
 
-/* ── HERO SCHEMATIC (home hero) ─────────────────────────
+/* ── SYSTEM SCHEMATIC (Home Controller case study) ──────
    Fig. 01: the Home Controller's real architecture, drawn as a labeled
    block diagram. ESP32-P4 (touch UI · Wi-Fi 6) —UART→ RP2040 (FOC 5 kHz)
    —6·PWM→ TMC6300 —U·V·W→ BLDC motor, shaft-coupled to the MT6701
    encoder, SSI feedback closing the torque loop. Strain gauges (BF350)
    feed an HX711 into the RP2040 for force-sensed knob presses, and the
    P4 links over Wi-Fi 6 to a Raspberry Pi running Home Assistant OS,
-   bridging Thread (ESP32-H2) to Matter lights. One signal pulse
-   circulates the loop; hovering a block highlights it. */
-function mountCircuit(host, canvas) {
+   bridging Thread (ESP32-H2) to Matter lights. Static drawing;
+   hovering a block highlights it. */
+function mountSchematic(host, canvas) {
   const C = CONFIG.schematic;
   const ink = cssRGB('--fg', '#1a1208');
   const acc = cssRGB('--accent', '#b83232');
@@ -1586,22 +1590,18 @@ function mountCircuit(host, canvas) {
   let W = 0, H = 0, frame = 0;
   let blocks = [];   // { id, label, sub, x, y, w, h, energy }  (motor: circle w/ r)
   let wires = [];    // { pts:[{x,y}], label, lx, ly, arrow, dashed }
-  let loop = null;   // { segs:[wire pts], lens:[], total }  pulse path
-  let pulseD = 0;
   let caption = null;
   const cursor = { x: -9999, y: -9999, on: false };
 
   const build = () => {
-    blocks = []; wires = []; loop = null; pulseD = 0; caption = null;
+    blocks = []; wires = []; caption = null;
 
-    const compact = W < 900;
-    // design-space layout (units), then scale + translate into the hero
-    const D = { w: 585, h: compact ? 262 : 352 };
-    const s = compact
-      ? Math.min((W - 48) / D.w, 175 / D.h)
-      : Math.min(1.02, Math.max(0.58, (W * 0.365) / D.w));
-    const ox = compact ? Math.max(24, W - 24 - D.w * s) : W - Math.max(56, W * 0.05) - D.w * s;
-    const oy = compact ? 78 : Math.max(112, H * 0.30);
+    const compact = W < 640;
+    // design-space layout (units), scaled to fit and centred in the host box
+    const D = { w: 585, h: compact ? 262 : 400 };
+    const s = Math.min(1.05, (W - 48) / D.w, (H - 32) / D.h);
+    const ox = (W - D.w * s) / 2;
+    const oy = (H - D.h * s) / 2;
     const P = (x, y) => ({ x: ox + x * s, y: oy + y * s });
 
     const yTop = compact ? -900 : 0;         // ESP32-P4 + home-link row (hidden when compact)
@@ -1651,27 +1651,8 @@ function mountCircuit(host, canvas) {
       wires.push({ pts: [{ x: px, y: hx.y }, { x: px, y: rp.y + rp.h }], label: 'press', lx: px + 9 * s, ly: (hx.y + rp.y + rp.h) / 2, align: 'left', arrow: true });
     }
 
-    // pulse circulates the closed torque loop (gaps inside components are skipped)
-    const segs = [w2.pts, w3.pts, w4.pts, w5.pts];
-    const lens = segs.map(pts => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y); return L; });
-    loop = { segs, lens, total: lens.reduce((a, b) => a + b, 0) };
-
     caption = { x: rp.x, y: (compact ? P(0, yEnc + 92).y : P(0, yEnc + 100).y), s };
     caption.text = compact ? 'FIG. 01 — HAPTIC TORQUE LOOP' : 'FIG. 01 — HOME CONTROLLER · HAPTIC CONTROL LOOP';
-  };
-
-  const loopPos = (d) => {
-    d = ((d % loop.total) + loop.total) % loop.total;
-    for (let i = 0; i < loop.segs.length; i++) {
-      if (d > loop.lens[i]) { d -= loop.lens[i]; continue; }
-      const pts = loop.segs[i];
-      for (let k = 1; k < pts.length; k++) {
-        const a = pts[k - 1], b = pts[k], L = Math.hypot(b.x - a.x, b.y - a.y);
-        if (d <= L) { const t = L ? d / L : 0; return [a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t]; }
-        d -= L;
-      }
-    }
-    return null;
   };
 
   const mix = (t) => `rgba(${Math.round(ink[0] + (acc[0] - ink[0]) * t)},${Math.round(ink[1] + (acc[1] - ink[1]) * t)},${Math.round(ink[2] + (acc[2] - ink[2]) * t)},`;
@@ -1681,7 +1662,6 @@ function mountCircuit(host, canvas) {
     step(dt) {
       const { ctx } = st;
       frame++;
-      pulseD += C.pulseSpeed * dt;
 
       // hover: gently highlight the block under the cursor
       for (const b of blocks) {
@@ -1778,18 +1758,6 @@ function mountCircuit(host, canvas) {
         }
       }
 
-      // ── circulating loop pulse ──
-      if (loop && loop.total > 0) {
-        const pos = loopPos(pulseD);
-        if (pos) {
-          const g = ctx.createRadialGradient(pos[0], pos[1], 0, pos[0], pos[1], 7);
-          g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},0.95)`);
-          g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`);
-          ctx.fillStyle = g;
-          ctx.beginPath(); ctx.arc(pos[0], pos[1], 7, 0, 7); ctx.fill();
-        }
-      }
-
       // ── figure caption ──
       if (caption) {
         ctx.font = `${fPx(9)}px 'Fira Code', monospace`;
@@ -1798,7 +1766,7 @@ function mountCircuit(host, canvas) {
         ctx.fillText(caption.text, caption.x, caption.y);
       }
     },
-  }));
+  }), { staticFallback: true });
 
   const onMove = e => { const r = host.getBoundingClientRect(); cursor.x = e.clientX - r.left; cursor.y = e.clientY - r.top; cursor.on = true; };
   const onLeave = () => { cursor.on = false; };
@@ -1808,19 +1776,16 @@ function mountCircuit(host, canvas) {
 }
 
 /* ── HERO ───────────────────────────────────────────── */
+/* Typographic hero: the name and tagline carry it on the bare grid —
+   no canvas art. (The Fig. 01 schematic lives in the Music Controller
+   case study now.) */
 function Hero() {
-  const heroRef = useRef(null);
-  const canvasRef = useRef(null);
-
-  useEffect(() => mountCircuit(heroRef.current, canvasRef.current), []);
-
   const name = DATA.profile.name;
   const [first, last] = name.split(' ');
 
   return (
-    <section className="hero" ref={heroRef}>
+    <section className="hero">
       <div className="hero-grid"></div>
-      <canvas className="hero-canvas" ref={canvasRef} aria-hidden="true"></canvas>
       <div style={{position:'absolute',bottom:80,left:'var(--pad-x)',fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
         {CONTENT.hero.locationTag}
       </div>
@@ -1835,10 +1800,6 @@ function Hero() {
         </div>
       </div>
       <div className="hero-meta">
-        <div className="hero-readout" aria-hidden="true">
-          <div className="hero-readout-label">{CONTENT.hero.readoutLabel}</div>
-          <div>FOC <span className="hero-readout-value">5 kHz</span> · enc <span className="hero-readout-value">SSI</span> · <span className="hero-readout-value">Wi-Fi 6</span></div>
-        </div>
         {DATA.stats.map((s,i) => (
           <div className="hero-stat" key={i}>
             <div className="hero-stat-n">{s.n}</div>
@@ -2363,6 +2324,18 @@ function useRouter() {
   return hash;
 }
 
+/* Fig. 01 system schematic, rendered as a contained figure in a case study. */
+function SchematicFigure() {
+  const hostRef = useRef(null);
+  const canvasRef = useRef(null);
+  useEffect(() => mountSchematic(hostRef.current, canvasRef.current), []);
+  return (
+    <div className="cs-schematic" ref={hostRef}>
+      <canvas ref={canvasRef} aria-hidden="true"></canvas>
+    </div>
+  );
+}
+
 function DiagramCard({ d }) {
   const [lb, setLb] = useState(false);
   return (
@@ -2524,6 +2497,12 @@ function CaseStudy({ proj }) {
           <h2 className="cs-sh">Technical Approach</h2>
           <p className="cs-p">{proj.tech}</p>
         </div>
+        {proj.schematic && (
+          <div className="cs-section">
+            <h2 className="cs-sh">System Architecture</h2>
+            <SchematicFigure />
+          </div>
+        )}
         {proj.diagrams && (
           <div className="cs-section">
             <h2 className="cs-sh">Wiring Diagrams</h2>
