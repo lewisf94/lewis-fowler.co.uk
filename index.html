@@ -890,7 +890,7 @@ const CONTENT = {
       { label:"Experience", href:"#experience", primary:false },
     ],
     scrollCue: "Scroll",
-    readoutLabel: "Fig. 01 · Music Controller",
+    readoutLabel: "Fig. 01 · Home Controller",
   },
 
   /* ── EXPERIENCE DETAIL PAGES ────────────────────────── */
@@ -1570,11 +1570,14 @@ function mountFlow(host, canvas, refs = {}) {
 }
 
 /* ── HERO SCHEMATIC (home hero) ─────────────────────────
-   Fig. 01: the Music Controller's real closed-loop haptic architecture,
-   drawn as a labeled block diagram. ESP32-S3 —UART→ RP2040 (FOC 5 kHz)
+   Fig. 01: the Home Controller's real architecture, drawn as a labeled
+   block diagram. ESP32-P4 (touch UI · Wi-Fi 6) —UART→ RP2040 (FOC 5 kHz)
    —6·PWM→ TMC6300 —U·V·W→ BLDC motor, shaft-coupled to the MT6701
-   encoder, with SSI feedback closing the loop back into the RP2040.
-   One signal pulse circulates the loop; hovering a block highlights it. */
+   encoder, SSI feedback closing the torque loop. Strain gauges (BF350)
+   feed an HX711 into the RP2040 for force-sensed knob presses, and the
+   P4 links over Wi-Fi 6 to a Raspberry Pi running Home Assistant OS,
+   bridging Thread (ESP32-H2) to Matter lights. One signal pulse
+   circulates the loop; hovering a block highlights it. */
 function mountCircuit(host, canvas) {
   const C = CONFIG.schematic;
   const ink = cssRGB('--fg', '#1a1208');
@@ -1601,9 +1604,9 @@ function mountCircuit(host, canvas) {
     const oy = compact ? 78 : Math.max(112, H * 0.30);
     const P = (x, y) => ({ x: ox + x * s, y: oy + y * s });
 
-    const yTop = compact ? -900 : 0;         // ESP32 row (hidden when compact)
-    const yMain = compact ? 10 : 150;        // main loop row
-    const yEnc = yMain + 130;                // encoder row
+    const yTop = compact ? -900 : 0;         // ESP32-P4 + home-link row (hidden when compact)
+    const yMain = compact ? 10 : 150;        // main torque-loop row
+    const yEnc = yMain + 130;                // encoder / strain row
 
     const B = (id, label, sub, x, y, w, h) => {
       const p = P(x, y);
@@ -1611,33 +1614,50 @@ function mountCircuit(host, canvas) {
       blocks.push(b); return b;
     };
 
-    let esp = null;
-    if (!compact) esp = B('U1', 'ESP32-S3', 'UI · Wi-Fi', 0, yTop, 150, 56);
+    let esp = null, rpi = null, lamp = null, hx = null;
+    if (!compact) {
+      esp = B('U1', 'ESP32-P4', 'touch UI · Wi-Fi 6', 0, yTop, 150, 56);
+      rpi = B('A1', 'RASPBERRY PI', 'HA OS', 300, yTop, 150, 56);
+      const lc = P(545, yTop + 28);
+      lamp = { id: 'E1', lamp: true, sub: 'Matter', cx: lc.x, cy: lc.y, r: 17 * s, energy: 0 };
+      blocks.push(lamp);
+    }
     const rp  = B('U2', 'RP2040',  'FOC · 5 kHz',   0,   yMain, 150, 64);
     const tmc = B('U3', 'TMC6300', 'gate driver',   225, yMain, 140, 64);
     const mot = { id: 'M1', label: 'M', sub: compact ? null : 'BLDC', cx: P(495, yMain + 32).x, cy: P(495, yMain + 32).y, r: 30 * s, energy: 0 };
     blocks.push(mot);
     const enc = B('U4', 'MT6701', 'encoder', 355, yEnc, 140, 52);
+    if (!compact) hx = B('U5', 'HX711', 'strain · BF350', 0, yEnc, 104, 52);
 
     const midY = rp.y + rp.h / 2;
     const encMidY = enc.y + enc.h / 2;
 
-    // wires (design left→right, arrows show signal direction)
-    if (esp) wires.push({ pts: [{ x: esp.x + esp.w / 2, y: esp.y + esp.h }, { x: rp.x + rp.w / 2, y: rp.y }], label: 'UART', lx: esp.x + esp.w / 2 + 9 * s, ly: (esp.y + esp.h + rp.y) / 2, align: 'left', arrow: true });
+    // wires (arrows show signal direction; short dashes = wireless, long = mechanical)
+    if (esp) {
+      wires.push({ pts: [{ x: esp.x + esp.w / 2, y: esp.y + esp.h }, { x: rp.x + rp.w / 2, y: rp.y }], label: 'UART', lx: esp.x + esp.w / 2 + 9 * s, ly: (esp.y + esp.h + rp.y) / 2, align: 'left', arrow: true });
+      const topY = esp.y + esp.h / 2;
+      wires.push({ pts: [{ x: esp.x + esp.w, y: topY }, { x: rpi.x, y: topY }], label: 'Wi-Fi 6', lx: (esp.x + esp.w + rpi.x) / 2, ly: topY - 8 * s, align: 'center', dashed: [2, 3] });
+      wires.push({ pts: [{ x: rpi.x + rpi.w, y: topY }, { x: lamp.cx - lamp.r, y: topY }], label: 'Thread·H2', lx: (rpi.x + rpi.w + lamp.cx - lamp.r) / 2, ly: topY - 8 * s, align: 'center', dashed: [2, 3] });
+    }
     const w2 = { pts: [{ x: rp.x + rp.w, y: midY }, { x: tmc.x, y: midY }], label: '6·PWM', lx: (rp.x + rp.w + tmc.x) / 2, ly: midY - 8 * s, align: 'center', arrow: true };
     const w3 = { pts: [{ x: tmc.x + tmc.w, y: midY }, { x: mot.cx - mot.r, y: midY }], label: 'U·V·W', lx: (tmc.x + tmc.w + mot.cx - mot.r) / 2, ly: midY - 8 * s, align: 'center', arrow: true };
-    const w4 = { pts: [{ x: mot.cx, y: mot.cy + mot.r }, { x: mot.cx, y: enc.y }], label: 'shaft', lx: mot.cx + 9 * s, ly: (mot.cy + mot.r + enc.y) / 2, align: 'left', dashed: true };
-    const fbX = rp.x + rp.w * 0.5;
-    const w5 = { pts: [{ x: enc.x, y: encMidY }, { x: fbX, y: encMidY }, { x: fbX, y: rp.y + rp.h }], label: 'SSI', lx: (enc.x + fbX) / 2, ly: encMidY - 8 * s, align: 'center', arrow: true };
+    const w4 = { pts: [{ x: mot.cx, y: mot.cy + mot.r }, { x: mot.cx, y: enc.y }], label: 'shaft', lx: mot.cx + 9 * s, ly: (mot.cy + mot.r + enc.y) / 2, align: 'left', dashed: [4, 4] };
+    // feedback drops into the RP2040 clear of the HX711 footprint below it
+    const fbX = rp.x + rp.w * (compact ? 0.5 : 0.82);
+    const w5 = { pts: [{ x: enc.x, y: encMidY }, { x: fbX, y: encMidY }, { x: fbX, y: rp.y + rp.h }], label: 'SSI', lx: (enc.x + fbX) / 2 + 20 * s, ly: encMidY - 8 * s, align: 'center', arrow: true };
     wires.push(w2, w3, w4, w5);
+    if (hx) {
+      const px = hx.x + hx.w * 0.35;
+      wires.push({ pts: [{ x: px, y: hx.y }, { x: px, y: rp.y + rp.h }], label: 'press', lx: px + 9 * s, ly: (hx.y + rp.y + rp.h) / 2, align: 'left', arrow: true });
+    }
 
-    // pulse circulates the closed loop (gaps inside components are skipped)
+    // pulse circulates the closed torque loop (gaps inside components are skipped)
     const segs = [w2.pts, w3.pts, w4.pts, w5.pts];
     const lens = segs.map(pts => { let L = 0; for (let k = 1; k < pts.length; k++) L += Math.hypot(pts[k].x - pts[k - 1].x, pts[k].y - pts[k - 1].y); return L; });
     loop = { segs, lens, total: lens.reduce((a, b) => a + b, 0) };
 
     caption = { x: rp.x, y: (compact ? P(0, yEnc + 92).y : P(0, yEnc + 100).y), s };
-    caption.text = 'FIG. 01 — HAPTIC TORQUE CONTROL LOOP';
+    caption.text = compact ? 'FIG. 01 — HAPTIC TORQUE LOOP' : 'FIG. 01 — HOME CONTROLLER · HAPTIC CONTROL LOOP';
   };
 
   const loopPos = (d) => {
@@ -1684,7 +1704,7 @@ function mountCircuit(host, canvas) {
       for (const w of wires) {
         ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.lineAlpha})`;
         ctx.lineWidth = 1.3;
-        if (w.dashed) ctx.setLineDash([4, 4]);
+        if (w.dashed) ctx.setLineDash(Array.isArray(w.dashed) ? w.dashed : [4, 4]);
         ctx.beginPath();
         ctx.moveTo(w.pts[0].x, w.pts[0].y);
         for (let k = 1; k < w.pts.length; k++) ctx.lineTo(w.pts[k].x, w.pts[k].y);
@@ -1709,15 +1729,23 @@ function mountCircuit(host, canvas) {
       // ── blocks ──
       for (const b of blocks) {
         const en = b.energy;
-        if (b.r) { // motor
+        if (b.r) { // circular symbols: motor (letter) or lamp (IEC crossed circle)
           ctx.strokeStyle = mix(en) + `${C.lineAlpha + en * 0.35})`;
           ctx.lineWidth = 1.3 + en * 0.7;
           ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.fillAlpha})`;
           ctx.beginPath(); ctx.arc(b.cx, b.cy, b.r, 0, 7); ctx.fill(); ctx.stroke();
-          ctx.font = `${fPx(15)}px 'Fira Code', monospace`;
-          ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.labelAlpha})`;
-          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(b.label, b.cx, b.cy + 1);
+          if (b.lamp) {
+            const k = b.r * 0.7071;
+            ctx.beginPath();
+            ctx.moveTo(b.cx - k, b.cy - k); ctx.lineTo(b.cx + k, b.cy + k);
+            ctx.moveTo(b.cx + k, b.cy - k); ctx.lineTo(b.cx - k, b.cy + k);
+            ctx.stroke();
+          } else {
+            ctx.font = `${fPx(15)}px 'Fira Code', monospace`;
+            ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},${C.labelAlpha})`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(b.label, b.cx, b.cy + 1);
+          }
           ctx.font = `${fPx(8.5)}px 'Fira Code', monospace`;
           ctx.fillStyle = `rgba(${acc[0]},${acc[1]},${acc[2]},${0.7 + en * 0.3})`;
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
@@ -1809,7 +1837,7 @@ function Hero() {
       <div className="hero-meta">
         <div className="hero-readout" aria-hidden="true">
           <div className="hero-readout-label">{CONTENT.hero.readoutLabel}</div>
-          <div>FOC <span className="hero-readout-value">5 kHz</span> · enc <span className="hero-readout-value">SSI</span> · <span className="hero-readout-value">UART</span></div>
+          <div>FOC <span className="hero-readout-value">5 kHz</span> · enc <span className="hero-readout-value">SSI</span> · <span className="hero-readout-value">Wi-Fi 6</span></div>
         </div>
         {DATA.stats.map((s,i) => (
           <div className="hero-stat" key={i}>
