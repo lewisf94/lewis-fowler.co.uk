@@ -996,22 +996,26 @@ const DATA = {
   projects: [
     { id:"musiccontroller", status:"active", schematic:true,
       display: MODEL_DISPLAY.musiccontroller,
-      title:"Music Controller", short:"Haptic smart knob, Spotify over Thread, LVGL touchscreen — a physical antidote to the phone.", tags:["IoT","PCB Design","BLDC / FOC","C++","LVGL"],
+      title:"Home Controller", short:"A handheld, haptic music controller — dual-MCU, with a motor-driven smart knob for Spotify, Sonos and a Home Assistant smart home.", tags:["Embedded C","FOC / Haptics","ESP32-P4 · RP2040","LVGL 9","PCB Design"],
       model: { path:"assets/models/MusicControllerExternal.glb", internalsPath:"assets/models/MusicControllerInternal.glb" },
-      intro:"Phones are everything devices. They can't specialise, so they're mediocre at most things — including controlling music. This project is a dedicated physical controller built to do one thing well: make interacting with music enjoyable. Physical buttons that click, a haptic knob that resists and snaps, a 5\" screen worth looking at. V1 used a Cheap Yellow Display and a mechanical rotary encoder. V1 hit real limits fast. V2 replaces both with a 5\" ESP32-S3 IPS touchscreen and a SmartKnob-inspired BLDC motor assembly — elevating the volume knob from a component into an experience.",
-      tech:"A dual-MCU architecture separates concerns cleanly. The ESP32-S3 handles Wi-Fi, LVGL rendering, and Spotify via a Raspberry Pi Thread border router that strips API JSON into lightweight packets before forwarding. A dedicated RP2040 co-MCU runs Field Oriented Control (FOC) at 5kHz+, synthesising programmable haptic detents, hard end-stops, and anti-nudge resistance profiles in real time. The RP2040 pushes asynchronous events (e.g. KNOB_TURN:+1, BTN_PRESS) over UART to the S3, guaranteeing sub-millisecond input latency independent of Wi-Fi state. The MT6701 magnetic encoder runs on a fully isolated SPI bus to prevent collisions with the display pipeline.",
-      math:"v_out = e^(k·θ)  — logarithmic volume curve matching human hearing",
-      challenges:"V1 hit three hard limits. (1) The CYD's resistive touchscreen required firm deliberate presses and handled swipes poorly — the opposite of what the project was built for. (2) Spotify has no webhook or websocket API; polling every 500ms while decoding JPEG album art and driving graphics was too much for a single core. Solved in V2 by offloading polling and JPEG-to-binary conversion to the Raspberry Pi bridge. (3) Fast spins on the mechanical rotary encoder missed edges and occasionally reversed direction — a fundamental sampling-rate problem with contact encoders. Replaced with the MT6701 non-contact magnetic encoder, eliminating bounce, wear, and missed steps entirely.",
-      results:null,
+      intro:"Phones are everything-devices, which makes them mediocre at most single things — controlling music included. The Home Controller is a dedicated, tactile alternative: a handheld unit with a 4.3\" touchscreen, four mechanical buttons, and a motor-driven knob that generates its own detents and end-stops in software. It browses your albums, shows what's playing, and drives Spotify directly, a Sonos speaker over the LAN, or a wider Home Assistant setup. What began on a small 2.8\" “Cheap Yellow Display” board now leads on a Waveshare ESP32-P4 and is hardware-verified end to end — display, Wi-Fi, Spotify, Sonos and the full themed UI. The SmartKnob-style haptic knob is the next layer: its firmware and the host-side driver are written and committed, with the custom PCB in progress.",
+      tech:"The system splits across two microcontrollers so real-time motor control never competes with the UI. The ESP32-P4 owns the screen (LVGL 9.4 on ESP-IDF 5.5), Wi-Fi, audio and every network backend; a dedicated RP2040 co-processor runs Field-Oriented Control at 5 kHz to synthesise the knob's haptics — programmable detents, hard end-stops and a different feel per screen. The two talk over a single 921 600-baud UART, framing protobuf messages with a CRC32 and COBS so a fast flick registers independently of network state. Spotify has no push API, so the P4 polls with a keep-alive TLS client and adaptive backoff (5 s playing, 15 s paused) and simulates the progress bar locally between polls for smooth motion; the same UI also drives Sonos over UPnP and a Home Assistant / Music Assistant WebSocket, which doubles as a hedge against Spotify's tightening API. The album browser's iPod-style Cover Flow is a true 3-D perspective rasteriser running in PSRAM rather than through LVGL transforms, and four dark/light theme languages — from clean Braun-style minimalism to a 1-bit teletype look — switch at runtime.",
+      math:"τ = -k · (θ* - θ_detent)   — the knob's restoring torque toward the nearest software-defined detent; θ* is the magnetic-encoder angle, unwrapped continuously at 5 kHz",
+      challenges:"The knob's real difficulty is real-time. On the RP2040, any flash write from the UI core stalls the motor core, so the FOC loop and its torque math are pinned to run from RAM to stay glitch-free. Pin planning was a genuine constraint too: the motor's six PWM lines must sit on paired hardware slices for clean dead-time, which collides with the RP2040's default UART pins — so the link to the P4 was moved to a second UART to keep both. The subtlest bug was in the haptics themselves. The magnetic encoder reports an angle that wraps every revolution, and the detent math originally diffed that raw value against a fixed reference; the instant the two straddled the wrap point, the knob would kick or snap to the wrong detent — and the volume dial, whose 0–100 range is exactly one turn, hit it every time. The fix accumulates a continuously-unwrapped angle by wrapping only the tiny per-tick change (always unambiguous), which made all three menus glitch-free at once.",
+      results:"The ESP32-P4 lead build is hardware-verified end to end: display, Wi-Fi, direct Spotify control, Sonos, and the complete UI — Cover Flow browser, four themes with light and dark faces, a 24-swatch accent system, settings and auto-dim. A full 14-bit encoder read costs about 25 µs against the 200 µs FOC budget, leaving generous headroom at 5 kHz. Before committing to a PCB spin, the haptic-knob firmware went through a pre-flight code review that caught and fixed two real bugs — the angle-wrap kick above and an end-stop anchoring error — so the board is the current work in progress rather than a rework.",
       specs:[
-        { label:"Main MCU",       value:"ESP32-S3 — 5\" IPS 800×480, capacitive touch" },
-        { label:"Co-MCU",         value:"RP2040 — FOC at 5kHz+, haptic subsystem" },
-        { label:"Motor Driver",   value:"Trinamic TMC6300 — 3-phase BLDC, 6PWM mode" },
-        { label:"Position Sensor",value:"MT6701 — magnetic encoder, SSI mode, isolated bus" },
-        { label:"Battery",        value:"4P LiPo — 8 000 mAh / 29.6 Wh" },
-        { label:"Wireless",       value:"Wi-Fi (S3) + Thread via ESP32-H2" },
-        { label:"UI Framework",   value:"LVGL on ESP32-S3" },
-        { label:"Input",          value:"Smart knob (BLDC) + 4× mechanical switches" },
+        { label:"Main MCU",       value:"ESP32-P4 — dual-core RISC-V @ 400 MHz, PSRAM (Waveshare P4-WIFI6 4.3\")" },
+        { label:"Display",        value:"4.3\" IPS 800×480 · ST7701 MIPI-DSI · GT911 capacitive touch" },
+        { label:"Connectivity",   value:"Wi-Fi 6 via onboard ESP32-C6 (SDIO)" },
+        { label:"Motor Co-MCU",   value:"RP2040 — SimpleFOC at 5 kHz, dedicated to haptics" },
+        { label:"Motor Driver",   value:"Trinamic TMC6300 — 3-phase BLDC, 6-PWM" },
+        { label:"Encoder",        value:"MT6701QT — 14-bit magnetic, SSI over SPI" },
+        { label:"Press Sensing",  value:"BF350 full Wheatstone bridge → HX711 (gain 128)" },
+        { label:"Input",          value:"4× Kailh MX hot-swap switches · SK6812 RGBW knob ring" },
+        { label:"MCU Link",       value:"UART @ 921 600 baud — protobuf · CRC32 · COBS" },
+        { label:"Music Backends", value:"Spotify Web API · Sonos UPnP · Home Assistant / Music Assistant" },
+        { label:"Smart-Home Layer",value:"Raspberry Pi 5 — HA OS + ESP32-H2 Thread border router (Matter)" },
+        { label:"UI Stack",       value:"LVGL 9.4 / ESP-IDF 5.5 — Cover Flow · 4 themes × light-dark" },
       ],
       timeline:null, links:null, images:null,
       diagrams:[
@@ -1777,7 +1781,7 @@ function mountSchematic(host, canvas) {
 
 /* ── HERO ───────────────────────────────────────────── */
 /* Typographic hero: the name and tagline carry it on the bare grid —
-   no canvas art. (The Fig. 01 schematic lives in the Music Controller
+   no canvas art. (The Fig. 01 schematic lives in the Home Controller
    case study now.) */
 function Hero() {
   const name = DATA.profile.name;
