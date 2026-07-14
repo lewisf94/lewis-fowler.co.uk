@@ -1049,19 +1049,19 @@ const DATA = {
       links:{ github:"https://github.com/lewisf94/Self-Balancing-Robot" } },
     { id:"arm", status:"planned",
       display: MODEL_DISPLAY.arm,
-      title:"Robotic Arm", short:"Inverse kinematics & precision path planning.", tags:["Robotics","MATLAB","Mechanical Design"],
-      intro:"A desktop-scale manipulator to explore coordinate systems, actuator control, and trajectory planning.",
-      tech:"Inverse kinematics via Jacobian Transpose to map (x,y,z) targets to joint angles. Smooth path planning with interpolated waypoints.",
+      title:"Robotic Arm", short:"A desktop manipulator, planned around Jacobian inverse kinematics and closed-loop backlash compensation.", tags:["Robotics","MATLAB","Mechanical Design"],
+      intro:"A planned desktop-scale manipulator to work through coordinate transforms, actuator control, and trajectory planning end to end — from a MATLAB kinematics model to a physical arm that hits a target pose reliably.",
+      tech:"The design approach centres on inverse kinematics via the Jacobian transpose method, mapping (x, y, z) targets to joint angles, with waypoint interpolation planned for smooth motion between them.",
       math:"θ̇ = Jᵀ(θ) · ẋ",
-      challenges:"Mechanical backlash in gears caused positioning error. Resolved with backlash compensation in the control loop.",
+      challenges:"The anticipated difficulty is mechanical backlash in the gear train showing up as joint-angle positioning error. The plan is to compensate for it in the control loop — closing the loop on measured position rather than trusting the drivetrain to be precise on its own.",
       results:null, specs:null, timeline:null, links:null, images:null },
     { id:"convoy", status:"planned",
       display: MODEL_DISPLAY.convoy,
-      title:"ConvoyLink", short:"Off-grid LoRa mesh for GPS tracking & voice.", tags:["RF","ESP32","React Native"],
-      intro:"Mesh radio network for vehicle convoy tracking outside cell coverage areas.",
-      tech:"LoRa 915MHz for long-range telemetry. Bluetooth bridge to React Native app. ESP32-S3 as processor.",
+      title:"ConvoyLink", short:"An off-grid LoRa mesh, planned for convoy GPS tracking and voice outside cell coverage.", tags:["RF","ESP32","React Native"],
+      intro:"A planned mesh radio network for convoy vehicles operating outside cell coverage — sharing GPS position between nodes and carrying a basic voice channel, entirely off-grid.",
+      tech:"The design uses LoRa at 915 MHz for long-range, low-bandwidth telemetry between nodes, bridged over Bluetooth to a React Native companion app, with an ESP32-S3 as each node's processor.",
       math:"d = 2R · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))",
-      challenges:"LoRa bandwidth is tiny. Codec2 voice compression made audio transmission feasible within packet limits.",
+      challenges:"LoRa's data rate is the central constraint — a few kbps at best — which makes voice the harder half of the problem. The plan is Codec2's low-bitrate speech compression to fit audio within LoRa's packet limits, untested on hardware so far.",
       results:null, specs:null, timeline:null, links:null, images:null },
   ],
 };
@@ -2504,6 +2504,7 @@ function CaseStudy({ proj }) {
       <div className="cs-header">
         <div className="cs-tags-row">
           {proj.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}
+          {proj.status === 'planned' && <span className="proj-planned-badge">{CONTENT.projects.plannedBadge}</span>}
         </div>
         <h1 className="cs-title">{proj.title}</h1>
         <div className="cs-subtitle">{proj.short}</div>
