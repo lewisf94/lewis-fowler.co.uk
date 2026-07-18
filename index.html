@@ -1055,14 +1055,28 @@ const DATA = {
       math:"θ̇ = Jᵀ(θ) · ẋ",
       challenges:"The anticipated difficulty is mechanical backlash in the gear train showing up as joint-angle positioning error. The plan is to compensate for it in the control loop — closing the loop on measured position rather than trusting the drivetrain to be precise on its own.",
       results:null, specs:null, timeline:null, links:null, images:null },
-    { id:"convoy", status:"planned",
+    { id:"convoy", status:"planned", statusLabel:"In Development",
       display: MODEL_DISPLAY.convoy,
-      title:"ConvoyLink", short:"An off-grid LoRa mesh, planned for convoy GPS tracking and voice outside cell coverage.", tags:["RF","ESP32","React Native"],
-      intro:"A planned mesh radio network for convoy vehicles operating outside cell coverage — sharing GPS position between nodes and carrying a basic voice channel, entirely off-grid.",
-      tech:"The design uses LoRa at 915 MHz for long-range, low-bandwidth telemetry between nodes, bridged over Bluetooth to a React Native companion app, with an ESP32-S3 as each node's processor.",
-      math:"d = 2R · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))",
-      challenges:"LoRa's data rate is the central constraint — a few kbps at best — which makes voice the harder half of the problem. The plan is Codec2's low-bitrate speech compression to fit audio within LoRa's packet limits, untested on hardware so far.",
-      results:null, specs:null, timeline:null, links:null, images:null },
+      title:"ConvoyLink", short:"GPS radar + push-to-talk voice for road-trip convoys beyond cell coverage — dash-mounted ESP32-S3 units on their own LoRa network. No phones.", tags:["RF / LoRa","ESP32-S3","Digital Voice","Embedded C"],
+      intro:"When a group road-trips in separate cars outside mobile coverage, the two questions are always \"where is everyone?\" and \"can I talk to them?\". ConvoyLink answers both with one dash-mounted unit per car, powered from the 12 V socket and on with the ignition: hold the PTT button to talk to the whole convoy, and watch every other car live on a radar-style screen — your car centred, the others as labelled dots with distance, bearing and freshness, for up to five cars. No phones anywhere in the system. The architecture is locked (v3, after a documented v1→v3 decision log spanning a radio range/reliability study and a corrected UK licensing analysis) and the scaffold is real: design docs, a 22-task implementation queue with acceptance tests, CI, and the first component — the beacon wire format — written and host-tested.",
+      tech:"Position and voice deliberately ride different radios. Positions use LoRa (SX1262 at 869/915 MHz): each unit broadcasts a 32-byte GPS beacon every 5 seconds, and middle cars single-hop relay the cars beyond them, roughly doubling coverage along a strung-out convoy. Voice is digital and transport-abstracted — I²S MEMS mic → codec → jitter buffer → I²S class-D amp — so the radio underneath is swappable: ESP-NOW on the S3's own 2.4 GHz radio ships first, with SX1262/Codec2 at 5 mW as a licence-free range upgrade to be settled by a field A/B. The radar renders at 5 Hz on an ILI9341 with range rings and a compass, and dots age through live → stale → ghost tiers rather than vanishing, so a dropped car leaves a \"last seen\" trail you can backtrack to. The whole stack is pure C on ESP-IDF (no Arduino), with the core libraries — protocol, geodesy, NMEA parsing, radar rendering — kept hardware-free so they run under gcc/ASan host tests and a scripted SDL2 desktop simulator before ever touching a car.",
+      math:"d = 2R · arcsin(√(sin²(Δφ/2) + cos φ₁·cos φ₂·sin²(Δλ/2)))   — haversine distance from GPS beacons; each dot's range and bearing falls out of this",
+      challenges:"The defining constraint is licence-free radio law: the bands that need no ham licence offer either range or bandwidth, never both. The design answers by splitting the problem — km-scale awareness goes to LoRa, where 32-byte beacons are cheap and 2–5 km car-to-car is realistic, while voice accepts a shorter licence-free tether (ESP-NOW at ~150–400 m, or Codec2 squeezed over the SX1262 toward ~1–1.5 km) with a documented ham-licence variant for more. An earlier NRF24-based design was retired by exactly this analysis. The other honest lesson from the range study: antenna placement in the car matters more than any firmware, so it gets its own section of the wiring docs. Success criteria for v1.0 are pinned down in advance — five cars on the radar to 2 km direct / 4 km relayed, voice latency under 250 ms, and a two-hour drive with no lockups.",
+      results:null,
+      specs:[
+        { label:"MCU",            value:"ESP32-S3-DevKitC-1 (N16R8) — ESP-IDF v5.3, pure C" },
+        { label:"Position Link",  value:"LoRa 869/915 MHz — SX1262 (E22-900M22S), 32-byte beacons / 5 s, single-hop relay" },
+        { label:"Radar Range",    value:"2–5 km car-to-car typical; relay roughly doubles along a convoy" },
+        { label:"Voice (ships first)", value:"Digital PTT over ESP-NOW — S3's own 2.4 GHz radio, ~150–400 m" },
+        { label:"Voice (upgrade)", value:"Codec2 over SX1262 @ 5 mW — ~0.5–1.5 km, licence-free; field A/B decides" },
+        { label:"Audio Path",     value:"INMP441 I²S mic → jitter buffer → MAX98357A class-D · <250 ms target" },
+        { label:"Display",        value:"2.8\" ILI9341 SPI — 5 Hz radar, range rings, live→stale→ghost dots" },
+        { label:"GPS",            value:"u-blox NEO-6M — NMEA over UART" },
+        { label:"Verification",   value:"gcc/ASan host tests + SDL2 simulator + CI; wire format 9/9 green" },
+        { label:"Unit Cost",      value:"~£20–25 of new hardware per car" },
+      ],
+      timeline:null, images:null,
+      links:{ github:"https://github.com/lewisf94/ConvoyLink" } },
   ],
 };
 
@@ -1948,7 +1962,7 @@ function Projects() {
               <h3 className="proj-title">{p.title}</h3>
               <div className="proj-short">{p.short}</div>
               <div className="proj-tags">{p.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}</div>
-              <div className="proj-planned-badge">{CONTENT.projects.plannedBadge}</div>
+              <div className="proj-planned-badge">{p.statusLabel || CONTENT.projects.plannedBadge}</div>
             </div>
           ))}
         </div>
@@ -2504,7 +2518,7 @@ function CaseStudy({ proj }) {
       <div className="cs-header">
         <div className="cs-tags-row">
           {proj.tags.map(t => <span key={t} className="proj-tag">{t}</span>)}
-          {proj.status === 'planned' && <span className="proj-planned-badge">{CONTENT.projects.plannedBadge}</span>}
+          {proj.status === 'planned' && <span className="proj-planned-badge">{proj.statusLabel || CONTENT.projects.plannedBadge}</span>}
         </div>
         <h1 className="cs-title">{proj.title}</h1>
         <div className="cs-subtitle">{proj.short}</div>
