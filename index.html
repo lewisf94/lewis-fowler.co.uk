@@ -103,7 +103,6 @@ body { overflow-x: hidden; line-height: 1; }
   --sec-title-size:clamp(34px,4.5vw,56px); /* section headings */
   --body-size:15px;           /* prose paragraphs */
   --small-size:14px;          /* secondary / card text */
-  --stat-n-size:36px;         /* hero stat number */
 
   /* ── SPACING ────────────────────────────────────────── */
   --pad-x:52px;               /* main horizontal padding — nav, sections, footer */
@@ -117,7 +116,6 @@ body { overflow-x: hidden; line-height: 1; }
   --hero-h1-mb:28px;          /* space below "Lewis Fowler" heading */
   --hero-bio-mb:52px;         /* space below bio paragraph */
   --hero-cta-gap:14px;        /* space between CTA buttons */
-  --hero-stat-gap:32px;       /* space between stat items (right column) */
   --card-pad:44px;            /* project card / contact cell inner padding */
   --card-gap:2px;             /* hairline gap between cards */
   --card-badge-mb:28px;       /* space below the category badge on a card */
@@ -125,6 +123,8 @@ body { overflow-x: hidden; line-height: 1; }
   /* ── SIZING ─────────────────────────────────────────── */
   --max-w:1200px;             /* max content width */
   --grid-cell:52px;           /* hero background grid square size */
+  --draw-cell:26px;           /* finer grid on the home hero's drawing sheet */
+  --draw-inset:30px;          /* drawing-sheet border inset from the viewport */
   --skills-h:460px;           /* height of the physics skills canvas */
   --scrollbar-w:5px;          /* scrollbar width */
   --viewer-h:180px;           /* 3D viewer height in project card */
@@ -296,14 +296,6 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   transition:border-color var(--dur-fast), color var(--dur-fast), transform .4s var(--ease);
 }
 .btn-g:hover { border-color:var(--accent); color:var(--accent); }
-.hero-meta {
-  position:absolute; right:var(--pad-x); bottom:0; top:var(--hero-pad-top);
-  display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:52px;
-  gap:var(--hero-stat-gap); z-index:2;
-}
-.hero-stat { text-align:right; }
-.hero-stat-n { font-family:var(--fh); font-size:var(--stat-n-size); font-weight:700; color:var(--fg); letter-spacing:-0.04em; }
-.hero-stat-l { font-family:var(--fm); font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--fg2); margin-top:4px; }
 .scroll-cue {
   position:absolute; bottom:36px; left:var(--pad-x); z-index:2;
   display:flex; align-items:center; gap:14px;
@@ -312,6 +304,75 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
 }
 .scroll-line { width:48px; height:1px; background:var(--accent); animation:scrollPulse var(--hero-pulse) ease-in-out infinite; transform-origin:left; }
 @keyframes scrollPulse { 0%,100%{transform:scaleX(.4);opacity:.4} 50%{transform:scaleX(1);opacity:1} }
+
+/* ── HERO AS A DRAWING SHEET ────────────────────────
+   The hero is framed like an engineering drawing: a sheet border with
+   registration marks, dimension lines annotating the name, a leader line
+   to the job title, and a title block. All of it is decoration — every
+   fact is also carried by real text — so the whole layer is hidden below
+   --draw-bp, where there isn't room for annotation. */
+.hero-frame {
+  position:absolute; inset:var(--draw-inset); z-index:1;
+  border:1px solid var(--border2); pointer-events:none;
+}
+.hero-reg { position:absolute; width:13px; height:13px; z-index:1; pointer-events:none; }
+.hero-reg::before, .hero-reg::after { content:''; position:absolute; background:var(--fg3); }
+.hero-reg::before { left:50%; top:0; bottom:0; width:1px; }
+.hero-reg::after { top:50%; left:0; right:0; height:1px; }
+.hero-reg.tl { top:calc(var(--draw-inset) - 7px); left:calc(var(--draw-inset) - 7px); }
+.hero-reg.tr { top:calc(var(--draw-inset) - 7px); right:calc(var(--draw-inset) - 7px); }
+.hero-reg.bl { bottom:calc(var(--draw-inset) - 7px); left:calc(var(--draw-inset) - 7px); }
+.hero-reg.br { bottom:calc(var(--draw-inset) - 7px); right:calc(var(--draw-inset) - 7px); }
+/* the name and everything measuring it */
+.hero-name-block { position:relative; display:inline-block; }
+.hero-dim { position:absolute; left:0; right:0; top:-42px; height:1px; background:var(--fg3); }
+.hero-dim::before, .hero-dim::after { content:''; position:absolute; top:-5px; width:1px; height:11px; background:var(--fg3); }
+.hero-dim::before { left:0; } .hero-dim::after { right:0; }
+.hero-dim-l {
+  position:absolute; top:-53px; left:50%; transform:translateX(-50%);
+  background:var(--bg); padding:0 12px; white-space:nowrap;
+  font-family:var(--fm); font-size:9.5px; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--fg2);
+}
+.hero-dimv { position:absolute; left:-34px; top:6px; bottom:6px; width:1px; background:var(--fg3); }
+.hero-dimv::before, .hero-dimv::after { content:''; position:absolute; left:-5px; width:11px; height:1px; background:var(--fg3); }
+.hero-dimv::before { top:0; } .hero-dimv::after { bottom:0; }
+.hero-dimv-l {
+  position:absolute; left:-46px; top:50%; transform:translateY(-50%) rotate(-90deg);
+  background:var(--bg); padding:3px 8px; white-space:nowrap;
+  font-family:var(--fm); font-size:9px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--fg2);
+}
+/* leader line out to the job title */
+.hero-leader { position:absolute; right:-186px; top:26px; width:178px; height:1px; z-index:2; }
+.hero-leader i { position:absolute; display:block; background:var(--accent); }
+.hero-leader .dot { left:-3px; top:-3px; width:6px; height:6px; border-radius:50%; }
+.hero-leader .diag { left:0; top:0; width:52px; height:1px; transform:rotate(-27deg); transform-origin:left center; }
+.hero-leader .flat { left:46px; top:-24px; width:132px; height:1px; }
+/* Sits outside .hero-leader (which is aria-hidden geometry) so the job
+   title stays readable, so its offsets are measured from the name block:
+   the leader's own left edge is 100% + 8px, its flat run starts +46px. */
+.hero-leader-l {
+  position:absolute; left:calc(100% + 60px); top:-20px; white-space:nowrap;
+  font-family:var(--fm); font-size:9.5px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--accent);
+}
+/* title block, bottom-right, like a real drawing sheet */
+.hero-titleblock {
+  position:absolute; right:var(--pad-x); bottom:var(--pad-x); z-index:3;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  border:1px solid var(--border); border-radius:var(--r);
+  background:color-mix(in srgb, var(--bg2) 55%, transparent);
+}
+.hero-tb { padding:9px 15px; border-right:1px solid var(--border2); border-bottom:1px solid var(--border2); font-family:var(--fm); }
+.hero-tb:nth-child(2n) { border-right:none; }
+.hero-tb:nth-child(n+3) { border-bottom:none; }
+.hero-tb-t { font-size:8px; letter-spacing:.16em; text-transform:uppercase; color:var(--fg3); margin-bottom:3px; }
+.hero-tb-d { font-size:10.5px; color:var(--fg); }
+/* the eyebrow is the small-screen stand-in for the leader-line callout */
+.hero-eyebrow-fallback { display:none; }
+/* finer grid on the drawing sheet — scoped so the experience heroes keep theirs */
+.hero-sheet .hero-grid { background-size:var(--draw-cell) var(--draw-cell); }
 
 
 
@@ -742,8 +803,15 @@ body { background:var(--bg); color:var(--fg); font-family:var(--fb); transition:
   :root{ --card-pad:28px; --sec-pad:88px; }
   .nav{padding:18px 24px;} .nav-links{display:none;}
   .hero-inner{padding:0 24px; padding-top:80px;}
-  .hero-meta{display:none;}
   .scroll-cue{left:24px;}
+  /* Drop the drawing-sheet annotations — there's no room to measure a name
+     on a phone, and the leader line would push the page sideways. The
+     eyebrow takes over the job title; the meta line keeps degree + location. */
+  .hero-frame, .hero-reg, .hero-dim, .hero-dim-l, .hero-dimv, .hero-dimv-l,
+  .hero-leader, .hero-leader-l, .hero-titleblock { display:none; }
+  .hero-name-block{ display:block; }
+  .hero-eyebrow-fallback{ display:flex; }
+  .hero-sheet .hero-grid{ background-size:var(--grid-cell) var(--grid-cell); }
   .wrap{padding:0 24px;}
   .proj-grid{grid-template-columns:1fr;}
   .tl-item{grid-template-columns:100px 1px 1fr; column-gap:20px;}
@@ -881,6 +949,14 @@ const CONTENT = {
   /* ── HERO ───────────────────────────────────────────── */
   hero: {
     locationTag: "NEWCASTLE UPON TYNE",
+    /* Annotations on the drawing-sheet hero */
+    disciplineTag: "Mechatronics · Embedded · Robotics",
+    titleBlock: {
+      sheetLabel:    "Sheet",    sheetValue: "01 — Index",
+      eduLabel:      "Education",
+      locationLabel: "Location",
+      revLabel:      "Rev",
+    },
     ctas: [
       { label:"View Work",  href:"#work",       primary:true  },
       { label:"Experience", href:"#experience", primary:false },
@@ -1824,40 +1900,75 @@ function mountSchematic(host, canvas) {
 }
 
 /* ── HERO ───────────────────────────────────────────── */
-/* Typographic hero: the name and tagline carry it on the bare grid —
-   no canvas art. (The Fig. 01 schematic lives in the Home Controller
-   case study now.) */
+/* The hero is drawn as an engineering sheet: a framed border with corner
+   registration marks, dimension lines measuring the name, a leader line
+   out to the job title, and a title block bottom-right. Only the geometry
+   is aria-hidden — the annotation *labels* are the real text carrying the
+   job title, disciplines and credentials on desktop. Below 900px the whole
+   drawing layer is dropped (no room to dimension a name on a phone) and
+   the eyebrow takes the callout's place. */
 function Hero() {
-  const name = DATA.profile.name;
-  const [first, last] = name.split(' ');
+  const [first, last] = DATA.profile.name.split(' ');
+  const C = CONTENT.hero;
+  const TB = C.titleBlock;
+  const edu = DATA.stats[0] || null;
 
   return (
-    <section className="hero">
+    <section className="hero hero-sheet">
       <div className="hero-grid"></div>
-      <div style={{position:'absolute',bottom:80,left:'var(--pad-x)',fontFamily:'var(--fm)',fontSize:10,color:'var(--accent)',opacity:.35,letterSpacing:'.14em',zIndex:2}}>
-        {CONTENT.hero.locationTag}
-      </div>
+      <div className="hero-frame" aria-hidden="true"></div>
+      <i className="hero-reg tl" aria-hidden="true"></i>
+      <i className="hero-reg tr" aria-hidden="true"></i>
+      <i className="hero-reg bl" aria-hidden="true"></i>
+      <i className="hero-reg br" aria-hidden="true"></i>
+
       <div className="hero-inner">
-        <div className="hero-eyebrow">{DATA.profile.current}</div>
-        <h1 className="hero-h1">{first} {last}</h1>
+        <div className="hero-eyebrow hero-eyebrow-fallback">{DATA.profile.current}</div>
+        <div className="hero-name-block">
+          <div className="hero-dim" aria-hidden="true"></div>
+          <div className="hero-dim-l">{C.disciplineTag}</div>
+          {edu && <React.Fragment>
+            <div className="hero-dimv" aria-hidden="true"></div>
+            <div className="hero-dimv-l">{edu.n}</div>
+          </React.Fragment>}
+          <h1 className="hero-h1">{first} {last}</h1>
+          <div className="hero-leader" aria-hidden="true">
+            <i className="dot"></i><i className="diag"></i><i className="flat"></i>
+          </div>
+          <div className="hero-leader-l">{DATA.profile.current}</div>
+        </div>
         <p className="hero-bio">{DATA.profile.bio}</p>
         <div className="hero-ctas">
-          {CONTENT.hero.ctas.map(c => (
+          {C.ctas.map(c => (
             <a key={c.label} href={c.href} className={c.primary ? 'btn-p' : 'btn-g'}>{c.label}</a>
           ))}
         </div>
       </div>
-      <div className="hero-meta">
-        {DATA.stats.map((s,i) => (
-          <div className="hero-stat" key={i}>
-            <div className="hero-stat-n">{s.n}</div>
-            <div className="hero-stat-l">{s.l}</div>
+
+      <div className="hero-titleblock">
+        <div className="hero-tb">
+          <div className="hero-tb-t">{TB.sheetLabel}</div>
+          <div className="hero-tb-d">{TB.sheetValue}</div>
+        </div>
+        {edu && (
+          <div className="hero-tb">
+            <div className="hero-tb-t">{TB.eduLabel}</div>
+            <div className="hero-tb-d">{edu.l}</div>
           </div>
-        ))}
+        )}
+        <div className="hero-tb">
+          <div className="hero-tb-t">{TB.locationLabel}</div>
+          <div className="hero-tb-d">{C.locationTag}</div>
+        </div>
+        <div className="hero-tb">
+          <div className="hero-tb-t">{TB.revLabel}</div>
+          <div className="hero-tb-d">{new Date().getFullYear()}</div>
+        </div>
       </div>
+
       <div className="scroll-cue">
         <div className="scroll-line"></div>
-        <span>{CONTENT.hero.scrollCue}</span>
+        <span>{C.scrollCue}</span>
       </div>
     </section>
   );
