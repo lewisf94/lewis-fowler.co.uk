@@ -1,9 +1,8 @@
 // Plain-language text for the home page. Technical detail stays on each project page.
 
 export const hero = {
-  status: "Open to new projects",
-  heading: ["Design engineer.", "I build products", "that are good to use."],
-  bio: "I am a mechanical design engineer. I take products from first idea to tested prototype, most recently liquid cooling plates at Eaton. In my own time I build electronics, robots and the software that runs them.",
+  heading: ["Design engineer.", "I make hardware", "people enjoy using."],
+  bio: "I take products from first idea to tested prototype. I have designed cooling hardware for cars and aerospace, and I build my own electronics and robots.",
 };
 
 export const profileRows = [

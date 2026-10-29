@@ -15,9 +15,6 @@ export function Home() {
     <>
       <section className="hero wrap">
         <div className="hero-text">
-          <p className="status-line">
-            <span className="status-dot" aria-hidden="true" /> {hero.status}
-          </p>
           <h1 className="display hero-title">
             {hero.heading.map((line, i) => (
               <span key={line} className={i === 0 ? "dim" : undefined}>
