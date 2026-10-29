@@ -144,8 +144,20 @@ img {
   height: 60px;
 }
 .site-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin-right: auto;
   color: var(--ink);
+}
+/* The logo is a mask, so it takes the ink colour in both themes. */
+.site-logo {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  background: currentColor;
+  -webkit-mask: url("/assets/icons/logo-red.png") center / contain no-repeat;
+  mask: url("/assets/icons/logo-red.png") center / contain no-repeat;
 }
 .site-nav {
   display: flex;
@@ -292,14 +304,15 @@ img {
 /* ── Hero ─────────────────────────────────────────────── */
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr);
   gap: clamp(32px, 5vw, 64px);
   align-items: center;
   padding-top: clamp(32px, 5vh, 56px);
   padding-bottom: clamp(24px, 4vh, 40px);
 }
 .hero-title {
-  font-size: clamp(40px, min(4.6vw, 7.6vh), 76px);
+  font-size: clamp(48px, 6.1vw, 88px);
+  line-height: 0.92;
   text-transform: uppercase;
   margin-bottom: 20px;
 }
@@ -357,7 +370,7 @@ img {
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.figure-caption span:nth-child(2) {
+.figure-caption span:first-child {
   color: var(--ink);
 }
 .figure-caption > :last-child {

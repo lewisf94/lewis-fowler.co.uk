@@ -41,8 +41,7 @@ export function Home() {
               className="hero-viewer"
             />
             <p className="figure-caption">
-              <span>Fig. 01</span>
-              <span>{lead.title}</span>
+                <span>{lead.title}</span>
               <span className="hide-sm">Hover to see inside</span>
             </p>
           </Frame>

@@ -12,7 +12,10 @@ export function SiteHeader() {
     <header className="site-header">
       <div className="wrap header-inner">
         <a className="site-name mono" href="#">
-          Lewis<span className="dim">.</span>Fowler
+          <span className="site-logo" aria-hidden="true" />
+          <span>
+            Lewis<span className="dim">.</span>Fowler
+          </span>
         </a>
         <nav aria-label="Main" className="site-nav">
           {NAV.map((n) => (

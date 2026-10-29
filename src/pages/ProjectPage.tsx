@@ -32,7 +32,6 @@ export function ProjectPage({ project: p }: { project: Project }) {
         <Frame className="detail-figure">
           <ModelViewer key={modelPath} path={modelPath} withControls autoRotate={false} display={p.display} />
           <p className="figure-caption">
-            <span>Fig. 01</span>
             <span>{showInside ? "Inside" : "Outside"}</span>
             {p.model?.internalsPath && (
               <button type="button" className="link-btn mono" onClick={() => setShowInside((v) => !v)}>
