@@ -12,6 +12,7 @@ export function ProjectPage({ project: p }: { project: Project }) {
   const [showInside, setShowInside] = useState(false);
   const index = projects.findIndex((x) => x.id === p.id);
   const next = projects[(index + 1) % projects.length];
+  const prev = projects[(index - 1 + projects.length) % projects.length];
   const summary = projectSummary[p.id];
   const modelPath = p.model && (showInside && p.model.internalsPath ? p.model.internalsPath : p.model.path);
 
@@ -24,7 +25,7 @@ export function ProjectPage({ project: p }: { project: Project }) {
         <span className="mono">
           {pad(index + 1)} / {pad(projects.length)}
         </span>
-        <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "Working build")}</span>
+        <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "In Development")}</span>
       </div>
       <h1 className="display detail-title">{p.title}</h1>
       <p className="lede">{summary?.plain ?? p.short}</p>
@@ -107,12 +108,20 @@ export function ProjectPage({ project: p }: { project: Project }) {
         </Frame>
       )}
 
-      <a className="next-project" href={`#work/${next.id}`}>
-        <span className="mono dim">Next project</span>
-        <span className="display">
-          {next.title} <span aria-hidden="true">→</span>
-        </span>
-      </a>
+      <nav className="project-nav" aria-label="More projects">
+        <a className="project-nav-link prev" href={`#work/${prev.id}`}>
+          <span className="mono dim">Previous project</span>
+          <span className="display">
+            <span aria-hidden="true">←</span> {prev.title}
+          </span>
+        </a>
+        <a className="project-nav-link next" href={`#work/${next.id}`}>
+          <span className="mono dim">Next project</span>
+          <span className="display">
+            {next.title} <span aria-hidden="true">→</span>
+          </span>
+        </a>
+      </nav>
     </article>
   );
 }

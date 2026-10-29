@@ -328,6 +328,8 @@ img {
   color: var(--ink-3);
 }
 .hero .lede {
+  font-size: clamp(15px, 1.4vw, 16.5px);
+  max-width: 38em;
   margin-bottom: 28px;
 }
 .hero-figure {
@@ -687,17 +689,26 @@ img {
 .detail .profile {
   margin-bottom: clamp(48px, 7vw, 88px);
 }
-.next-project {
+.project-nav {
   display: grid;
-  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
   border-top: 1px solid var(--line);
   padding-top: 32px;
 }
-.next-project .display {
-  font-size: clamp(36px, 6vw, 64px);
+.project-nav-link {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+.project-nav-link.next {
+  text-align: right;
+}
+.project-nav-link .display {
+  font-size: clamp(22px, 4vw, 48px);
   text-transform: uppercase;
 }
-.next-project:hover .display {
+.project-nav-link:hover .display {
   color: var(--ink-2);
 }
 .narrow {

@@ -6,7 +6,7 @@ export const profile: Profile = {
   role: "Mechanical Design Engineer",
   bio: "Mechanical design engineer with three years of experience. I take products from first idea to tested prototype. In my own time I build electronics, robots and software.",
   current: "Mechanical Design Engineer",
-  location: "Newcastle upon Tyne",
+  location: "Fort William",
   email: "lewis@lewis-fowler.co.uk",
   linkedin: "https://linkedin.com/in/lewisfowler",
   github: "https://github.com/lewisf94",

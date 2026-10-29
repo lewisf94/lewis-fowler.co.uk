@@ -64,10 +64,8 @@ export function Home() {
       </section>
 
       <section id="work" className="wrap section">
-        <SectionLabel index={1} total={SECTIONS}>
-          Projects
-        </SectionLabel>
-        <h2 className="display section-title">Things I have built</h2>
+        <SectionLabel index={1} total={SECTIONS} />
+        <h2 className="display section-title">Projects</h2>
         <ol className="project-list">
           {projects.map((p, i) => {
             const s = projectSummary[p.id];
@@ -77,7 +75,7 @@ export function Home() {
                   <span className="mono">
                     {pad(i + 1)} / {pad(projects.length)}
                   </span>
-                  <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "Working build")}</span>
+                  <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "In Development")}</span>
                 </div>
                 <a className="project-body" href={`#work/${p.id}`}>
                   <div className="project-text">
@@ -95,10 +93,8 @@ export function Home() {
       </section>
 
       <section id="experience" className="wrap section">
-        <SectionLabel index={2} total={SECTIONS}>
-          Experience
-        </SectionLabel>
-        <h2 className="display section-title">Where I have worked</h2>
+        <SectionLabel index={2} total={SECTIONS} />
+        <h2 className="display section-title">Experience</h2>
         <ol className="timeline">
           {experience.map((e, i) => (
             <li key={e.slug}>
@@ -117,10 +113,8 @@ export function Home() {
       </section>
 
       <section id="skills" className="wrap section">
-        <SectionLabel index={3} total={SECTIONS}>
-          Toolkit
-        </SectionLabel>
-        <h2 className="display section-title">What I use</h2>
+        <SectionLabel index={3} total={SECTIONS} />
+        <h2 className="display section-title">Toolkit</h2>
         <div className="skill-groups">
           {(["Design", "Analysis", "Making", "Code"] as SkillCategory[]).map((cat, i) => (
             <Frame key={cat} className="skill-group">
@@ -141,10 +135,8 @@ export function Home() {
       </section>
 
       <section id="contact" className="wrap section">
-        <SectionLabel index={4} total={SECTIONS}>
-          Contact
-        </SectionLabel>
-        <h2 className="display section-title">{contact.heading}</h2>
+        <SectionLabel index={4} total={SECTIONS} />
+        <h2 className="display section-title">Contact</h2>
         <p className="lede">{contact.text}</p>
         <a className="display contact-email" href={`mailto:${profile.email}`}>
           {profile.email} <span aria-hidden="true"> <OutArrow /></span>
