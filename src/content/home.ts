@@ -1,7 +1,7 @@
 // Plain-language text for the home page. Technical detail stays on each project page.
 
 export const hero = {
-  heading: ["Design engineer.", "I make hardware", "I enjoy using."],
+  heading: ["Design engineer.", "I make satisfying hardware", "and software."],
   bio: "I have taken a professional design project through its full product development life cycle and I build my own hardware and electronics.",
 };
 
