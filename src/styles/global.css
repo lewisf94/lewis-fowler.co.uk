@@ -178,9 +178,24 @@ img {
   background: var(--solid-bg);
   color: var(--solid-ink);
 }
+/* Phones: the nav links move to a second row under the name. */
 @media (max-width: 640px) {
+  .header-inner {
+    flex-wrap: wrap;
+    height: auto;
+    row-gap: 0;
+    padding-top: 12px;
+  }
   .site-nav {
-    display: none;
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid var(--line);
+    margin-top: 12px;
+    padding: 10px 0;
+  }
+  html {
+    scroll-padding-top: 110px;
   }
 }
 
