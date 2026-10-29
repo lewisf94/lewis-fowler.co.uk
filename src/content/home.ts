@@ -20,7 +20,7 @@ export const projectSummary: Record<string, { plain: string }> = {
   cineclub: { plain: "A web app for film clubs. A wheel picks the film, and everyone's review stays hidden until the whole club has watched it." },
   eatme: { plain: "A home food tracker that shows what to eat first, on your phone or on a small e-paper screen in the kitchen." },
   arm: { plain: "A 3D-printed robot arm that you drive from a web page hosted on the arm itself." },
-  convoy: { plain: "Dashboard units that show where every car in a convoy is, and let you talk, with no phone signal." },
+  convoy: { plain: "Imagine a walkie-talkie for your car dashboard, but with a screen that shows where the other cars in your convoy are." },
 };
 
 export const contact = {

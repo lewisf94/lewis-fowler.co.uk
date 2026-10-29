@@ -73,9 +73,9 @@ export function ProjectPage({ project: p }: { project: Project }) {
 
         <div className="prose">
           <h2 className="mono-label">The idea</h2>
-          <p>{p.intro}</p>
+          {p.intro.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
           <h2 className="mono-label">How it works</h2>
-          <p>{p.tech}</p>
+          {p.tech.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
           {p.math && <pre className="math">{p.math}</pre>}
           {p.diagrams?.map((d) => (
             <figure key={d.path} className="diagram">
@@ -84,11 +84,11 @@ export function ProjectPage({ project: p }: { project: Project }) {
             </figure>
           ))}
           <h2 className="mono-label">What was hard</h2>
-          <p>{p.challenges}</p>
+          {p.challenges.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
           {p.results && (
             <>
               <h2 className="mono-label">Where it is now</h2>
-              <p>{p.results}</p>
+              {p.results.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
             </>
           )}
         </div>
