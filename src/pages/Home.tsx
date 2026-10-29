@@ -114,7 +114,7 @@ export function Home() {
 
       <section id="skills" className="wrap section">
         <SectionLabel index={3} total={SECTIONS} />
-        <h2 className="display section-title">Toolkit</h2>
+        <h2 className="display section-title">Skills</h2>
         <div className="skill-groups">
           {(["Design", "Analysis", "Making", "Code"] as SkillCategory[]).map((cat, i) => (
             <Frame key={cat} className="skill-group">
