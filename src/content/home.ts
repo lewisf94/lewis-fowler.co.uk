@@ -10,7 +10,7 @@ export const profileRows = [
   { label: "Role", value: "Mechanical Design Engineer" },
   { label: "Professional Experience", value: "3 years" },
   { label: "Studied", value: "MEng, University of Glasgow, First Class Honours" },
-  { label: "Focus", value: "Product design · Embedded" },
+  { label: "Focus", value: "Product design · Microcontrollers · Software" },
 ];
 
 /** One plain sentence per project, keyed by project id. */
