@@ -31,7 +31,7 @@ export const projects: Project[] = [
       { label:"Reliability",    value:"Crash reports, watchdog, OTA updates, memory checks" },
     ],
     timeline:null, images:null,
-    links:null,
+    links:{ github:"https://github.com/lewisf94/Home-Controller" },
     diagrams:[
       { label:"CYD controller wiring diagram", path:"/assets/diagrams/CYD-Controller-Wiring-Diagram.svg" },
     ]},
@@ -99,7 +99,7 @@ export const projects: Project[] = [
       { label:"Backups",     value:"Daily snapshots, JSON backup and restore, CSV export" },
     ],
     timeline:null, images:null,
-    links:null },
+    links:{ github:"https://github.com/lewisf94/EatMe" } },
 
   { id:"arm", status:"planned", statusLabel:"In progress",
     title:"Robotic Arm",
