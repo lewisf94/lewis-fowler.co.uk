@@ -81,7 +81,7 @@ export const projects: Project[] = [
     timeline:null, images:null,
     links:{ github:"https://github.com/lewisf94/Self-Balancing-Robot" } },
 
-  { id:"eatme", status:"active", statusLabel:"Working build",
+  { id:"eatme", status:"active", statusLabel:"In Development",
     title:"EatMe",
     short:"A home food tracker. Scan what you buy and it tells you what to eat first, on your phone or on a small e-paper screen in the kitchen.",
     tags:["React","TypeScript","Home Assistant","CircuitPython","E-paper"],
@@ -101,7 +101,7 @@ export const projects: Project[] = [
     timeline:null, images:null,
     links:{ github:"https://github.com/lewisf94/EatMe" } },
 
-  { id:"arm", status:"planned", statusLabel:"In progress",
+  { id:"arm", status:"planned", statusLabel:"In Development",
     title:"Robotic Arm",
     short:"A 3D-printed robot arm on an ESP32-S3. You drive it from a web page that the arm hosts itself.",
     tags:["ESP32-S3","Kinematics","C++17","ROS 2","3D printing"],
@@ -123,7 +123,7 @@ export const projects: Project[] = [
     timeline:null, images:null,
     links:{ github:"https://github.com/lewisf94/RoboticArm" } },
 
-  { id:"convoy", status:"planned", statusLabel:"Ready for road tests",
+  { id:"convoy", status:"planned", statusLabel:"In Development",
     title:"ConvoyLink",
     short:"A dashboard unit for each car in a convoy. It shows where every car is and lets you talk, with no phone signal.",
     tags:["LoRa","ESP32-S3","Digital voice","Embedded C"],
