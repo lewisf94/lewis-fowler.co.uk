@@ -23,7 +23,7 @@ export function ProjectPage({ project: p }: { project: Project }) {
         <span className="mono">
           {pad(index + 1)} / {pad(projects.length)}
         </span>
-        <span className="mono dim">{p.status === "planned" ? "In progress" : "Working build"}</span>
+        <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "Working build")}</span>
       </div>
       <h1 className="display detail-title">{p.title}</h1>
       <p className="lede">{summary?.plain ?? p.short}</p>
@@ -53,6 +53,11 @@ export function ProjectPage({ project: p }: { project: Project }) {
           {p.links?.github && (
             <a className="btn btn-line" href={p.links.github} target="_blank" rel="noopener">
               Code on GitHub ↗
+            </a>
+          )}
+          {p.links?.demo && (
+            <a className="btn btn-line" href={p.links.demo} target="_blank" rel="noopener">
+              Open the live site ↗
             </a>
           )}
         </aside>

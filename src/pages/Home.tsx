@@ -80,7 +80,7 @@ export function Home() {
                   <span className="mono">
                     {pad(i + 1)} / {pad(projects.length)}
                   </span>
-                  <span className="mono dim">{p.status === "planned" ? "In progress" : "Working build"}</span>
+                  <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "Working build")}</span>
                 </div>
                 <a className="project-body" href={`#work/${p.id}`}>
                   <div className="project-text">
