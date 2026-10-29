@@ -25,6 +25,7 @@ export const skills: Skill[] = [
   { name: "CNC machining",    cat: "Making"   },
   { name: "3D printing",      cat: "Making"   },
   { name: "C++",              cat: "Code"     },
+  { name: "Python",           cat: "Code"     },
   { name: "JavaScript",       cat: "Code"     },
   { name: "TypeScript",       cat: "Code"     },
   { name: "React",            cat: "Code"     },
