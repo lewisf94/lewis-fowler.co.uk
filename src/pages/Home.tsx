@@ -90,12 +90,6 @@ export function Home() {
                       Read the build <span aria-hidden="true">→</span>
                     </span>
                   </div>
-                  {s && (
-                    <div className="project-stat">
-                      <span className="display stat-value">{s.stat.value}</span>
-                      <span className="mono dim">{s.stat.label}</span>
-                    </div>
-                  )}
                 </a>
               </li>
             );

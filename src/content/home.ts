@@ -14,24 +14,12 @@ export const profileRows = [
   { label: "Focus", value: "Embedded · Motors · Robots" },
 ];
 
-/** One plain sentence and one headline number per project, keyed by project id. */
-export const projectSummary: Record<string, { plain: string; stat: { value: string; label: string } }> = {
-  musiccontroller: {
-    plain: "A handheld music remote with a touchscreen and a motor-driven knob that clicks however you want it to.",
-    stat: { value: "5 kHz", label: "knob control loop" },
-  },
-  selfbalancingrobot: {
-    plain: "A two-wheeled robot that stays upright by correcting its own tilt hundreds of times a second.",
-    stat: { value: "200 Hz", label: "balance loop" },
-  },
-  arm: {
-    plain: "A 3D-printed robot arm that you drive from a web page hosted on the arm itself.",
-    stat: { value: "50 Hz", label: "smooth motion updates" },
-  },
-  convoy: {
-    plain: "Dashboard units that show where every car in a convoy is, and let you talk, with no phone signal.",
-    stat: { value: "2–5 km", label: "car-to-car range" },
-  },
+/** One plain sentence per project, keyed by project id. */
+export const projectSummary: Record<string, { plain: string }> = {
+  musiccontroller: { plain: "A handheld music remote with a touchscreen and a motor-driven knob that clicks however you want it to." },
+  selfbalancingrobot: { plain: "A two-wheeled robot that stays upright by correcting its own tilt hundreds of times a second." },
+  arm: { plain: "A 3D-printed robot arm that you drive from a web page hosted on the arm itself." },
+  convoy: { plain: "Dashboard units that show where every car in a convoy is, and let you talk, with no phone signal." },
 };
 
 export const contact = {

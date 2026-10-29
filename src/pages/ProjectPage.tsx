@@ -45,12 +45,6 @@ export function ProjectPage({ project: p }: { project: Project }) {
 
       <div className="detail-grid">
         <aside>
-          {summary && (
-            <div className="detail-stat">
-              <span className="display stat-value">{summary.stat.value}</span>
-              <span className="mono dim">{summary.stat.label}</span>
-            </div>
-          )}
           <ul className="chips">
             {p.tags.map((t) => (
               <li key={t}>{t}</li>

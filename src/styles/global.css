@@ -475,10 +475,7 @@ img {
   margin-bottom: 14px;
 }
 .project-body {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 32px;
-  align-items: end;
+  display: block;
 }
 .project-title {
   font-size: clamp(34px, 5vw, 56px);
@@ -506,29 +503,6 @@ img {
 .project-body:hover .project-title {
   color: var(--ink-2);
 }
-.project-stat,
-.detail-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  text-align: right;
-}
-.stat-value {
-  font-size: clamp(44px, 6vw, 72px);
-}
-@media (max-width: 640px) {
-  .project-body {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-  .project-stat {
-    align-items: flex-start;
-    text-align: left;
-    order: -1;
-  }
-}
-
 /* ── Experience timeline ──────────────────────────────── */
 .timeline {
   border-top: 1px solid var(--line);
@@ -658,10 +632,6 @@ img {
   flex-direction: column;
   gap: 24px;
   align-items: flex-start;
-}
-.detail-grid .detail-stat {
-  align-items: flex-start;
-  text-align: left;
 }
 .prose {
   max-width: 40em;
