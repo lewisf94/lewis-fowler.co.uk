@@ -1,16 +1,16 @@
 // Plain-language text for the home page. Technical detail stays on each project page.
 
 export const hero = {
-  heading: ["Design engineer.", "I make hardware", "people enjoy using."],
-  bio: "I take products from first idea to tested prototype. I have designed cooling hardware for cars and aerospace, and I build my own electronics and robots.",
+  heading: ["Design engineer.", "I make hardware", "I enjoy using."],
+  bio: "I have taken a professional design project through its full product development life cycle and I build my own hardware and electronics.",
 };
 
 export const profileRows = [
-  { label: "Based in", value: "Newcastle upon Tyne" },
+  { label: "Based in", value: "Fort William" },
   { label: "Role", value: "Mechanical Design Engineer" },
-  { label: "Experience", value: "3 years" },
-  { label: "Studied", value: "MEng, Glasgow, First" },
-  { label: "Focus", value: "Product design · CFD · Embedded" },
+  { label: "Professional Experience", value: "3 years" },
+  { label: "Studied", value: "MEng, University of Glasgow, First Class Honours" },
+  { label: "Focus", value: "Product design · Embedded" },
 ];
 
 /** One plain sentence per project, keyed by project id. */
