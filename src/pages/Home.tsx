@@ -1,3 +1,4 @@
+import { OutArrow } from "../components/OutArrow";
 import { profile, skills, education } from "../content/profile";
 import { projects } from "../content/projects";
 import { experience } from "../content/experience";
@@ -64,9 +65,9 @@ export function Home() {
 
       <section id="work" className="wrap section">
         <SectionLabel index={1} total={SECTIONS}>
-          Work
+          Projects
         </SectionLabel>
-        <h2 className="display section-title">Projects</h2>
+        <h2 className="display section-title">Things I have built</h2>
         <ol className="project-list">
           {projects.map((p, i) => {
             const s = projectSummary[p.id];
@@ -146,7 +147,7 @@ export function Home() {
         <h2 className="display section-title">{contact.heading}</h2>
         <p className="lede">{contact.text}</p>
         <a className="display contact-email" href={`mailto:${profile.email}`}>
-          {profile.email} <span aria-hidden="true">↗</span>
+          {profile.email} <span aria-hidden="true"> <OutArrow /></span>
         </a>
         <div className="actions">
           <a className="btn btn-line" href={profile.github} target="_blank" rel="noopener">

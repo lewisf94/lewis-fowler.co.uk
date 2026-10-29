@@ -11,7 +11,7 @@ export function Frame({ children, className = "" }: { children: ReactNode; class
   );
 }
 
-/** Small mono section label, such as "[ 01 / 04 ] · Work". */
+/** Small mono section label, such as "[ 01 / 04 ] · Projects". */
 export function SectionLabel({ index, total, children }: { index: number; total: number; children: ReactNode }) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return (

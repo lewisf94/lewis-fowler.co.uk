@@ -1,3 +1,4 @@
+import { OutArrow } from "../components/OutArrow";
 import { useState } from "react";
 import type { Project } from "../content/types";
 import { projects } from "../content/projects";
@@ -51,12 +52,12 @@ export function ProjectPage({ project: p }: { project: Project }) {
           </ul>
           {p.links?.github && (
             <a className="btn btn-line" href={p.links.github} target="_blank" rel="noopener">
-              Code on GitHub ↗
+              Code on GitHub <OutArrow />
             </a>
           )}
           {p.links?.demo && (
             <a className="btn btn-line" href={p.links.demo} target="_blank" rel="noopener">
-              Open the live site ↗
+              Open the live site <OutArrow />
             </a>
           )}
         </aside>

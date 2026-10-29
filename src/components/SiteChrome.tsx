@@ -1,8 +1,9 @@
+import { OutArrow } from "./OutArrow";
 import { profile } from "../content/profile";
 import { ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
-  { label: "Work", href: "#work" },
+  { label: "Projects", href: "#work" },
   { label: "Experience", href: "#experience" },
   { label: "Contact", href: "#contact" },
 ];
@@ -40,13 +41,13 @@ export function SiteFooter() {
         </p>
         <p className="footer-links">
           <a className="mono" href={profile.github} target="_blank" rel="noopener">
-            GitHub ↗
+            GitHub <OutArrow />
           </a>
           <a className="mono" href={profile.linkedin} target="_blank" rel="noopener">
-            LinkedIn ↗
+            LinkedIn <OutArrow />
           </a>
           <a className="mono" href={`mailto:${profile.email}`}>
-            Email ↗
+            Email <OutArrow />
           </a>
         </p>
       </div>
