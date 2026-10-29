@@ -528,7 +528,7 @@ img {
 /* ── Skills ───────────────────────────────────────────── */
 .skill-groups {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 .skill-group {
@@ -553,7 +553,12 @@ img {
   border: 1px solid var(--line);
   padding: 6px 10px;
 }
-@media (max-width: 860px) {
+@media (max-width: 1000px) {
+  .skill-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
   .skill-groups {
     grid-template-columns: 1fr;
   }

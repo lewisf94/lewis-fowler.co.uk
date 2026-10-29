@@ -3,26 +3,29 @@ import type { Profile, Skill } from "./types";
 // Copied unchanged from the previous site. The content refresh replaces this text.
 export const profile: Profile = {
   name: "Lewis Fowler",
-  role: "Design Engineer",
-  bio: "Building mechatronic hardware — embedded electronics, motor control, and robotics. By day, designing thermal management solutions for automotive and space at Boyd. Based in Newcastle upon Tyne.",
-  current: "Design Engineer @ Boyd",
+  role: "Mechanical Design Engineer",
+  bio: "Mechanical design engineer with three years of experience. I take products from first idea to tested prototype. In my own time I build electronics, robots and software.",
+  current: "Mechanical Design Engineer",
   location: "Newcastle upon Tyne",
   email: "lewis@lewis-fowler.co.uk",
   linkedin: "https://linkedin.com/in/lewisfowler",
   github: "https://github.com/lewisf94",
 };
 
-export const education = "MEng, University of Glasgow";
+export const education = "MEng Mechanical Engineering, First-Class Honours · University of Glasgow · 2023";
 
 export const skills: Skill[] = [
-  { name: "SolidWorks",   cat: "Software"   },
-  { name: "Fusion 360",   cat: "Software"   },
-  { name: "CFD / Fluent", cat: "Software"   },
-  { name: "MATLAB",       cat: "Software"   },
-  { name: "Python",       cat: "Software"   },
-  { name: "C++",          cat: "Embedded"   },
-  { name: "Fabrication",  cat: "Mechanical" },
-  { name: "3D Printing",  cat: "Mechanical" },
-  { name: "Arduino",      cat: "Embedded"   },
-  { name: "ROS 2",        cat: "Embedded"   },
+  { name: "SolidWorks",       cat: "Design"   },
+  { name: "Fusion 360",       cat: "Design"   },
+  { name: "GD&T",             cat: "Design"   },
+  { name: "Ansys Fluent",     cat: "Analysis" },
+  { name: "STAR-CCM+",        cat: "Analysis" },
+  { name: "CFD",              cat: "Analysis" },
+  { name: "Flow and pressure testing", cat: "Analysis" },
+  { name: "DFM",              cat: "Making"   },
+  { name: "CNC machining",    cat: "Making"   },
+  { name: "3D printing",      cat: "Making"   },
+  { name: "C++",              cat: "Code"     },
+  { name: "TypeScript",       cat: "Code"     },
+  { name: "ROS 2",            cat: "Code"     },
 ];

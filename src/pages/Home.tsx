@@ -125,7 +125,7 @@ export function Home() {
         </SectionLabel>
         <h2 className="display section-title">What I use</h2>
         <div className="skill-groups">
-          {(["Mechanical", "Embedded", "Software"] as SkillCategory[]).map((cat, i) => (
+          {(["Design", "Analysis", "Making", "Code"] as SkillCategory[]).map((cat, i) => (
             <Frame key={cat} className="skill-group">
               <p className="skill-head">
                 <span className="mono">{cat}</span>

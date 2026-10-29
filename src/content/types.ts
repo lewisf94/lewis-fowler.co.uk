@@ -77,7 +77,7 @@ export interface Experience {
   highlights: string[];
 }
 
-export type SkillCategory = "Software" | "Mechanical" | "Embedded";
+export type SkillCategory = "Design" | "Analysis" | "Making" | "Code";
 
 export interface Skill {
   name: string;
