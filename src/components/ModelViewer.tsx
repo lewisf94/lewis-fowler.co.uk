@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { TrackballControls } from "three/addons/controls/TrackballControls.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import type { ModelDisplay } from "../content/types";
 
 /** Runtime tuning for the viewer. Ported unchanged from the previous site. */
@@ -18,6 +19,30 @@ const VIEWER = {
   activateSpeed: 0.16,
   deactivateSpeed: 0.18,
 } as const;
+
+/**
+ * Material clean-up for the CAD exports. A key is a material name from the GLB file,
+ * or "name#rrggbb" when one name has several colours (rrggbb is the colour in the file).
+ * Fusion exports every "Opaque(r,g,b)" colour as metal, so non-metals are reset to plastic first.
+ */
+const MATERIAL_OVERRIDES: Record<
+  string,
+  { color?: number; roughness?: number; metalness?: number; envMapIntensity?: number }
+> = {
+  // Home Controller: graphite case and buttons, a less mirror-like screen, a soft white knob.
+  lightgreylowglossplastic: { color: 0x2b2b2a, roughness: 0.62 },
+  "defaultplastic#a1a1a1": { color: 0x2b2b2a, roughness: 0.62 },
+  blackhighglossplastic: { color: 0x0a0a0a, roughness: 0.3, envMapIntensity: 0.15 },
+  "mattealuminum#f7f7f7": { color: 0xb9b6af, roughness: 0.5, metalness: 0 },
+  // Self-Balancing Robot: rubber tyres, a satin metal chassis and a printed body.
+  "Steel - Satin": { color: 0x6b6b69, roughness: 0.5 },
+  "Opaque(74,74,74)": { color: 0x1c1c1b, roughness: 0.92 },
+  "Opaque(230,230,230)": { color: 0xbab7b0, roughness: 0.6 },
+};
+/** Placeholder colours that CAD gives to duplicate parts. Material pairing never picks these. */
+const PAIRING_IGNORE = new Set(["Opaque(203,210,239)"]);
+const METAL_NAME = /steel|alumin|metal|chrome|brass|copper/i;
+const GLOSS_NAME = /gloss|glass|enamel/i;
 
 const TEXT = {
   loading: "Loading 3D model…",
@@ -86,6 +111,7 @@ export function ModelViewer({
     let tickFn: (() => void) | null = null;
     let renderer: THREE.WebGLRenderer | null = null;
     let scene: THREE.Scene | null = null;
+    let envMap: THREE.Texture | null = null;
     let controls: TrackballControls | null = null;
     let model: THREE.Group | null = null;
     let spotlight: Spotlight | null = null;
@@ -133,18 +159,27 @@ export function ModelViewer({
       r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       r.setSize(w, h);
       r.outputColorSpace = THREE.SRGBColorSpace;
+      r.toneMapping = THREE.ACESFilmicToneMapping;
+      r.toneMappingExposure = 0.9;
       mount.appendChild(r.domElement);
       const cv = r.domElement;
       canvas = cv;
 
-      sc.add(new THREE.AmbientLight(0xffffff, 1.6));
-      const key = new THREE.DirectionalLight(0xffffff, 2.2);
+      // A soft studio environment gives metal and gloss parts something to reflect.
+      // Each material gets it directly (not scene.environment), so its strength can differ per material.
+      const pmrem = new THREE.PMREMGenerator(r);
+      const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      envMap = envTex;
+      pmrem.dispose();
+
+      sc.add(new THREE.AmbientLight(0xffffff, 0.25));
+      const key = new THREE.DirectionalLight(0xffffff, 1.5);
       key.position.set(4, 6, 5);
       sc.add(key);
-      const fill = new THREE.DirectionalLight(0xffffff, 1.1);
+      const fill = new THREE.DirectionalLight(0xffffff, 0.45);
       fill.position.set(-5, 3, 4);
       sc.add(fill);
-      const back = new THREE.DirectionalLight(0xffffff, 0.9);
+      const back = new THREE.DirectionalLight(0xffffff, 0.7);
       back.position.set(0, -2, -5);
       sc.add(back);
 
@@ -201,13 +236,48 @@ export function ModelViewer({
           let bestSat = -1;
           group.forEach((mesh) => {
             const m = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
-            const s = matSat(m);
+            const s = PAIRING_IGNORE.has(m.name) ? -1 : matSat(m);
             if (s > bestSat) {
               bestSat = s;
               best = m;
             }
           });
           if (best && bestSat > 0.1) group.forEach((mesh) => (mesh.material = best!));
+          // A placeholder loses to any real colour, even a grey one.
+          else if (best && group.some((mesh) => PAIRING_IGNORE.has((mesh.material as THREE.Material).name)))
+            group.forEach((mesh) => (mesh.material = best!));
+        });
+      };
+
+      const tidyMaterials = (root: THREE.Object3D) => {
+        const seen = new Set<THREE.Material>();
+        root.traverse((c) => {
+          const mesh = c as THREE.Mesh;
+          if (!mesh.isMesh) return;
+          (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).forEach((m) => {
+            if (seen.has(m)) return;
+            seen.add(m);
+            const std = m as THREE.MeshStandardMaterial;
+            if (!std.isMeshStandardMaterial) return;
+            std.envMap = envTex;
+            if (METAL_NAME.test(m.name)) {
+              std.metalness = 1;
+              std.envMapIntensity = 0.65;
+              std.roughness = Math.min(Math.max(std.roughness, 0.3), 0.5);
+            } else {
+              std.metalness = 0;
+              std.roughness = GLOSS_NAME.test(m.name) ? 0.3 : Math.max(std.roughness, 0.5);
+              // Plastics pick up less of the studio reflection than metal does.
+              std.envMapIntensity = 0.3;
+            }
+            const o = MATERIAL_OVERRIDES[`${m.name}#${std.color.getHexString()}`] ?? MATERIAL_OVERRIDES[m.name];
+            if (o) {
+              if (o.color !== undefined) std.color.setHex(o.color);
+              if (o.roughness !== undefined) std.roughness = o.roughness;
+              if (o.metalness !== undefined) std.metalness = o.metalness;
+              if (o.envMapIntensity !== undefined) std.envMapIntensity = o.envMapIntensity;
+            }
+          });
         });
       };
 
@@ -219,6 +289,7 @@ export function ModelViewer({
         );
         m.quaternion.multiplyQuaternions(baseQ, offQ);
         applyMaterialPairing(m);
+        tidyMaterials(m);
       };
 
       // Scale and centre only; Y offsets go on the wrapper in finishWithGroup.
@@ -421,6 +492,7 @@ export function ModelViewer({
       if (canvas && onCanvasMove) canvas.removeEventListener("mousemove", onCanvasMove);
       if (canvas && onCanvasLeave) canvas.removeEventListener("mouseleave", onCanvasLeave);
       spotlight?.ring.remove();
+      envMap?.dispose();
       if (renderer) {
         renderer.dispose();
         renderer.domElement.remove();
