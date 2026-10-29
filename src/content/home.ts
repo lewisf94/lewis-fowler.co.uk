@@ -2,7 +2,7 @@
 
 export const hero = {
   heading: ["Design engineer.", "I make satisfying", "hardware & software."],
-  bio: "I have taken a professional design project through its full product development life cycle and I build my own hardware and electronics.",
+  bio: "I have taken a professional design project through its full product development life cycle from design to manufacture, testing, and shipping. I also build my own hardware, electronics and embedded systems.",
 };
 
 export const profileRows = [
