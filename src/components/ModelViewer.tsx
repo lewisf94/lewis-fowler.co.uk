@@ -9,14 +9,14 @@ import type { ModelDisplay } from "../content/types";
 const VIEWER = {
   /** Auto-rotate angular velocity, rad/frame. */
   spinSpeed: 0.005,
-  /** Cursor reveal radius in CSS px (scaled by devicePixelRatio). */
-  spotlightRadius: 52,
-  /** [inner, outer] smoothstep fade edge of the reveal. */
-  spotlightFade: [0.28, 0.46],
-  /** Comet-trail lerp speeds [head, mid, tail]. */
-  trailLerp: [0.45, 0.2, 0.12],
-  activateSpeed: 0.2,
-  deactivateSpeed: 0.15,
+  /** Lens radius in CSS px (scaled by devicePixelRatio for the shader). */
+  lensRadius: 84,
+  /** Width of the anti-aliased lens edge, CSS px. */
+  lensEdge: 1.25,
+  /** How fast the lens follows the cursor (0 to 1 per frame). */
+  followLerp: 0.3,
+  activateSpeed: 0.16,
+  deactivateSpeed: 0.18,
 } as const;
 
 const TEXT = {
@@ -27,12 +27,13 @@ const TEXT = {
 };
 
 interface Spotlight {
-  pts: THREE.Vector2[];
-  weights: number[];
+  center: THREE.Vector2;
   manualPx: THREE.Vector2;
   active: { value: number };
   cursorMode: boolean;
   radiusPx: { value: number };
+  edgePx: { value: number };
+  ring: HTMLDivElement;
 }
 
 type SpotlightMaterial = THREE.Material & { _spotlightInjected?: boolean };
@@ -250,30 +251,27 @@ export function ModelViewer({
         const prev = mat.onBeforeCompile.bind(mat);
         mat.onBeforeCompile = (shader, rnd) => {
           prev(shader, rnd);
-          shader.uniforms.uPts = { value: sp.pts };
-          shader.uniforms.uWeights = { value: sp.weights };
+          shader.uniforms.uCenter = { value: sp.center };
           shader.uniforms.uActive = sp.active;
           shader.uniforms.uRadiusPx = sp.radiusPx;
+          shader.uniforms.uEdgePx = sp.edgePx;
           shader.fragmentShader = shader.fragmentShader
             .replace(
               "#include <common>",
               `#include <common>
-              uniform vec2 uPts[3];
-              uniform float uWeights[3];
+              uniform vec2 uCenter;
               uniform float uActive;
-              uniform float uRadiusPx;`,
+              uniform float uRadiusPx;
+              uniform float uEdgePx;`,
             )
             .replace(
               "#include <dithering_fragment>",
               `#include <dithering_fragment>
               if (uActive > 0.001) {
-                float field = 0.0;
-                for (int i = 0; i < 3; i++) {
-                  float d = distance(gl_FragCoord.xy, uPts[i]);
-                  float k = max(0.0, 1.0 - d / uRadiusPx);
-                  field += k * k * uWeights[i];
-                }
-                gl_FragColor.a *= 1.0 - smoothstep(${VIEWER.spotlightFade[0]}, ${VIEWER.spotlightFade[1]}, field * uActive);
+                // A sharp-edged lens: the shell is cut away inside the circle.
+                float rad = uRadiusPx * uActive;
+                float d = distance(gl_FragCoord.xy, uCenter);
+                gl_FragColor.a *= smoothstep(rad - uEdgePx, rad, d);
               }`,
             );
         };
@@ -305,13 +303,19 @@ export function ModelViewer({
 
             const cx = cv.width * 0.5;
             const cy = cv.height * 0.5;
+            // Thin outline drawn in HTML over the canvas, so it stays crisp.
+            const ring = document.createElement("div");
+            ring.className = "viewer-lens";
+            ring.setAttribute("aria-hidden", "true");
+            mount.appendChild(ring);
             const sp: Spotlight = {
-              pts: [new THREE.Vector2(cx, cy), new THREE.Vector2(cx, cy), new THREE.Vector2(cx, cy)],
-              weights: [1.4, 1.0, 0.65],
+              center: new THREE.Vector2(cx, cy),
               manualPx: new THREE.Vector2(cx, cy),
               active: { value: 0 },
               cursorMode: false,
-              radiusPx: { value: VIEWER.spotlightRadius * r.getPixelRatio() },
+              radiusPx: { value: VIEWER.lensRadius * r.getPixelRatio() },
+              edgePx: { value: VIEWER.lensEdge * r.getPixelRatio() },
+              ring,
             };
             spotlight = sp;
             shell.traverse((c) => {
@@ -324,6 +328,8 @@ export function ModelViewer({
               const rect = cv.getBoundingClientRect();
               const pr = r.getPixelRatio();
               sp.manualPx.set((e.clientX - rect.left) * pr, (rect.height - (e.clientY - rect.top)) * pr);
+              // Jump to the cursor on entry, so the lens does not slide in from the centre.
+              if (!sp.cursorMode && sp.active.value < 0.02) sp.center.copy(sp.manualPx);
               sp.cursorMode = true;
             };
             onCanvasLeave = () => {
@@ -351,7 +357,10 @@ export function ModelViewer({
         r.setSize(rw, rh);
         cam.aspect = rw / rh;
         cam.updateProjectionMatrix();
-        if (spotlight) spotlight.radiusPx.value = VIEWER.spotlightRadius * r.getPixelRatio();
+        if (spotlight) {
+          spotlight.radiusPx.value = VIEWER.lensRadius * r.getPixelRatio();
+          spotlight.edgePx.value = VIEWER.lensEdge * r.getPixelRatio();
+        }
       });
       resizeObs.observe(mount);
 
@@ -363,15 +372,20 @@ export function ModelViewer({
         const idleSpin = autoRotate || (withControls && coarse && !controls);
         if (model && idleSpin && !reduceMotion) model.quaternion.premultiply(spinQ);
         if (spotlight) {
-          const pts = spotlight.pts;
-          if (spotlight.cursorMode) {
-            pts[0].lerp(spotlight.manualPx, VIEWER.trailLerp[0]);
-            pts[1].lerp(pts[0], VIEWER.trailLerp[1]);
-            pts[2].lerp(pts[1], VIEWER.trailLerp[2]);
-            spotlight.active.value += (1 - spotlight.active.value) * VIEWER.activateSpeed;
+          const sp = spotlight;
+          if (sp.cursorMode) {
+            sp.center.lerp(sp.manualPx, VIEWER.followLerp);
+            sp.active.value += (1 - sp.active.value) * VIEWER.activateSpeed;
           } else {
-            spotlight.active.value += (0 - spotlight.active.value) * VIEWER.deactivateSpeed;
+            sp.active.value += (0 - sp.active.value) * VIEWER.deactivateSpeed;
           }
+          const pr = r.getPixelRatio();
+          const rad = VIEWER.lensRadius * sp.active.value;
+          const x = sp.center.x / pr;
+          const y = cv.clientHeight - sp.center.y / pr;
+          sp.ring.style.opacity = sp.active.value > 0.02 ? String(sp.active.value) : "0";
+          sp.ring.style.width = sp.ring.style.height = `${rad * 2}px`;
+          sp.ring.style.transform = `translate(${x - rad}px, ${y - rad}px)`;
         }
         controls?.update();
         r.render(sc, cam);
@@ -406,6 +420,7 @@ export function ModelViewer({
       (controls as TrackballControls | null)?.dispose();
       if (canvas && onCanvasMove) canvas.removeEventListener("mousemove", onCanvasMove);
       if (canvas && onCanvasLeave) canvas.removeEventListener("mouseleave", onCanvasLeave);
+      spotlight?.ring.remove();
       if (renderer) {
         renderer.dispose();
         renderer.domElement.remove();

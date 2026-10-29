@@ -335,6 +335,7 @@ img {
 }
 .model-viewer {
   position: relative;
+  overflow: hidden;
   width: 100%;
   height: 260px;
 }
@@ -354,6 +355,15 @@ img {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
+}
+.viewer-lens {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 1px solid var(--ink-2);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
 }
 .hero-viewer {
   height: clamp(260px, min(36vw, 46vh), 440px);
