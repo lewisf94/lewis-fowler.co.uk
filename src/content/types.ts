@@ -27,6 +27,12 @@ export interface Spec {
   value: string;
 }
 
+/** A titled bullet list in the specification, for example "Hardware". */
+export interface SpecGroup {
+  heading: string;
+  items: string[];
+}
+
 export interface Diagram {
   label: string;
   path: string;
@@ -51,12 +57,16 @@ export interface Project {
   short: string;
   tags: string[];
   model?: { path: string; internalsPath?: string };
+  /** Project-page introduction. Defaults to the homepage description. */
+  lede?: string;
   intro: string;
   tech: string;
   math?: string;
   challenges: string;
   results: string | null;
   specs: Spec[];
+  /** Bullet-list specification. Shown instead of specs when set. */
+  specGroups?: SpecGroup[];
   timeline: { date: string; text: string }[] | null;
   images: string[] | null;
   links: ProjectLinks | null;

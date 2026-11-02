@@ -15,11 +15,10 @@ export const profileRows = [
 
 /** One plain sentence per project, keyed by project id. */
 export const projectSummary: Record<string, { plain: string }> = {
-  musiccontroller: { plain: "A handheld music remote with a touchscreen and a motor-driven knob that clicks however you want it to." },
-  selfbalancingrobot: { plain: "A two-wheeled robot that stays upright by correcting its own tilt many times a second." },
+  musiccontroller: { plain: "A handheld controller for music, lights and other home devices, designed around tactile controls and a more satisfying experience than using a phone." },
+  selfbalancingrobot: { plain: "A two-wheeled robot that balances itself using feedback control." },
   cineclub: { plain: "A web app for film clubs. A wheel picks the film, and everyone's review stays hidden until the whole club has watched it." },
-  eatme: { plain: "A home food tracker that shows what to eat first, on your phone or on a small e-paper screen in the kitchen." },
-  arm: { plain: "A 3D-printed robot arm that you drive from a web page hosted on the arm itself." },
+  eatme: { plain: "A food tracker with an e-ink display to help you reduce food waste." },
   convoy: { plain: "Imagine a walkie-talkie for your car dashboard, but with a screen that shows where the other cars in your convoy are." },
 };
 

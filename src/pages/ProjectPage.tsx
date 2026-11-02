@@ -6,6 +6,23 @@ import { projectSummary } from "../content/home";
 import { LazyModelViewer as ModelViewer } from "../components/LazyModelViewer";
 import { Frame } from "../components/Frame";
 
+/** Blank lines start a new paragraph. A paragraph that starts with "$ " is a formula. */
+function Paragraphs({ text }: { text: string }) {
+  return (
+    <>
+      {text.split("\n\n").map((para, i) =>
+        para.startsWith("$ ") ? (
+          <pre key={i} className="math">
+            {para.slice(2)}
+          </pre>
+        ) : (
+          <p key={i}>{para}</p>
+        ),
+      )}
+    </>
+  );
+}
+
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function ProjectPage({ project: p }: { project: Project }) {
@@ -28,7 +45,7 @@ export function ProjectPage({ project: p }: { project: Project }) {
         <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "In Development")}</span>
       </div>
       <h1 className="display detail-title">{p.title}</h1>
-      <p className="lede">{summary?.plain ?? p.short}</p>
+      <p className="lede">{p.lede ?? summary?.plain ?? p.short}</p>
 
       {modelPath && (
         <Frame className="detail-figure">
@@ -73,9 +90,9 @@ export function ProjectPage({ project: p }: { project: Project }) {
 
         <div className="prose">
           <h2 className="mono-label">The idea</h2>
-          {p.intro.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+          <Paragraphs text={p.intro} />
           <h2 className="mono-label">How it works</h2>
-          {p.tech.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+          <Paragraphs text={p.tech} />
           {p.math && <pre className="math">{p.math}</pre>}
           {p.diagrams?.map((d) => (
             <figure key={d.path} className="diagram">
@@ -84,17 +101,33 @@ export function ProjectPage({ project: p }: { project: Project }) {
             </figure>
           ))}
           <h2 className="mono-label">What was hard</h2>
-          {p.challenges.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+          <Paragraphs text={p.challenges} />
           {p.results && (
             <>
               <h2 className="mono-label">Where it is now</h2>
-              {p.results.split("\n\n").map((para, i) => <p key={i}>{para}</p>)}
+              <Paragraphs text={p.results} />
             </>
           )}
         </div>
       </div>
 
-      {p.specs.length > 0 && (
+      {p.specGroups ? (
+        <Frame className="profile specs">
+          <p className="mono-label">Specification</p>
+          <div className="spec-groups">
+            {p.specGroups.map((g) => (
+              <div key={g.heading}>
+                <h3 className="mono-label">{g.heading}</h3>
+                <ul>
+                  {g.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </Frame>
+      ) : p.specs.length > 0 && (
         <Frame className="profile specs">
           <p className="mono-label">Specification</p>
           <dl className="rows">
