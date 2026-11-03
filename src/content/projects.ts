@@ -22,7 +22,7 @@ export const projects: Project[] = [
     timeline:null, images:null,
     links:{ github:"https://github.com/lewisf94/Home-Controller" },
     diagrams:[
-      { label:"CYD controller wiring diagram", path:"/assets/diagrams/CYD-Controller-Wiring-Diagram.svg" },
+      { label:"Wiring for the original prototype. It used a Cheap Yellow Display (CYD), an ESP32 board with a 2.8-inch touchscreen, with two conventional knobs and the buttons.", path:"/assets/diagrams/CYD-Controller-Wiring-Diagram.svg" },
     ]},
 
   { id:"cineclub", status:"active", statusLabel:"Live",
