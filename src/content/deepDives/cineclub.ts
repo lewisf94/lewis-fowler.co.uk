@@ -36,14 +36,9 @@ export const cineclubDeepDive: DeepDive = {
           kind: "gallery",
           images: [
             shot(
-              "films-recommended",
-              "Recommended for your club: a grid of film posters, each marked Everyone can watch, with an add button",
-              "Recommendations based on the club's top-rated films. Films that every member can stream show first.",
-            ),
-            shot(
-              "films-streaming",
-              "Films your club can stream: a search box, genre and decade filters, an A to Z index and a list of films",
-              "Films the club can stream, from each member's saved services and country, with search, filters and an A to Z index.",
+              "films-import",
+              "Import films sheet with Letterboxd and IMDb tabs and numbered steps",
+              "Import from Letterboxd or IMDb. The numbered steps explain how to export the file on a phone or a computer.",
             ),
             shot(
               "films-wheel-packs",
@@ -51,9 +46,14 @@ export const cineclubDeepDive: DeepDive = {
               "Wheel packs: ready-made themed collections, grouped by theme and by decade.",
             ),
             shot(
-              "films-import",
-              "Import films sheet with Letterboxd and IMDb tabs and numbered steps",
-              "Import from Letterboxd or IMDb. The numbered steps explain how to export the file on a phone or a computer.",
+              "films-streaming",
+              "Films your club can stream: a search box, genre and decade filters, an A to Z index and a list of films",
+              "Films the club can stream, from each member's saved services and country, with search, filters and an A to Z index.",
+            ),
+            shot(
+              "films-recommended",
+              "Recommended for your club: a grid of film posters, each marked Everyone can watch, with an add button",
+              "Recommendations based on the club's top-rated films. Films that every member can stream show first.",
             ),
             shot(
               "films-seen",
