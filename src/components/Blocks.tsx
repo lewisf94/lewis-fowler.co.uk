@@ -51,6 +51,7 @@ export function BlockView({ block }: { block: Block }) {
     case "text":
       return (
         <div className="block block-text">
+          <Heading text={block.heading} />
           <Text text={block.text} />
         </div>
       );

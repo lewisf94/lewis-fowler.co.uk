@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 610" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#1a1a1a">
+  <title>Home Controller system block diagram</title>
+  <desc>Hardware architecture of the redesigned controller. Solid boxes are tested on hardware, dashed boxes are designed or have firmware written but are not yet tested, and dotted boxes are proposed or open decisions.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#1a1a1a"/></marker>
+    <style>
+      .t{stroke:#1a1a1a;stroke-width:1.6;fill:#f4f4f2}
+      .d{stroke:#1a1a1a;stroke-width:1.6;fill:#fff;stroke-dasharray:7 4}
+      .p{stroke:#1a1a1a;stroke-width:1.6;fill:#fff;stroke-dasharray:2 4}
+      .l{stroke:#1a1a1a;stroke-width:1.4;fill:none}
+      .ld{stroke:#1a1a1a;stroke-width:1.4;fill:none;stroke-dasharray:7 4}
+      .lp{stroke:#1a1a1a;stroke-width:1.4;fill:none;stroke-dasharray:2 4}
+      .b{font-weight:700}
+      .s{font-size:11.5px;fill:#444}
+    </style>
+  </defs>
+
+  <!-- Home Assistant -->
+  <rect class="t" x="20" y="30" width="260" height="70" rx="6"/>
+  <text x="34" y="56" class="b">Raspberry Pi 5</text>
+  <text x="34" y="76" class="s">Home Assistant and Music Assistant</text>
+  <text x="34" y="91" class="s">speakers, Spotify Connect, lights</text>
+  <path class="l" d="M150 100V166" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="160" y="138" class="s">Wi-Fi, WebSocket</text>
+
+  <!-- P4 -->
+  <rect class="t" x="20" y="170" width="260" height="170" rx="6"/>
+  <text x="34" y="196" class="b">Waveshare ESP32-P4 board</text>
+  <text x="34" y="218" class="s">Application, interface and network</text>
+  <text x="34" y="240" class="s">4.3-inch ST7701 display, MIPI-DSI</text>
+  <text x="34" y="258" class="s">GT911 capacitive touch</text>
+  <text x="34" y="276" class="s">ESP32-C6 Wi-Fi over SDIO</text>
+  <text x="34" y="294" class="s">ES8311 audio codec and speaker</text>
+  <text x="34" y="324" class="s">UART TX GPIO32, RX GPIO46</text>
+
+  <!-- UART -->
+  <path class="ld" d="M282 255H398" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text x="292" y="224" class="s">UART1</text>
+  <text x="292" y="240" class="s">921600 baud</text>
+  <text x="292" y="276" class="s">CRC32, COBS,</text>
+  <text x="292" y="291" class="s">acknowledged</text>
+
+  <!-- RP2040 -->
+  <rect class="t" x="400" y="190" width="180" height="130" rx="6"/>
+  <text x="414" y="216" class="b">RP2040</text>
+  <text x="414" y="238" class="s">Core 1: motor loop</text>
+  <text x="414" y="254" class="s">(5 kHz target)</text>
+  <text x="414" y="274" class="s">Core 0: sensors, buttons,</text>
+  <text x="414" y="290" class="s">LEDs and the serial link</text>
+  <text x="414" y="310" class="s">Bench: Pico-layout module</text>
+
+  <!-- bus -->
+  <path class="l" d="M580 255H620"/>
+  <path class="l" d="M620 45V445"/>
+  <path class="l" d="M620 45H658" marker-end="url(#a)"/>
+  <path class="l" d="M620 125H658" marker-end="url(#a)"/>
+  <path class="l" d="M620 205H658" marker-end="url(#a)"/>
+  <path class="l" d="M620 285H658" marker-end="url(#a)"/>
+  <path class="l" d="M620 365H658" marker-end="url(#a)"/>
+  <path class="l" d="M620 445H658" marker-end="url(#a)"/>
+
+  <!-- motor -->
+  <rect class="d" x="660" y="20" width="135" height="50" rx="6"/>
+  <text x="672" y="41" class="b">TMC6300</text>
+  <text x="672" y="58" class="s">6 PWM, GPIO0–5</text>
+  <path class="ld" d="M795 45H818" marker-end="url(#a)"/>
+  <rect class="d" x="820" y="20" width="120" height="50" rx="6"/>
+  <text x="832" y="41" class="b">Gimbal motor</text>
+  <text x="832" y="58" class="s">3 phases, 7.8 Ω</text>
+
+  <!-- encoder -->
+  <rect class="t" x="660" y="100" width="280" height="50" rx="6"/>
+  <text x="672" y="121" class="b">MT6701QT angle sensor</text>
+  <text x="672" y="138" class="s">SSI on SPI0; magnet on the knob shaft</text>
+
+  <!-- strain -->
+  <rect class="d" x="660" y="180" width="280" height="50" rx="6"/>
+  <text x="672" y="201" class="b">HX711 + 4 × BF350 gauges</text>
+  <text x="672" y="218" class="s">Full bridge on PCB flexures, 80 SPS</text>
+
+  <!-- buttons -->
+  <rect class="d" x="660" y="260" width="280" height="50" rx="6"/>
+  <text x="672" y="281" class="b">4 × MX hot-swap switches</text>
+  <text x="672" y="298" class="s">GPIO12–15, active low</text>
+
+  <!-- LEDs -->
+  <rect class="d" x="660" y="340" width="280" height="50" rx="6"/>
+  <text x="672" y="361" class="b">SK6812 RGBW LEDs, 2 chains</text>
+  <text x="672" y="378" class="s">12-LED ring, 4 button LEDs, 5 V level shift</text>
+
+  <!-- I2C -->
+  <rect class="d" x="660" y="420" width="135" height="50" rx="6"/>
+  <text x="672" y="441" class="b">VEML7700</text>
+  <text x="672" y="458" class="s">Light, I²C 0x10</text>
+  <rect class="p" x="805" y="420" width="135" height="50" rx="6"/>
+  <text x="817" y="441" class="b">MAX17048</text>
+  <text x="817" y="458" class="s">Battery, I²C 0x36</text>
+
+  <!-- power -->
+  <rect class="p" x="20" y="430" width="160" height="60" rx="6"/>
+  <text x="34" y="455" class="b">Charging dock</text>
+  <text x="34" y="474" class="s">Proposed</text>
+  <path class="lp" d="M180 460H218" marker-end="url(#a)"/>
+  <rect class="p" x="220" y="430" width="160" height="60" rx="6"/>
+  <text x="232" y="452" class="b">Power path</text>
+  <text x="232" y="470" class="s">Charger, switch and</text>
+  <text x="232" y="484" class="s">5 V rail: open</text>
+  <path class="lp" d="M300 430V342" marker-end="url(#a)"/>
+  <path class="lp" d="M380 460H398" marker-start="url(#a)" marker-end="url(#a)"/>
+  <rect class="d" x="400" y="430" width="180" height="60" rx="6"/>
+  <text x="414" y="452" class="b">1-cell LiPo, 3.7 V</text>
+  <text x="414" y="470" class="s">Feeds the TMC6300 directly</text>
+  <text x="414" y="484" class="s">(2–11 V supply range)</text>
+  <path class="lp" d="M490 430V322" marker-end="url(#a)"/>
+
+  <!-- legend -->
+  <rect class="t" x="20" y="550" width="34" height="20" rx="3"/>
+  <text x="62" y="565">Tested on hardware</text>
+  <rect class="d" x="230" y="550" width="34" height="20" rx="3"/>
+  <text x="272" y="565">Designed or firmware written, not yet tested</text>
+  <rect class="p" x="600" y="550" width="34" height="20" rx="3"/>
+  <text x="642" y="565">Proposed or open decision</text>
+  <text x="20" y="597" class="s">MT6701 tested on the bench over I²C. The SSI connection in the final firmware is not yet tested. Power connections to the boards are not yet designed.</text>
+</svg>

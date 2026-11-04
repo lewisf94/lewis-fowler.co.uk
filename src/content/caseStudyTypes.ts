@@ -42,7 +42,7 @@ export interface BomItem {
 }
 
 export type Block =
-  | { kind: "text"; text: string }
+  | { kind: "text"; heading?: string; text: string }
   | { kind: "list"; heading?: string; items: string[] }
   /** Numbered steps, each with optional images. */
   | { kind: "steps"; heading?: string; items: { text: string; images?: CaseImage[] }[] }
