@@ -20,7 +20,7 @@ export const profileRows = [
 export const projectSummary: Record<string, { plain: string }> = {
   musiccontroller: { plain: "A handheld controller for music, lights and other home devices, designed around tactile controls and a more satisfying experience than using a phone." },
   selfbalancingrobot: { plain: "A two-wheeled robot that balances itself using feedback control." },
-  cineclub: { plain: "A film club app where members add films to a wheel, spin for the next watch, then rate and review before everything is revealed at the deadline." },
+  cineclub: { plain: "A film club app where members add films to a wheel, spin for the next watch, then rate and review before everything is revealed once everyone has watched and rated it." },
   eatme: { plain: "A food tracker with an e-ink display to help you reduce food waste." },
   convoy: { plain: "Imagine a walkie-talkie for your car dashboard, but with a screen that shows where the other cars in your convoy are." },
 };
