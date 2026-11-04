@@ -15,12 +15,12 @@ export function Gallery({ images }: { images: CaseImage[] }) {
 
   return (
     <>
-      <div className={`gallery ${shown.length === 1 ? "single" : ""}`}>
+      <div className={`gallery ${shown.length === 1 ? "single" : ""} ${shown.every((i) => i.phone) ? "phones" : ""}`}>
         {shown.map((img, i) => (
           <figure key={img.src} className="gallery-item">
             <button
               type="button"
-              className={`gallery-thumb ${img.diagram ? "on-white" : ""}`}
+              className={`gallery-thumb ${img.diagram ? "on-white" : ""} ${img.phone ? "phone" : ""}`}
               onClick={() => setOpen(i)}
               aria-label={`View full size: ${img.alt}`}
             >
@@ -98,7 +98,7 @@ function Lightbox({
           </button>
         </span>
       </div>
-      <div className={`lightbox-image ${img.diagram ? "on-white" : ""}`}>
+      <div className={`lightbox-image ${img.diagram ? "on-white" : ""} ${img.phone ? "phone" : ""}`}>
         <img src={url(img.src)} alt={img.alt} />
       </div>
       <p className="lightbox-caption">{img.caption}</p>

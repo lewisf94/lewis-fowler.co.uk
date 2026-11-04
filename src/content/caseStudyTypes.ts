@@ -18,6 +18,8 @@ export interface CaseImage {
   caption: string;
   /** Diagrams and drawings get a white backing so dark lines stay visible. */
   diagram?: boolean;
+  /** Phone screenshots are shown whole, with rounded iPhone-style corners. */
+  phone?: boolean;
 }
 
 /** One downloadable file. `href` must be a real file under public/ or a full URL. */
@@ -69,6 +71,8 @@ export interface Stage {
 }
 
 export interface DeepDive {
+  /** Heading for Part 2. Defaults to "Engineering deep dive". */
+  title?: string;
   projectId: string;
   /** One or two sentences under the "Engineering deep dive" heading. */
   intro: string;

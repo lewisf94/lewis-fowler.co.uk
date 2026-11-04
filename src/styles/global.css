@@ -1181,6 +1181,28 @@ img {
 .gallery-thumb:hover {
   border-color: var(--ink-2);
 }
+/* Phone screenshots: shown whole, with iPhone-style rounded corners. */
+.gallery.phones {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  align-items: start;
+}
+.gallery.phones.single {
+  grid-template-columns: minmax(0, 260px);
+}
+.gallery .gallery-thumb.phone {
+  aspect-ratio: auto;
+  border-color: var(--line-strong);
+  border-radius: 13% / 6.5%;
+  overflow: hidden;
+}
+.gallery .gallery-thumb.phone img {
+  height: auto;
+  object-fit: contain;
+}
+.lightbox-image.phone img {
+  border: 1px solid var(--line-strong);
+  border-radius: 13% / 6.5%;
+}
 .gallery-item figcaption {
   margin-top: 10px;
   font-size: 14px;

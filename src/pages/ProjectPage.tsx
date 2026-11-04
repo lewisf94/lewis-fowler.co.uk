@@ -57,7 +57,7 @@ export function ProjectPage({ project: p }: { project: Project }) {
             e.preventDefault();
             document.getElementById("deep-dive-title")?.scrollIntoView({ behavior: "smooth" });
           }}>
-            Part 2 · Engineering deep dive ↓
+            Part 2 · {deepDive.title ?? "Engineering deep dive"} ↓
           </a>
         </p>
       )}

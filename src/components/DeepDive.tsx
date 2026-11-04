@@ -12,7 +12,7 @@ export function DeepDive({ data }: { data: DeepDiveData }) {
       <header className="part-head">
         <p className="mono-label">Part 2</p>
         <h2 id="deep-dive-title" className="display part-title">
-          Engineering deep dive
+          {data.title ?? "Engineering deep dive"}
         </h2>
         <p className="part-intro">{data.intro}</p>
         <div className="status-key mono dim" aria-label="Status key">
