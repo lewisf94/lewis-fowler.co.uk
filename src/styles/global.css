@@ -337,6 +337,20 @@ img {
 .hero .lede:not(:last-of-type) {
   margin-bottom: 14px;
 }
+@media (max-width: 860px) {
+  .hero-title {
+    font-size: clamp(34px, 9.5vw, 44px);
+    font-weight: 400;
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+  .hero .lede {
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+    opacity: 0.82;
+  }
+}
 .hero-figure {
   background: var(--surface);
 }
