@@ -311,10 +311,11 @@ img {
   padding-bottom: clamp(24px, 4vh, 40px);
 }
 .hero-title {
-  font-size: clamp(48px, 6.1vw, 88px);
-  line-height: 0.92;
+  font-size: clamp(44px, 5.8vw, 84px);
+  font-weight: 500;
+  line-height: 1.02;
   text-transform: uppercase;
-  margin-bottom: 20px;
+  margin-bottom: 32px;
 }
 .hero-title span {
   display: block;
@@ -328,7 +329,8 @@ img {
   color: var(--ink-3);
 }
 .hero .lede {
-  font-size: clamp(16px, 1.5vw, 18px);
+  font-size: clamp(15px, 1.4vw, 17px);
+  line-height: 1.65;
   max-width: 38em;
   margin-bottom: 28px;
 }
