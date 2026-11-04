@@ -5,6 +5,9 @@ import { projects } from "../content/projects";
 import { projectSummary } from "../content/home";
 import { LazyModelViewer as ModelViewer } from "../components/LazyModelViewer";
 import { Frame } from "../components/Frame";
+import { DeepDive } from "../components/DeepDive";
+import { deepDives } from "../content/deepDives";
+import { guidesFor, isDraftPreview } from "../content/guides";
 
 /** Blank lines start a new paragraph. A paragraph that starts with "$ " is a formula. */
 function Paragraphs({ text }: { text: string }) {
@@ -31,6 +34,8 @@ export function ProjectPage({ project: p }: { project: Project }) {
   const next = projects[(index + 1) % projects.length];
   const prev = projects[(index - 1 + projects.length) % projects.length];
   const summary = projectSummary[p.id];
+  const deepDive = deepDives[p.id];
+  const projectGuides = guidesFor(p.id);
   const modelPath = p.model && (showInside && p.model.internalsPath ? p.model.internalsPath : p.model.path);
 
   return (
@@ -45,6 +50,17 @@ export function ProjectPage({ project: p }: { project: Project }) {
         <span className="mono dim">{p.statusLabel ?? (p.status === "planned" ? "In progress" : "In Development")}</span>
       </div>
       <h1 className="display detail-title">{p.title}</h1>
+      {deepDive && (
+        <p className="part-jump mono">
+          <span className="dim">Part 1 · Project overview</span>
+          <a href="#deep-dive-title" onClick={(e) => {
+            e.preventDefault();
+            document.getElementById("deep-dive-title")?.scrollIntoView({ behavior: "smooth" });
+          }}>
+            Part 2 · Engineering deep dive ↓
+          </a>
+        </p>
+      )}
       <p className="lede">{p.lede ?? summary?.plain ?? p.short}</p>
 
       {modelPath && (
@@ -81,6 +97,12 @@ export function ProjectPage({ project: p }: { project: Project }) {
               Code on GitHub <OutArrow />
             </a>
           )}
+          {projectGuides.map((g) => (
+            <a key={g.id} className="btn btn-solid" href={`#build/${g.id}`}>
+              Build it yourself{projectGuides.length > 1 ? `: ${g.hardwareVersion.split(":")[0]}` : ""}
+              {isDraftPreview && !g.published ? " (draft)" : ""}
+            </a>
+          ))}
           {p.links?.demo && (
             <a className="btn btn-line" href={p.links.demo} target="_blank" rel="noopener">
               Open the live site <OutArrow />
@@ -140,6 +162,8 @@ export function ProjectPage({ project: p }: { project: Project }) {
           </dl>
         </Frame>
       )}
+
+      {deepDive && <DeepDive data={deepDive} />}
 
       <nav className="project-nav" aria-label="More projects">
         <a className="project-nav-link prev" href={`#work/${prev.id}`}>

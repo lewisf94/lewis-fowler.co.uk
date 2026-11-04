@@ -5,6 +5,8 @@ import { experience } from "./content/experience";
 import { Home } from "./pages/Home";
 import { ProjectPage } from "./pages/ProjectPage";
 import { ExperiencePage } from "./pages/ExperiencePage";
+import { GuidePage } from "./pages/GuidePage";
+import { guides } from "./content/guides";
 import { SiteHeader, SiteFooter } from "./components/SiteChrome";
 
 const SCROLL_KEY = "scroll-position";
@@ -59,6 +61,10 @@ export function App() {
   } else if (route.page === "experience") {
     const item = experience.find((e) => e.slug === route.slug);
     if (item) body = <ExperiencePage item={item} />;
+  } else if (route.page === "guide") {
+    const guide = guides.find((g) => g.id === route.id);
+    const project = guide && projects.find((p) => p.id === guide.projectId);
+    if (guide && project) body = <GuidePage guide={guide} project={project} />;
   }
 
   return (

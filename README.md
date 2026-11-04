@@ -23,6 +23,32 @@ npm run preview   # serve the built site
 
 Pages use hash URLs (`#work/<id>`, `#experience/<slug>`), so links from the old site still work.
 
+## Engineering deep dives
+
+A project page has two parts: the overview (the text in `src/content/projects.ts`) and an
+optional engineering deep dive below it.
+
+- Deep dive content: `src/content/deepDives/<project>.ts`, listed in `src/content/deepDives/index.ts`.
+- Each deep dive is a list of dated stages. Each stage has a status (`done`, `current` or
+  `planned`) and a list of blocks: `text`, `list`, `table`, `decisions`, `problems`,
+  `checklist`, `gallery`, `steps`, `warning`, `bom`, `downloads` and `code`.
+  Use only the blocks a project needs. Types are in `src/content/caseStudyTypes.ts`.
+- Images go in `public/assets/...`. Every image needs an `alt` and a `caption`. Set
+  `diagram: true` for drawings so they get a white backing. Tap an image to see it full size.
+- `npm run build` stops if any `/assets/...` or `/downloads/...` path in `src/` does not exist.
+
+## Build it yourself guides
+
+- Guides live in `src/content/guides/` and open at `#build/<id>`.
+- A guide is a draft until Lewis approves it. Drafts are in the `DRAFTS` list in
+  `src/content/guides/index.ts`. They show only with `npm run dev`, with a banner that lists
+  what is missing. The production build leaves them out completely.
+- To publish: set `published: true`, set `verified: true` only if the whole build was tested on
+  that hardware version, and move the guide to `PUBLISHED`. The project page then shows a
+  "Build it yourself" button.
+- Put downloadable files in `public/downloads/<project>/` with a version in the file name.
+- Never put passwords, API keys or private configuration in a guide or a download.
+
 ## Adding a React Bits component
 
 [React Bits](https://reactbits.dev) components are copied into the project. Pick the

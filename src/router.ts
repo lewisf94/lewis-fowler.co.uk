@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 export type Route =
   | { page: "home"; section?: string }
   | { page: "project"; id: string }
-  | { page: "experience"; slug: string };
+  | { page: "experience"; slug: string }
+  | { page: "guide"; id: string };
 
 export function parseHash(hash: string): Route {
   const [first, second] = hash.replace(/^#\/?/, "").split("/");
   if (first === "work" && second) return { page: "project", id: second };
   if (first === "experience" && second) return { page: "experience", slug: second };
+  if (first === "build" && second) return { page: "guide", id: second };
   return { page: "home", section: first || undefined };
 }
 
