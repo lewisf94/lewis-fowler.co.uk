@@ -8,7 +8,7 @@ import type { DeepDive } from "../caseStudyTypes";
  * cyd/esp-idf/README.md and the commit history), checked on 4 November 2026.
  *
  * Images: only add files that exist under public/. The build stops if a path
- * is wrong. Photos, CAD screenshots and interface screenshots are still to come.
+ * is wrong. Photos are Lewis's own (added 4 November 2026).
  */
 export const homeControllerDeepDive: DeepDive = {
   projectId: "musiccontroller",
@@ -57,7 +57,7 @@ export const homeControllerDeepDive: DeepDive = {
       blocks: [
         {
           kind: "text",
-          text: "The first version used a Cheap Yellow Display (CYD): an ESP32 board with a 2.8-inch 320 × 240 touchscreen. Physical buttons and a rotary encoder connect through an MCP23017 input expander, so they use only two data pins on the ESP32.\n\nThe firmware talks directly to the Spotify Web API. I brought it up one checkpoint at a time, so each new part was tested on its own before the next was added.",
+          text: "The first version used a Cheap Yellow Display (CYD): an ESP32 board with a 2.8-inch 320 × 240 touchscreen. Physical buttons and a rotary encoder connect through an MCP23017 input expander, so they use only two data pins on the ESP32. The enclosure CAD has space for two encoder knobs, and the wiring and firmware so far use one. A PowerBoost 1000C board and a LiPo battery sit inside the case.\n\nThe firmware talks directly to the Spotify Web API. I brought it up one checkpoint at a time, so each new part was tested on its own before the next was added.",
         },
         {
           kind: "gallery",
@@ -68,6 +68,29 @@ export const homeControllerDeepDive: DeepDive = {
               caption:
                 "Wiring for the original prototype. The buttons and the encoder go through the MCP23017 expander on one I²C bus (SDA GPIO27, SCL GPIO22, interrupt GPIO35), with 4.7 kΩ pull-up resistors to 3.3 V.",
               diagram: true,
+            },
+          ],
+        },
+        {
+          kind: "gallery",
+          images: [
+            {
+              src: "/assets/photos/home-controller/cyd-cad-assembly.jpg",
+              alt: "SolidWorks assembly of the original prototype enclosure, with the CYD screen, two knobs and protoboards",
+              caption:
+                "Enclosure assembly in SolidWorks. The CYD screen sits at the top, with two encoder knobs to its right and the button protoboards below.",
+            },
+            {
+              src: "/assets/photos/home-controller/cyd-cad-protoboards.jpg",
+              alt: "CAD close-up of the CYD board, two green protoboards with buttons and the MCP23017 chip",
+              caption:
+                "Inside the CAD model: the CYD board and two 30 × 70 mm protoboards that carry the buttons and the MCP23017 input expander.",
+            },
+            {
+              src: "/assets/photos/home-controller/cyd-prototype-bench.jpg",
+              alt: "The printed grey enclosure on a cutting mat, open, with wiring, Wago connectors and the CYD screen",
+              caption:
+                "The printed enclosure on the bench during assembly, with the wiring still exposed.",
             },
           ],
         },
@@ -216,6 +239,26 @@ export const homeControllerDeepDive: DeepDive = {
           text: "The interface is built with LVGL. Albums are browsed in a Cover Flow view, with Carousel and Focus views for moving faster through a large library. The display hardware's graphics accelerator (PPA) helps draw the album art smoothly.\n\nThere are six visual themes, each with a dark and a light version. To tune them without rebuilding each time, I added a Developer tab with 65 live controls, and a browser page that gives an approximate preview of each theme.",
         },
         {
+          kind: "gallery",
+          images: [
+            {
+              src: "/assets/photos/home-controller/p4-cover-flow-colour.jpg",
+              alt: "Cover Flow album browser on the 4.3-inch screen, showing L.A. Woman by The Doors in colour",
+              caption: "The Cover Flow album browser with full-colour album art.",
+            },
+            {
+              src: "/assets/photos/home-controller/p4-cover-flow.jpg",
+              alt: "Cover Flow album browser in a dithered black-and-white theme, showing Dogrel by Fontaines D.C.",
+              caption: "The same browser in a dithered black-and-white theme. The frame rate shows at the top left during development.",
+            },
+            {
+              src: "/assets/photos/home-controller/p4-now-playing.jpg",
+              alt: "Now playing screen with album art, track progress and play, pause and skip buttons",
+              caption: "The now-playing screen: track progress, transport controls and the output and level controls.",
+            },
+          ],
+        },
+        {
           kind: "table",
           heading: "Themes",
           head: ["Theme", "Reference"],
@@ -345,6 +388,17 @@ export const homeControllerDeepDive: DeepDive = {
         {
           kind: "text",
           text: "I am testing the knob hardware one risk at a time, on prototype hardware, before any custom PCB is made.",
+        },
+        {
+          kind: "gallery",
+          images: [
+            {
+              src: "/assets/photos/home-controller/knob-parts-front.jpg",
+              alt: "An RP2040 board, an MT6701 magnetic angle sensor breakout, a small magnet and a pin header on a cutting mat",
+              caption:
+                "Bring-up parts: an RP2040 board, an MT6701 angle sensor breakout and the small magnet it reads.",
+            },
+          ],
         },
         {
           kind: "checklist",

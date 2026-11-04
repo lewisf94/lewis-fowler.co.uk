@@ -14,7 +14,8 @@ export const homeControllerCydGuide: Guide = {
   published: false,
   draftNotes: [
     "The CYD ESP-IDF firmware needs a new hardware check after recent changes.",
-    "Confirm the knob count: the firmware and wiring use one rotary encoder.",
+    "Confirm the knob count: the CAD shows two encoder knobs, and the firmware and wiring use one.",
+    "The CAD shows a PowerBoost 1000C and a LiPo battery. Battery wiring and safety steps are not documented yet.",
     "Add supplier links, cost, build time and photos of each assembly step.",
     "Add enclosure files, if this version had an enclosure.",
   ],
