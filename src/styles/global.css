@@ -332,6 +332,9 @@ img {
   max-width: 38em;
   margin-bottom: 28px;
 }
+.hero .lede:not(:last-of-type) {
+  margin-bottom: 14px;
+}
 .hero-figure {
   background: var(--surface);
 }

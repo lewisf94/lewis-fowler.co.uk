@@ -10,13 +10,9 @@ export function ExperiencePage({ item: e }: { item: Experience }) {
       <h1 className="display detail-title">{e.title}</h1>
       <p className="mono">{e.place}</p>
       <div className="prose narrow">
-        <p>{e.detail || e.desc}</p>
-        <h2 className="mono-label">Highlights</h2>
-        <ul>
-          {e.highlights.map((h) => (
-            <li key={h}>{h}</li>
-          ))}
-        </ul>
+        {(e.detail || e.desc).split("\n\n").map((para) => (
+          <p key={para}>{para}</p>
+        ))}
       </div>
       <ul className="chips">
         {e.focus.map((f) => (

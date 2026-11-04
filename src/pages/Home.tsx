@@ -1,9 +1,8 @@
 import { OutArrow } from "../components/OutArrow";
-import { profile, skills, education } from "../content/profile";
+import { profile, skills, skillCategories, education } from "../content/profile";
 import { projects } from "../content/projects";
 import { experience } from "../content/experience";
 import { hero, profileRows, projectSummary, contact } from "../content/home";
-import type { SkillCategory } from "../content/types";
 import { LazyModelViewer as ModelViewer } from "../components/LazyModelViewer";
 import { Frame, SectionLabel } from "../components/Frame";
 
@@ -17,13 +16,15 @@ export function Home() {
       <section className="hero wrap">
         <div className="hero-text">
           <h1 className="display hero-title">
-            {hero.heading.map((line, i) => (
-              <span key={line} className={i === 0 ? "dim" : undefined}>
-                {line}
-              </span>
+            {hero.heading.map((line) => (
+              <span key={line}>{line}</span>
             ))}
           </h1>
-          <p className="lede">{hero.bio}</p>
+          {hero.bio.map((para) => (
+            <p key={para} className="lede">
+              {para}
+            </p>
+          ))}
           <div className="actions">
             <a className="btn btn-solid" href="#work">
               See projects
@@ -116,7 +117,7 @@ export function Home() {
         <SectionLabel index={3} total={SECTIONS} />
         <h2 className="display section-title">Skills</h2>
         <div className="skill-groups">
-          {(["Design", "Analysis", "Making", "Code"] as SkillCategory[]).map((cat, i) => (
+          {skillCategories.map((cat, i) => (
             <Frame key={cat} className="skill-group">
               <p className="skill-head">
                 <span className="mono">{cat}</span>

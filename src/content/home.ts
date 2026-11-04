@@ -1,13 +1,16 @@
 // Plain-language text for the home page. Technical detail stays on each project page.
 
 export const hero = {
-  heading: ["Design engineer.", "I make satisfying", "hardware & software."],
-  bio: "I have taken a professional design project through its full product development life cycle from design to manufacture, testing, and shipping. I also design and build my own hardware and electronics, including custom enclosures, microcontroller-based systems, and the software that controls them.",
+  heading: ["I make satisfying", "products that", "solve problems."],
+  bio: [
+    "I have taken a professional, bespoke engineering project through the full product development process, from research and design to costing, procurement, manufacture, testing and delivery. The project was successfully delivered to the customer and led to repeat orders.",
+    "Alongside my professional work, I design and build my own hardware and software projects, combining mechanical design, electronics, embedded systems and product development.",
+  ],
 };
 
 export const profileRows = [
   { label: "Based in", value: "Fort William" },
-  { label: "Role", value: "Mechanical Design Engineer" },
+  { label: "Role", value: "Design Engineer" },
   { label: "Professional Experience", value: "3 years" },
   { label: "Studied", value: "MEng, University of Glasgow, First Class Honours" },
   { label: "Focus", value: "Product design · Microcontrollers · Software" },

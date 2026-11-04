@@ -84,10 +84,16 @@ export interface Experience {
   focus: string[];
   desc: string;
   detail: string;
-  highlights: string[];
 }
 
-export type SkillCategory = "Design" | "Analysis" | "Making" | "Code";
+export type SkillCategory =
+  | "Product Development"
+  | "Mechanical Design"
+  | "Simulation"
+  | "Manufacturing"
+  | "Testing"
+  | "Electronics & Embedded Systems"
+  | "Digital Product Design";
 
 export interface Skill {
   name: string;
