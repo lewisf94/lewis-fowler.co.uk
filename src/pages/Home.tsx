@@ -16,8 +16,10 @@ export function Home() {
       <section className="hero wrap">
         <div className="hero-text">
           <h1 className="display hero-title">
-            {hero.heading.map((line) => (
-              <span key={line}>{line}</span>
+            {hero.heading.map((line, i) => (
+              <span key={line} className={i === 0 ? "dim" : undefined}>
+                {line}
+              </span>
             ))}
           </h1>
           {hero.bio.map((para) => (
