@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useRoute } from "./router";
 import { projects } from "./content/projects";
 import { experience } from "./content/experience";
@@ -8,6 +8,8 @@ import { ExperiencePage } from "./pages/ExperiencePage";
 import { GuidePage } from "./pages/GuidePage";
 import { guides } from "./content/guides";
 import { SiteHeader, SiteFooter } from "./components/SiteChrome";
+import { entryOnHome } from "./pageTransition";
+import type { Route } from "./router";
 
 const SCROLL_KEY = "scroll-position";
 let firstRoute = true;
@@ -40,18 +42,38 @@ function restoreScroll(): boolean {
 
 export function App() {
   const route = useRoute();
+  const lastRoute = useRef<Route | null>(null);
 
-  useEffect(() => {
+  // A layout effect places the new page before the browser paints it, so the
+  // reader never sees the old scroll position or a scroll to the top.
+  useLayoutEffect(() => {
+    const previous = lastRoute.current;
+    lastRoute.current = route;
     if (firstRoute) {
       firstRoute = false;
       // On a refresh, go back to where the reader was, not to the section in the URL.
       if (restoreScroll()) return;
     }
     if (route.page !== "home") {
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: "instant" });
       return;
     }
-    if (route.section) document.getElementById(route.section)?.scrollIntoView();
+    // A link to a section on the page that is already open scrolls smoothly.
+    // Arriving from another page jumps straight to the section.
+    const fromOtherPage = previous?.page !== "home";
+    // Coming back from a project or role to its list, show the entry the reader opened.
+    const backToList =
+      (previous?.page === "project" && route.section === "work") ||
+      (previous?.page === "experience" && route.section === "experience");
+    const entry = backToList && previous ? entryOnHome(previous) : null;
+    if (entry) {
+      const top = entry.getBoundingClientRect().top + window.scrollY - window.innerHeight / 3;
+      window.scrollTo({ top: Math.max(0, top), behavior: "instant" });
+      return;
+    }
+    const target = route.section ? document.getElementById(route.section) : null;
+    if (target) target.scrollIntoView({ behavior: fromOtherPage ? "instant" : "smooth" });
+    else if (fromOtherPage) window.scrollTo({ top: 0, behavior: "instant" });
   }, [route]);
 
   let body = <Home />;

@@ -1361,3 +1361,21 @@ img {
     gap: 10px;
   }
 }
+
+/* ── Page transitions (see src/pageTransition.ts) ─────── */
+/* Opening: the new page grows out of the tapped box over the old page. */
+html.vt-open::view-transition-old(root),
+html.vt-open::view-transition-new(root),
+html.vt-close::view-transition-old(root),
+html.vt-close::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+/* Closing: the old page shrinks into its entry on top of the home page. */
+html.vt-close::view-transition-old(root) {
+  z-index: 1;
+}
+html.vt-fade::view-transition-old(root),
+html.vt-fade::view-transition-new(root) {
+  animation-duration: 0.25s;
+}

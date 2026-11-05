@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { changeRoute } from "./pageTransition";
 
 /** Routes keep the previous site's hash URLs, so old links still work. */
 export type Route =
@@ -17,8 +18,14 @@ export function parseHash(hash: string): Route {
 
 export function useRoute(): Route {
   const [route, setRoute] = useState(() => parseHash(window.location.hash));
+  const current = useRef(route);
   useEffect(() => {
-    const onChange = () => setRoute(parseHash(window.location.hash));
+    const onChange = () => {
+      const next = parseHash(window.location.hash);
+      const from = current.current;
+      current.current = next;
+      changeRoute(from, next, () => setRoute(next));
+    };
     window.addEventListener("hashchange", onChange);
     return () => window.removeEventListener("hashchange", onChange);
   }, []);
