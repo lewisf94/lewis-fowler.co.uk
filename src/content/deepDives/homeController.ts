@@ -163,7 +163,7 @@ export const homeControllerDeepDive: DeepDive = {
         {
           kind: "text",
           heading: "Problems with the CYD display",
-          text: "Firstly, its touchscreen is resistive, which makes it difficult to navigate the interface consistently and makes the experience frustrating. It regularly misses taps if you do not press hard enough, and swipes are even worse.\n\nIt also uses a TN screen, which is cheap to make but does not look great. As soon as you are not looking at the screen straight on, the colours fade.\n\nThe other issue with the CYD was processing performance, which is why I later moved to the ESP32-P4.",
+          text: "Firstly, its touchscreen is resistive, which makes it difficult to navigate the interface consistently and makes the experience frustrating. It regularly misses taps if you do not press hard enough, and swipes are even worse.\n\nIt also uses a TN screen, which is cheap to make but does not look great. As soon as you are not looking at the screen straight on, the colours fade.\n\nAnother issue with the CYD is the processing performance.",
         },
         {
           kind: "problems",
@@ -241,7 +241,7 @@ export const homeControllerDeepDive: DeepDive = {
         },
         {
           kind: "text",
-          text: "The later CYD firmware with these changes has not had a new hardware test, so I have not measured how much they improved it.",
+          text: "The later CYD firmware with these changes has not had a new hardware test, so the improvement has not been measured.",
         },
         {
           kind: "text",
