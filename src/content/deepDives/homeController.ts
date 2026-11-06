@@ -9,7 +9,9 @@ import type { DeepDive } from "../caseStudyTypes";
  * Haptic, link and test details also come from docs/KNOB-NOTES.md,
  * docs/TESTING.md, docs/KICAD-GUIDE.md, rp2040/bringup/README.md and
  * rp2040/src/motor_task.cpp. Design reasons in the first person are Lewis's
- * own words (4 November 2026), with minor edits only.
+ * own words (4 and 6 November 2026), with minor edits only. Sections in
+ * the first person come from Lewis's notes or approved copy; neutral
+ * technical paragraphs are written from the repo and commit history.
  *
  * Images: only add files that exist under public/. The build stops if a path
  * is wrong. Photos are Lewis's own (added 4 November 2026).
@@ -61,7 +63,21 @@ export const homeControllerDeepDive: DeepDive = {
       blocks: [
         {
           kind: "text",
-          text: "The first version used a Cheap Yellow Display (CYD): an ESP32 board with a 2.8-inch 320 × 240 touchscreen. Physical buttons and a rotary encoder connect through an MCP23017 input expander, so they use only two data pins on the ESP32. The enclosure CAD has space for two encoder knobs, and the wiring and firmware so far use one. A PowerBoost 1000C board and a LiPo battery sit inside the case.\n\nThe firmware talks directly to the Spotify Web API. I brought it up one checkpoint at a time, so each new part was tested on its own before the next was added.",
+          heading: "Why the CYD",
+          text: "I chose the CYD because I already had one, and it is a very easy way to get a basic screen set up. I wanted to establish whether I could use an ESP32 to connect to my network and control Spotify.",
+        },
+        {
+          kind: "text",
+          text: "The CYD (Cheap Yellow Display) is an ESP32-2432S028R board: an ESP32-WROOM module (dual-core, 240 MHz, 4 MB flash, no PSRAM in use) with a 2.8-inch 320 × 240 ILI9341 display and an XPT2046 touch controller. I modelled the enclosure in SolidWorks and 3D printed it. The buttons and the input expander sit on two protoboards, and a PowerBoost 1000C board and a LiPo battery sit inside the case.\n\nThe firmware talks directly to the Spotify Web API. I brought it up one checkpoint at a time, so each new part was tested on its own before the next was added.",
+        },
+        {
+          kind: "text",
+          heading: "Why I used the MCP23017",
+          text: "One of the first limitations of the board is the number of pins. There were only three usable pins (GPIO 22, 27 and 35), which makes it difficult to attach peripherals like sensors, buttons and knobs. In my project, I wanted to use four buttons and two knobs, which you cannot connect directly to three pins.\n\nI had not heard of this module before starting the project, so I was figuring this out as I went along. I did not even know if it would work for this setup.",
+        },
+        {
+          kind: "text",
+          text: "Each button needs one input, and each encoder needs three: two quadrature signals and its push switch. Four buttons and two encoders need ten inputs. The MCP23017 adds 16 digital inputs over I²C, which needs only two pins: SDA on GPIO27 and SCL on GPIO22, at address 0x20, with 4.7 kΩ pull-up resistors to 3.3 V. The third pin, GPIO35, is input-only on the ESP32, which suits the expander's interrupt output (INTA). INTA signals the ESP32 when an input changes.",
         },
         {
           kind: "gallery",
@@ -74,6 +90,24 @@ export const homeControllerDeepDive: DeepDive = {
               diagram: true,
             },
           ],
+        },
+        {
+          kind: "text",
+          heading: "Why a rotary encoder, not a potentiometer",
+          text: "Another issue was that the MCP23017 is digital only. I had planned to use potentiometers for the volume control, as they have a set start and end point, but these are analogue devices. Rotary encoders, on the other hand, can spin infinitely and, most importantly, are digital.\n\nI also worked out that potentiometers could give conflicting data with the phone app. An encoder allows both the phone and the controller to control the same volume scale.",
+        },
+        {
+          kind: "text",
+          text: "A potentiometer reports an absolute position, so each position is fixed to one volume level. If the volume changes from the phone, the knob no longer matches it. An encoder reports only steps, so the firmware adds each step to Spotify's current volume, wherever it was set.",
+        },
+        {
+          kind: "text",
+          heading: "Power",
+          text: "For power management, I went for the PowerBoost 1000C, as this was another part I had from a previous project. It is great for this situation as it has a JST port, which lets you quickly connect a LiPo battery.\n\nIt also has load sharing. When the device is running on the battery and the cable is plugged in to charge, the power comes from the cable, instead of the battery constantly charging and discharging while the cable is in.\n\nAnother issue I had was that the PowerBoost input is micro-USB, and I wanted it to be USB-C, as this is the new standard for cables and the most common type.",
+        },
+        {
+          kind: "text",
+          text: "The PowerBoost 1000C uses an MCP73871 charger, which charges the cell at up to 1 A, and a TPS61090 boost converter, which makes 5.2 V from the 3.7 V cell. Adafruit describes the load sharing as switching to USB power when it is available, so the board can charge and keep its output running at the same time.",
         },
         {
           kind: "gallery",
@@ -113,7 +147,7 @@ export const homeControllerDeepDive: DeepDive = {
         },
         {
           kind: "checklist",
-          heading: "Bring-up checkpoints, all passed on hardware",
+          heading: "Bring-up checkpoints, passed on hardware in May 2026",
           items: [
             { text: "Backlight and serial output", status: "done" },
             { text: "Display colour test and LVGL graphics", status: "done" },
@@ -123,7 +157,13 @@ export const homeControllerDeepDive: DeepDive = {
             { text: "Album carousel and selection", status: "done" },
             { text: "Input expander, encoder, buttons, volume and mute", status: "done" },
             { text: "Status indicators and on-screen messages", status: "done" },
+            { text: "New hardware test after later firmware changes", status: "planned" },
           ],
+        },
+        {
+          kind: "text",
+          heading: "Problems with the CYD display",
+          text: "Firstly, its touchscreen is resistive, which makes it difficult to navigate the interface consistently and makes the experience frustrating. It regularly misses taps if you do not press hard enough, and swipes are even worse.\n\nIt also uses a TN screen, which is cheap to make but does not look great. As soon as you are not looking at the screen straight on, the colours fade.\n\nThe other issue with the CYD was processing performance, which is why I later moved to the ESP32-P4.",
         },
         {
           kind: "problems",
@@ -133,10 +173,117 @@ export const homeControllerDeepDive: DeepDive = {
               fix: "The input driver uses a 30 ms debounce and a state machine for the encoder.",
             },
             {
+              problem: "The first MCP23017 breakout (a CJMCU-2317) corrupted its readings: pressing a button on one port made the other port read 0x00.",
+              fix: "I replaced the breakout on 12 May 2026. An I²C scanner tool later found cold solder joints on the board.",
+            },
+            {
+              problem: "The second encoder never read its rotation correctly.",
+              fix: "It was removed on 12 May 2026. All seven remaining inputs moved to one port (GPA0 to GPA6), so one interrupt wire covers every button and the encoder.",
+            },
+            {
               problem: "The display's tearing signal is not connected on this board, so fast scrolling can tear.",
               fix: "Noted as a hardware limit of the CYD. The new display does not have this problem.",
             },
           ],
+        },
+      ],
+    },
+
+    {
+      id: "responsiveness",
+      label: "Problems",
+      title: "Lost inputs and Spotify limits",
+      status: "done",
+      blocks: [
+        {
+          kind: "text",
+          heading: "The encoder problem",
+          text: "When you spin the rotary encoder too fast, it behaves unexpectedly. Sometimes it misses increments, so you will spin it, say, five clicks, but it will only register and move the album three places. Even more unusually, the album art will jump backwards.",
+        },
+        {
+          kind: "text",
+          text: "Polling Spotify was not actually the main cause. The polling loop is fast when nothing else is going on. The real culprit was the Spotify HTTPS calls blocking the main loop for 0.5 to 2 seconds normally, and up to 5 seconds when a request timed out (error -11).\n\nDuring that block, mcp_input_update() does not run at all, so any button press that happens and releases inside that window is lost. The serial logs proved it: the heartbeat messages are spaced 2 seconds apart when healthy, but stretched to 5 to 7 seconds during a cluster of HTTP 502 and 500 errors.",
+        },
+        {
+          kind: "text",
+          heading: "Why an encoder loses steps",
+          text: "A quadrature encoder has two switches, A and B, that change a quarter of a cycle apart. On this encoder, one detent passes through four states, and the order of the states gives the direction. The firmware must see every state. If it misses some, a jump such as 00 to 11 could be two steps in either direction, so steps are lost or counted the wrong way. That is how a fast spin could move fewer albums than clicks, or even jump backwards.",
+        },
+        {
+          kind: "code",
+          text: "One detent, one direction:\nA B   00 → 01 → 11 → 10 → 00\n\nThe other direction:\nA B   00 → 10 → 11 → 01 → 00\n\nSampled too slowly:\nA B   00 → 11      two steps, but which way?",
+        },
+        {
+          kind: "problems",
+          heading: "Causes and fixes in the firmware",
+          items: [
+            {
+              problem: "Serial debug output: each interrupt printed about 800 characters, and at 115,200 baud the output blocked the loop for about 60 ms.",
+              fix: "The input debug prints now only build when a debug flag (MCP_DEBUG) is set, and it is off in normal builds (14 May 2026).",
+            },
+            {
+              problem: "Blocking HTTPS requests stopped the firmware from reading the inputs.",
+              fix: "All inputs moved to one interrupt line, so any change is flagged at once, and HTTP timeouts dropped from 5 seconds to 2 (12 May 2026).",
+            },
+            {
+              problem: "Missed and noisy encoder transitions.",
+              fix: "A seven-state gray-code state machine counts exactly one step per full detent, ignores impossible jumps and resets if it stalls mid-click for 1 second (16 May 2026).",
+            },
+            {
+              problem: "Each click of volume sent its own HTTPS request.",
+              fix: "Volume steps are batched and sent after 300 ms without turning.",
+            },
+            {
+              problem: "Network work still shared the input loop.",
+              fix: "Spotify requests moved to their own FreeRTOS task on core 0, with the interface on core 1. The ESP-IDF CYD builds use separate input and network tasks.",
+            },
+          ],
+        },
+        {
+          kind: "text",
+          text: "The later CYD firmware with these changes has not had a new hardware test, so I have not measured how much they improved it.",
+        },
+        {
+          kind: "text",
+          heading: "Spotify volume and Sonos",
+          text: "I initially had problems getting volume control to work reliably. Some of this came from the firmware, where network requests were blocking the rotary encoder input. However, I also found that Spotify restricted API commands on certain playback devices. My Sonos speakers were one example, which led me to develop a separate method of controlling them directly over the local network.",
+        },
+        {
+          kind: "list",
+          heading: "What the commits recorded",
+          items: [
+            "8 May 2026: Spotify returned HTTP 411 errors for commands. Adding a Content-Length header to every PUT and POST fixed them.",
+            "12 May 2026: volume requests were sent, but the phone volume did not change.",
+            "26 May 2026: Spotify reported the Sonos speaker and the laptop as restricted devices and returned HTTP 403 for playback commands. Playing on the iPhone, the controller's playback commands worked.",
+            "26 May 2026: the Waveshare build controls Sonos directly with UPnP and SOAP commands on port 1400 when the active device is restricted. This was tested on two speakers across two Sonos systems.",
+          ],
+        },
+      ],
+    },
+
+    {
+      id: "smart-home",
+      label: "Home Assistant",
+      title: "Lights, Home Assistant and Thread",
+      status: "done",
+      blocks: [
+        {
+          kind: "text",
+          text: "I started getting a bit carried away with things and figuring out what features I could add. I have smart lights, but I currently just control them with their buttons, and the interface is not the best. There is no way of controlling each light individually, as they are all hooked up to the same button. Any brightness or hue change alters all the lights.\n\nI had a Raspberry Pi from an old project, which I used. After setting things up in software and adding the IKEA lights, I was able to control the lights through my phone in the Home Assistant app, or through a website on my computer.\n\nThis step proved that the lights could be controlled by Home Assistant, so in theory all I needed to do now was figure out a way to get my controller to communicate with Home Assistant.",
+        },
+        {
+          kind: "list",
+          heading: "How it connects",
+          items: [
+            "The Raspberry Pi runs Home Assistant OS, with Music Assistant for the speakers.",
+            "The IKEA lights use Matter over Thread, a low-power mesh network that is separate from Wi-Fi.",
+            "An ESP32-H2 connected to the Raspberry Pi is the Thread radio. The OpenThread Border Router bridges the Thread network to the home network.",
+            "The controller talks to Home Assistant over Wi-Fi. On the Waveshare board, Wi-Fi comes from its ESP32-C6, not from the ESP32-H2.",
+          ],
+        },
+        {
+          kind: "text",
+          text: "Light control from the controller is hardware-verified in the daily Home Assistant build (July 2026). After each on, off or brightness change, the firmware reads the light list again 400 ms later, which gives the Matter command time to reach the light. Stress tests of light control during music playback are still open.",
         },
       ],
     },
@@ -183,7 +330,12 @@ export const homeControllerDeepDive: DeepDive = {
       blocks: [
         {
           kind: "text",
-          text: "The redesign is built on a Waveshare ESP32-P4 board with a 4.3-inch 800 × 480 touchscreen. It has much more memory than the CYD, a dedicated Wi-Fi chip and an audio codec with a speaker output.",
+          heading: "Why I moved on from the CYD",
+          text: "The CYD was a good starting point because I already had one. It let me test whether I could connect an ESP32 to my network and control Spotify, which I was not even sure was possible at first.\n\nOnce I got that working, I started trying to develop the interface I actually wanted. I was imagining being able to smoothly scroll through album artwork, with albums moving and flipping as you browsed through your music.\n\nThe problem was that the CYD really struggled with the graphics. I was having trouble getting even basic 2D shapes to scroll smoothly, let alone the album artwork and animations I had in mind.\n\nI started researching newer boards, particularly the ESP32-S3 and ESP32-P4 versions from Waveshare. I was not sure which one to choose until I watched a demonstration comparing their performance. The difference was massive, and it convinced me to go with the P4.\n\nThe P4 also has dedicated hardware for graphics processing, including a Pixel Processing Accelerator (PPA), which can handle things like scaling, rotating and blending images. This made it much better suited to the interface I wanted to create.\n\nOne concern was that the P4 does not have built-in Wi-Fi. However, Waveshare includes a separate ESP32-C6 chip on the board to handle wireless connectivity, so I could still connect to my network and control Spotify.",
+        },
+        {
+          kind: "text",
+          text: "The redesign is built on a Waveshare ESP32-P4 board with a 4.3-inch 800 × 480 touchscreen and an audio codec with a speaker output.",
         },
         {
           kind: "table",
@@ -202,17 +354,6 @@ export const homeControllerDeepDive: DeepDive = {
           kind: "decisions",
           items: [
             {
-              choice: "Home Assistant as the main backend",
-              reason:
-                "Home Assistant and Music Assistant reduce dependence on one service's API. The same connection also gives control of lights and other devices.",
-              alternatives: "A direct Spotify and Sonos build. It still exists and is also tested on hardware.",
-            },
-            {
-              choice: "Shared code for both backends",
-              reason:
-                "The interface, album data and fonts live in one shared component, so a change reaches both builds at once.",
-            },
-            {
               choice: "A separate RP2040 for the knob",
               reason:
                 "Motor control needs a fast, steady loop. Putting it on its own chip keeps it away from the network and graphics work on the main processor.",
@@ -230,6 +371,27 @@ export const homeControllerDeepDive: DeepDive = {
       blocks: [
         {
           kind: "text",
+          heading: "Controlling Spotify, with and without Home Assistant",
+          text: "Originally, this project was just going to be a music controller. I wanted to see if I could use an ESP32 to control Spotify directly over Wi-Fi, without needing a separate server.\n\nI started with the CYD and Spotify's Web API. The firmware uses HTTPS requests to communicate with Spotify, with an access token to authenticate each request. It can retrieve the current track, playback position and album artwork, as well as send commands for playing, pausing, skipping and changing volume.\n\nThe project was also starting to become more than just a music controller. I wanted to be able to control things like my lights through it, which is where Home Assistant came in.\n\nRather than making Home Assistant a requirement, I decided to maintain two versions of the firmware.",
+        },
+        {
+          kind: "text",
+          heading: "Direct Spotify version",
+          text: "This connects to Spotify's Web API over HTTPS. A separate FreeRTOS task handles the network requests, so the interface does not have to wait for Spotify to respond.\n\nThe Waveshare version polls Spotify every five seconds during playback and every fifteen seconds when paused. It also supports direct Sonos control through UPnP and SOAP commands sent over the local network. This gets around some of the restrictions of Spotify's API.",
+        },
+        {
+          kind: "text",
+          heading: "Home Assistant version",
+          text: "This connects to Home Assistant through a WebSocket connection using a long-lived access token. Rather than repeatedly requesting Spotify's playback state, the firmware receives state-change events from Home Assistant.\n\nPlayback commands go through Home Assistant's media_player services. Music Assistant provides additional functions, including speaker selection and queue management. I can also control lights through Home Assistant's light entities.",
+        },
+        {
+          kind: "text",
+          heading: "Developing both versions",
+          text: "I have kept the interface and hardware-specific code separate from the music-control backend where possible. Both Waveshare versions share the same LVGL interface, album-art handling and input code, while using different methods to communicate with the music system.\n\nI have also developed both approaches for the original CYD, although its Home Assistant version has not yet been tested on hardware.\n\nBoth Waveshare versions have working, hardware-tested baselines. Some of the more recent features and changes still need further testing.",
+        },
+        {
+          kind: "text",
+          heading: "Keeping it reliable",
           text: "The Home Assistant build is the one I use every day. Most of the work at this stage has been making it stay reliable for long periods.\n\nThe limiting resource is not total memory. It is the small amount of fast internal memory that the Wi-Fi link and the display hardware need. When that runs out, the network connection fails.",
         },
         {
@@ -274,19 +436,19 @@ export const homeControllerDeepDive: DeepDive = {
       blocks: [
         {
           kind: "text",
-          text: "The interface is built with LVGL. Albums are browsed in a Cover Flow view, with Carousel and Focus views for moving faster through a large library. The display hardware's graphics accelerator (PPA) helps draw the album art smoothly.\n\nThere are six visual themes, each with a dark and a light version. To tune them without rebuilding each time, I added a Developer tab with 65 live controls, and a browser page that gives an approximate preview of each theme.",
+          text: "The interface is built with LVGL. Albums are browsed in a view where the covers move and flip as you scroll, with Carousel and Focus views for moving faster through a large library. The display hardware's graphics accelerator (PPA) helps draw the album art smoothly.\n\nThere are six visual themes, each with a dark and a light version. To tune them without rebuilding each time, I added a Developer tab with 65 live controls, and a browser page that gives an approximate preview of each theme.",
         },
         {
           kind: "gallery",
           images: [
             {
               src: "/assets/photos/home-controller/p4-cover-flow-colour.jpg",
-              alt: "Cover Flow album browser on the 4.3-inch screen, showing L.A. Woman by The Doors in colour",
-              caption: "The Cover Flow album browser with full-colour album art.",
+              alt: "Album browser on the 4.3-inch screen, showing L.A. Woman by The Doors in colour",
+              caption: "The album browser with full-colour album art.",
             },
             {
               src: "/assets/photos/home-controller/p4-cover-flow.jpg",
-              alt: "Cover Flow album browser in a dithered black-and-white theme, showing Dogrel by Fontaines D.C.",
+              alt: "Album browser in a dithered black-and-white theme, showing Dogrel by Fontaines D.C.",
               caption: "The same browser in a dithered black-and-white theme. The frame rate shows at the top left during development.",
             },
             {
@@ -376,7 +538,7 @@ export const homeControllerDeepDive: DeepDive = {
             ["RP2040", "Two cores, so one core can run only the motor loop. Its PWM slices suit a six-input motor driver, and SimpleFOC runs on it", "Boots and reads the angle sensor on a Pico-style module. Full knob firmware compiles, not tested"],
             ["TMC6300", "Three-phase driver for small gimbal motors. Its 2 to 11 V supply range lets it run directly from one LiPo cell", "Fail-safe test firmware built, not yet run"],
             ["MT6701QT", "14-bit contactless magnetic angle sensor with a fast SSI read", "Tested on the bench over I²C"],
-            ["4 × BF350, HX711", "Detects a press on the knob itself, with no switch under it", "Designed, firmware written"],
+            ["Strain sensing on a flexible PCB, HX711", "Detects a press on the knob itself, with no switch under it", "Planned design. Firmware for the HX711 is written"],
             ["SK6812, SN74AHCT1G125", "Individually addressable RGBW lights. The level shifter makes the 3.3 V signal reliable at 5 V", "Designed, firmware written"],
             ["VEML7700", "Sets the screen brightness from the room light", "Designed, firmware written"],
             ["MAX17048", "Reports the charge of a single cell", "Proposed, not yet ordered"],
@@ -391,9 +553,9 @@ export const homeControllerDeepDive: DeepDive = {
           kind: "decisions",
           items: [
             {
-              choice: "Four strain gauges in a full bridge",
+              choice: "Strain sensing on a flexible PCB",
               reason:
-                "Two gauges stretch and two compress when the knob is pressed. Together they give a stronger, more stable signal than one gauge.",
+                "I plan to follow the newer SmartKnob approach, where surface-mounted resistors on a flexible PCB sense the strain when the knob is pressed. This replaces my earlier plan of four BF350 strain gauges glued in place in a full bridge.",
             },
             {
               choice: "A checked serial protocol between the boards",
@@ -443,7 +605,7 @@ export const homeControllerDeepDive: DeepDive = {
       blocks: [
         {
           kind: "text",
-          text: "The feel of the knob comes from firmware on the RP2040. Everything in this stage is written and compiles, but none of it has driven the motor yet.",
+          text: "The motor allows the user to spin the knob, but it can also give feedback. It can be set up so the motor provides a force against any movement that the user applies to the knob, for example haptic feedback, or clicks to mark each step, such as each increment in volume.\n\nThe feel of the knob comes from firmware on the RP2040. Everything in this stage is written and compiles, but none of it has driven the motor yet.",
         },
         {
           kind: "text",
@@ -487,7 +649,7 @@ export const homeControllerDeepDive: DeepDive = {
         {
           kind: "text",
           heading: "Reference design and my hardware",
-          text: "The detent approach follows the open-source SmartKnob firmware, which has shown it works on SmartKnob's own hardware. On my hardware, the loop has not driven the motor yet. The pole-pair count is assumed to be 7 and is not confirmed. The 5 kHz loop rate is a target, not a measurement.",
+          text: "The motor-driven knob is based on Scott Bezek's SmartKnob, but adapted to my controller. The detent approach follows the open-source SmartKnob firmware, which has shown it works on SmartKnob's own hardware. On my hardware, the loop has not driven the motor yet. The pole-pair count is assumed to be 7 and is not confirmed. The 5 kHz loop rate is a target, not a measurement.",
         },
         {
           kind: "checklist",
@@ -575,10 +737,10 @@ export const homeControllerDeepDive: DeepDive = {
           heading: "How far each part has been tested",
           head: ["Level", "What is at this level"],
           rows: [
-            ["Verified on hardware", "Original CYD prototype with one encoder and four buttons. Both P4 builds. RP2040 boot and USB serial. MT6701 reads over I²C. Motor phase resistance"],
+            ["Verified on hardware", "Original CYD prototype with one encoder and four buttons (May 2026; needs a new test after later changes). Both P4 builds. RP2040 boot and USB serial. MT6701 reads over I²C. Motor phase resistance"],
             ["Firmware written, not tested on hardware", "Full RP2040 knob firmware (it compiles, using 4.6 % of RAM and 4.6 % of flash). The P4 side of the knob link. The fail-safe motor test. Over-the-air updates and crash reports. BOLD and HIFI themes"],
-            ["Prototype hardware in development", "Daughterboard schematic in KiCad. Enclosure CAD. Strain-gauge flexures"],
-            ["Planned", "Custom PCB. Battery, charging and dock. Thermal and long-run tests of the knob"],
+            ["Prototype hardware in development", "Daughterboard schematic in KiCad. Enclosure CAD"],
+            ["Planned", "Custom PCB. Flexible PCB strain sensing. Battery, charging and dock. Thermal and long-run tests of the knob"],
           ],
         },
       ],
@@ -602,7 +764,8 @@ export const homeControllerDeepDive: DeepDive = {
             ["The MT6701 sits on the knob axis, directly under the magnet", "The sensor reads the direction of the magnet's field, so the magnet must be centred and at a small air gap", "To be checked with the final knob fixture"],
             ["The TMC6300, the motor connector and the battery pads sit close together", "The motor phase traces carry the most current on the board", "Layout rule for the PCB"],
             ["The RP2040, its crystal and its flash sit close together", "They share short, fast signals", "Layout rule for the PCB"],
-            ["The strain gauges sit on flexure beams cut into the PCB, two in tension and two in compression", "The board must bend a measurable amount when the knob is pressed", "SmartKnob's slots are a reference only. My own beam shape is not designed yet"],
+            ["The motor's own bearings support the rotating knob", "Follows the SmartKnob mechanical approach", "Planned, not built"],
+            ["Press sensing on a flexible PCB with surface-mounted resistors", "A press on the knob must strain the flexible PCB a measurable amount", "Planned, following the newer SmartKnob approach. Not designed or tested"],
             ["Four MX hot-swap sockets on the PCB, one under each switch", "Switches can be changed without soldering", "Socket footprint chosen"],
             ["Motor connector: a three-pin JST or a screw terminal", "Depends on the motor's leads", "Open"],
           ],
@@ -617,7 +780,7 @@ export const homeControllerDeepDive: DeepDive = {
           heading: "Status",
           items: [
             { text: "Enclosure CAD", status: "current" },
-            { text: "Flexure beam shape for the strain gauges", status: "planned" },
+            { text: "Flexible PCB for knob-press sensing", status: "planned" },
             { text: "Check the magnet position under the final knob fixture", status: "planned" },
             { text: "Print and assemble a test enclosure", status: "planned" },
           ],

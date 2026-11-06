@@ -19,7 +19,7 @@
   <rect class="t" x="20" y="30" width="260" height="70" rx="6"/>
   <text x="34" y="56" class="b">Raspberry Pi 5</text>
   <text x="34" y="76" class="s">Home Assistant and Music Assistant</text>
-  <text x="34" y="91" class="s">speakers, Spotify Connect, lights</text>
+  <text x="34" y="91" class="s">Thread lights via an ESP32-H2 radio</text>
   <path class="l" d="M150 100V166" marker-start="url(#a)" marker-end="url(#a)"/>
   <text x="160" y="138" class="s">Wi-Fi, WebSocket</text>
 
@@ -75,8 +75,8 @@
 
   <!-- strain -->
   <rect class="d" x="660" y="180" width="280" height="50" rx="6"/>
-  <text x="672" y="201" class="b">HX711 + 4 × BF350 gauges</text>
-  <text x="672" y="218" class="s">Full bridge on PCB flexures, 80 SPS</text>
+  <text x="672" y="201" class="b">Knob press sensing, HX711</text>
+  <text x="672" y="218" class="s">Strain resistors on a flexible PCB</text>
 
   <!-- buttons -->
   <rect class="d" x="660" y="260" width="280" height="50" rx="6"/>
