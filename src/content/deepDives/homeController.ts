@@ -335,7 +335,7 @@ export const homeControllerDeepDive: DeepDive = {
         },
         {
           kind: "text",
-          text: "Each button selects a function, and the knob changes its behaviour to suit that function. The common actions stay on dedicated physical controls, and the touchscreen keeps the settings, text entry and less frequent actions (see \"Why a touchscreen?\" above). Because the motor's response is set in software, each mode can also feel different: different resistance, clicks, limits and feedback help the hand tell the modes apart without looking at the screen. A small initial resistance means a knock or a brush against the knob does not change anything.\n\nEverything in this stage is a design intention. The proposed long-press time is 500 ms. The exact resistance, breakout force and timings will need physical testing on the motor.",
+          text: "Each button selects a function, and the knob changes its behaviour to suit that function. The common actions stay on dedicated physical controls, and the touchscreen keeps the settings, text entry and less frequent actions (see \"Why a touchscreen?\" above). Because the motor's response is set in software, each mode can also feel different: different resistance, clicks, limits and feedback help the hand tell the modes apart without looking at the screen. A small initial resistance means a knock or a brush against the knob does not change anything.\n\nApart from the Lights scheme below, which is now confirmed, everything in this stage is a design intention. The proposed long-press time is 500 ms. The exact resistance, breakout force and timings will need physical testing on the motor.",
         },
         {
           kind: "decisions",
@@ -359,7 +359,7 @@ export const homeControllerDeepDive: DeepDive = {
             {
               choice: "Lights",
               reason:
-                "Press to enter lighting control. Turning selects a light, a short press toggles it, and a long press enters brightness or colour adjustment. The knob's resistance and limits change with the setting.",
+                "Press to open the Lights screen. Turning selects a light, a short press toggles it, and a long press enters adjustment. There, turning changes brightness or hue, a short press switches between the two, and a long press returns to the light list.",
             },
           ],
         },
@@ -371,12 +371,43 @@ export const homeControllerDeepDive: DeepDive = {
         {
           kind: "text",
           heading: "Lights",
-          text: "For brightness, I considered hard end stops. For hue, I considered continuous rotation with no end stops. I also considered a temporary resistance to prevent accidental adjustments. My notes have more than one way of navigating between the lights and their settings, so the exact scheme is still an open design decision.",
+          text: "For brightness, I considered hard end stops. For hue, I considered continuous rotation with no end stops. I also considered a temporary resistance to prevent accidental adjustments.",
+        },
+        {
+          kind: "decisions",
+          heading: "Lights: the agreed scheme",
+          items: [
+            {
+              choice: "Light selection",
+              reason:
+                "Turn to move between lights. A short press toggles the selected light on or off. A long press (500 ms) opens adjustment for that light.",
+            },
+            {
+              choice: "Adjustment",
+              reason:
+                "Turn to change brightness (the default) or hue. A short press switches between brightness and hue. A long press (500 ms) returns to light selection.",
+            },
+          ],
+        },
+        {
+          kind: "text",
+          text: "This scheme is now a confirmed design decision. A short press acts on release. A long press acts once at 500 ms, and its release does not also count as a short press. The selected light stays the same when entering or leaving adjustment, and opening the Lights screen cannot toggle a light by accident.\n\nThe proposed haptics keep these ideas. Light selection has distinct, medium detents, one for each light. Brightness has small, precise detents, with motor end stops at 0 % and 100 %. Hue turns continuously through the colour range, with no end stops. The temporary resistance against accidental adjustment is still a design intention. It is not in the firmware, because a constant motor torque needs checking against motor heat and battery use first.",
+        },
+        {
+          kind: "checklist",
+          heading: "Lights: where each part stands",
+          items: [
+            { text: "Agreed knob scheme for lights: confirmed design", status: "done" },
+            { text: "Touchscreen light controls (on, off, brightness, colour): tested on hardware", status: "done" },
+            { text: "Knob light firmware on the P4 and RP2040: written and covered by automated tests, not yet tested on hardware", status: "current" },
+            { text: "Selection, brightness and hue haptics: first values only, need tuning on the motor", status: "planned" },
+            { text: "Resistance against accidental knob movement: design intention, not implemented", status: "planned" },
+          ],
         },
         {
           kind: "text",
           heading: "What exists in the firmware",
-          text: "The P4 firmware has a first version of this mapping. It is written, but not tested on hardware. The four buttons select Now Playing, Volume, Albums and Lights, and each mode sends its own detent profile to the RP2040 (see the table in Haptics). In this first version, volume moves 1 % per detent rather than the proposed 2 %, each scrub detent moves 500 ms through the track, and Lights is a placeholder. Long presses, the breakout force and precision mode are not written yet.",
+          text: "The P4 firmware has a first version of this mapping. It is written, but not tested on hardware. The four buttons select Now Playing, Volume, Albums and Lights, and each mode sends its own detent profile to the RP2040 (see the table in Haptics). In this first version, volume moves 1 % per detent rather than the proposed 2 %, and each scrub detent moves 500 ms through the track. The Lights mode follows the agreed scheme above. To time a press, the RP2040 now reports whether the knob is held, and the P4 measures how long. Long presses in the other modes, the breakout force and precision mode are not written yet.",
         },
         {
           kind: "text",
