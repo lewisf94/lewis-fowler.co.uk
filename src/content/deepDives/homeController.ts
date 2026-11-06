@@ -107,7 +107,7 @@ export const homeControllerDeepDive: DeepDive = {
         },
         {
           kind: "text",
-          text: "The PowerBoost 1000C uses an MCP73871 charger, which charges the cell at up to 1 A, and a TPS61090 boost converter, which makes 5.2 V from the 3.7 V cell. Adafruit describes the load sharing as switching to USB power when it is available, so the board can charge and keep its output running at the same time. A USB-C charger only supplies power when it sees 5.1 kΩ pull-down resistors on the device's CC pins, which the breakout lacked. The redesigned daughterboard includes them.",
+          text: "The PowerBoost 1000C uses an MCP73871 charger, which charges the cell at up to 1 A, and a TPS61090 boost converter, which makes 5.2 V from the 3.7 V cell. Adafruit describes the load sharing as switching to USB power when it is available, so the board can charge and keep its output running at the same time. A USB-C charger only supplies power when it sees 5.1 kΩ pull-down resistors on the device's CC pins, which the breakout lacked. The planned daughterboard design includes them.",
         },
         {
           kind: "gallery",
