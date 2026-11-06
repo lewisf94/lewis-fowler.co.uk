@@ -103,11 +103,11 @@ export const homeControllerDeepDive: DeepDive = {
         {
           kind: "text",
           heading: "Power",
-          text: "For power management, I went for the PowerBoost 1000C, as this was another part I had from a previous project. It is great for this situation as it has a JST port, which lets you quickly connect a LiPo battery.\n\nIt also has load sharing. When the device is running on the battery and the cable is plugged in to charge, the power comes from the cable, instead of the battery constantly charging and discharging while the cable is in.\n\nAnother issue I had was that the PowerBoost input is micro-USB, and I wanted it to be USB-C, as this is the new standard for cables and the most common type.",
+          text: "For power management, I went for the PowerBoost 1000C, as this was another part I had from a previous project. It is great for this situation as it has a JST port, which lets you quickly connect a LiPo battery.\n\nIt also has load sharing. When the device is running on the battery and the cable is plugged in to charge, the power comes from the cable, instead of the battery constantly charging and discharging while the cable is in.\n\nAnother issue I had was that the PowerBoost input is micro-USB, and I wanted it to be USB-C, as this is the new standard for cables and the most common type. I tried to get one working with a USB-C breakout board, but could not, as it did not have the resistors on it.",
         },
         {
           kind: "text",
-          text: "The PowerBoost 1000C uses an MCP73871 charger, which charges the cell at up to 1 A, and a TPS61090 boost converter, which makes 5.2 V from the 3.7 V cell. Adafruit describes the load sharing as switching to USB power when it is available, so the board can charge and keep its output running at the same time.",
+          text: "The PowerBoost 1000C uses an MCP73871 charger, which charges the cell at up to 1 A, and a TPS61090 boost converter, which makes 5.2 V from the 3.7 V cell. Adafruit describes the load sharing as switching to USB power when it is available, so the board can charge and keep its output running at the same time. A USB-C charger only supplies power when it sees 5.1 kΩ pull-down resistors on the device's CC pins, which the breakout lacked. The redesigned daughterboard includes them.",
         },
         {
           kind: "gallery",
@@ -177,8 +177,8 @@ export const homeControllerDeepDive: DeepDive = {
               fix: "I replaced the breakout on 12 May 2026. An I²C scanner tool later found cold solder joints on the board.",
             },
             {
-              problem: "The second encoder never read its rotation correctly.",
-              fix: "It was removed on 12 May 2026. All seven remaining inputs moved to one port (GPA0 to GPA6), so one interrupt wire covers every button and the encoder.",
+              problem: "The second encoder never read its rotation correctly. The encoder itself turned out to be faulty.",
+              fix: "I removed it on 12 May 2026. All seven remaining inputs moved to one port (GPA0 to GPA6), so one interrupt wire covers every button and the encoder.",
             },
             {
               problem: "The display's tearing signal is not connected on this board, so fast scrolling can tear.",
@@ -277,7 +277,7 @@ export const homeControllerDeepDive: DeepDive = {
           items: [
             "The Raspberry Pi runs Home Assistant OS, with Music Assistant for the speakers.",
             "The IKEA lights use Matter over Thread, a low-power mesh network that is separate from Wi-Fi.",
-            "An ESP32-H2 connected to the Raspberry Pi is the Thread radio. The OpenThread Border Router bridges the Thread network to the home network.",
+            "An ESP32-H2, plugged into the Raspberry Pi over USB, is the Thread radio. The OpenThread Border Router add-on in Home Assistant bridges the Thread network to the home network.",
             "The controller talks to Home Assistant over Wi-Fi. On the Waveshare board, Wi-Fi comes from its ESP32-C6, not from the ESP32-H2.",
           ],
         },
@@ -297,7 +297,7 @@ export const homeControllerDeepDive: DeepDive = {
         {
           kind: "text",
           heading: "From two knobs to one",
-          text: "The main focus of this project has always been making something satisfying to use. It needed to feel better than controlling everything through a phone, otherwise there would be little reason to use it.\n\nMy original design had two conventional knobs. Only one of them was wired up and tested in the prototype. It worked, but there was nothing particularly interesting about using it. It felt like any other knob.\n\nWhen I came across Scott Bezek's SmartKnob, it immediately looked like something I would want to play around with. It was playful and satisfying, but also practical.\n\nThe motor-driven feedback meant that one knob could adapt to different functions, with its physical behaviour controlled through software. It could create different levels of resistance, clicks or limits, depending on what you were controlling.\n\nThis also made the overall design cleaner and more flexible. Instead of having two knobs with fixed functions, I could have one that changes how it behaves depending on what I need it to do.",
+          text: "The main focus of this project has always been making something satisfying to use. It needed to feel better than controlling everything through a phone, otherwise there would be little reason to use it.\n\nMy original design had two conventional knobs. The second encoder turned out to be faulty, so only one was used in the prototype. It worked, but there was nothing particularly interesting about using it. It felt like any other knob.\n\nWhen I came across Scott Bezek's SmartKnob, it immediately looked like something I would want to play around with. It was playful and satisfying, but also practical.\n\nThe motor-driven feedback meant that one knob could adapt to different functions, with its physical behaviour controlled through software. It could create different levels of resistance, clicks or limits, depending on what you were controlling.\n\nThis also made the overall design cleaner and more flexible. Instead of having two knobs with fixed functions, I could have one that changes how it behaves depending on what I need it to do.",
         },
         {
           kind: "text",
