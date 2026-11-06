@@ -323,6 +323,70 @@ export const homeControllerDeepDive: DeepDive = {
     },
 
     {
+      id: "interactions",
+      label: "Interaction",
+      title: "Designing the controls and interactions",
+      status: "current",
+      blocks: [
+        {
+          kind: "text",
+          heading: "General principles",
+          text: "Short press on any of the buttons activates its primary local action, or switches to that mode if it is not active.\n\nLong press allows the user to dive deeper and have more control.\n\nButton plus turning the knob scrolls or adjusts.\n\nThe knob requires a breakout force before activating. This stops any accidental nudges on the controller from causing any unwanted input.",
+        },
+        {
+          kind: "text",
+          text: "Each button selects a function, and the knob changes its behaviour to suit that function. The common actions stay on dedicated physical controls, and the touchscreen keeps the settings, text entry and less frequent actions (see \"Why a touchscreen?\" above). Because the motor's response is set in software, each mode can also feel different: different resistance, clicks, limits and feedback help the hand tell the modes apart without looking at the screen. A small initial resistance means a knock or a brush against the knob does not change anything.\n\nEverything in this stage is a design intention. The proposed long-press time is 500 ms. The exact resistance, breakout force and timings will need physical testing on the motor.",
+        },
+        {
+          kind: "decisions",
+          heading: "Intended behaviour in each mode",
+          items: [
+            {
+              choice: "Now Playing",
+              reason:
+                "Press to open the current track, and press again to play or pause. Turning moves through the track, after a small initial resistance. Long-press for track navigation, with stronger detents: each one skips or restarts a track. Release to return to normal track control.",
+            },
+            {
+              choice: "Volume",
+              reason:
+                "Fine clicks, with motor end stops at minimum and maximum. Proposed: 2 % per step, or 0.5 % in a precision mode. Holding the Volume button for 500 ms from another menu shows volume temporarily, and releasing it goes back to the previous screen.",
+            },
+            {
+              choice: "Albums",
+              reason:
+                "Press to open the album browser. Turning moves between albums with medium detents. A knob press or the button selects an album, and a longer press switches between artwork and the tracklist.",
+            },
+            {
+              choice: "Lights",
+              reason:
+                "Press to enter lighting control. Turning selects a light, a short press toggles it, and a long press enters brightness or colour adjustment. The knob's resistance and limits change with the setting.",
+            },
+          ],
+        },
+        {
+          kind: "text",
+          heading: "From my notes",
+          text: "Turning the knob scrubs through the current song. To stop accidental scrubbing, it requires a force to activate the scrubbing, and then it smoothly rotates. Every single physical click passed in either direction fires one discrete track skip or restart command.\n\nFor albums, turning the knob scrolls through albums with a similar feel to Now Playing and scrolling through songs, with medium clicks between albums.",
+        },
+        {
+          kind: "text",
+          heading: "Lights",
+          text: "For brightness, I considered hard end stops. For hue, I considered continuous rotation with no end stops. I also considered a temporary resistance to prevent accidental adjustments. My notes have more than one way of navigating between the lights and their settings, so the exact scheme is still an open design decision.",
+        },
+        {
+          kind: "text",
+          heading: "What exists in the firmware",
+          text: "The P4 firmware has a first version of this mapping. It is written, but not tested on hardware. The four buttons select Now Playing, Volume, Albums and Lights, and each mode sends its own detent profile to the RP2040 (see the table in Haptics). In this first version, volume moves 1 % per detent rather than the proposed 2 %, each scrub detent moves 500 ms through the track, and Lights is a placeholder. Long presses, the breakout force and precision mode are not written yet.",
+        },
+        {
+          kind: "text",
+          heading: "Configuration",
+          text: "The aim is to make changes through the controller rather than by editing the firmware: reassigning the four buttons to different functions, changing their order, using keycaps with tactile or visual identifiers, LEDs under each button, and adjustable haptic profiles with their own detent strength and spacing.\n\nToday, the touchscreen Settings page covers the display, sound and setup, plus a Developer tab with 65 live controls for tuning the interface themes. The button functions and the haptic profiles are still fixed in the firmware.",
+        },
+      ],
+    },
+
+    {
       id: "platform",
       label: "New platform",
       title: "Moving to the ESP32-P4",
@@ -373,6 +437,15 @@ export const homeControllerDeepDive: DeepDive = {
           kind: "text",
           heading: "Controlling Spotify, with and without Home Assistant",
           text: "Originally, this project was just going to be a music controller. I wanted to see if I could use an ESP32 to control Spotify directly over Wi-Fi, without needing a separate server.\n\nI started with the CYD and Spotify's Web API. The firmware uses HTTPS requests to communicate with Spotify, with an access token to authenticate each request. It can retrieve the current track, playback position and album artwork, as well as send commands for playing, pausing, skipping and changing volume.\n\nThe project was also starting to become more than just a music controller. I wanted to be able to control things like my lights through it, which is where Home Assistant came in.\n\nRather than making Home Assistant a requirement, I decided to maintain two versions of the firmware.",
+        },
+        {
+          kind: "text",
+          heading: "Why polling, and why events",
+          text: "Ideally, what I would use for this project would be a webhook or a WebSocket. Because it is a RESTful API, the only way to get information from Spotify is polling. The Raspberry Pi can do the polling for the controller and then process the information, so it can be quickly and easily displayed on the controller screen.",
+        },
+        {
+          kind: "text",
+          text: "Spotify's public Web API has no webhook or WebSocket for playback changes, so the direct firmware asks for the player state (/v1/me/player) on a timer. Each request is a full HTTPS exchange, which is why it has to run away from the display and input code (see \"Lost inputs and Spotify limits\"). The Home Assistant version is the event-driven approach: Home Assistant tracks the players and sends changes over one open WebSocket. The controller still downloads and decodes the album art itself.",
         },
         {
           kind: "text",
@@ -772,6 +845,29 @@ export const homeControllerDeepDive: DeepDive = {
         },
         {
           kind: "text",
+          heading: "Magnetic kickstand",
+          text: "A U-shaped rod rotates outward to act as the rear stand. Neodymium magnets are embedded in the part where the rod rests when stowed. This provides a satisfying tactile snap when closing the stand, securely holding it flush against the body when not in use.",
+        },
+        {
+          kind: "text",
+          text: "The pivot needs enough friction to hold the stand at its angle when the buttons and knob are pressed, but not so much that it is hard to open by hand. PTFE or brass bushings are options for the pivot. The magnets also need to hold the stand closed without making it hard to open, and the stand should look clean when closed. The stand is not made or tested yet, so its friction, magnet force and durability are not known.",
+        },
+        {
+          kind: "text",
+          heading: "Knob ergonomics",
+          text: "Heavy knob: similar size and feel to the knob on the DaVinci Resolve Speed Editor. Metal, with a rubber side for grip.\n\nIt cannot be so heavy that the BLDC motor struggles to create crisp detents.\n\nIt should be possible to operate it with a single finger or thumb, so it should allow pressing down at a single point, even near the edge of the knob.",
+        },
+        {
+          kind: "text",
+          text: "This is a trade-off between feel and control. A heavier knob has more rotational inertia, which gives a smooth spin. But the motor has to accelerate and stop that inertia at every detent (torque = inertia × angular acceleration). With the same motor torque, more inertia makes each detent softer and slower to settle. Mass far from the axis matters most, because inertia rises with the square of the radius. The rubber grip has to work for a single finger as well as a full hand. A press near the edge puts an off-centre load on the press sensor, so the flexible PCB has to detect a press anywhere on the knob, not only at the centre.",
+        },
+        {
+          kind: "text",
+          heading: "Enclosure and materials",
+          text: "The enclosure is planned as a 3D-printed part, for prototyping and for anyone who wants to build their own, with a machined aluminium version as a possible later option. Heat-set threaded inserts will take the screws, so the case can be opened many times to reach the electronics and change parts, without wearing out printed threads.",
+        },
+        {
+          kind: "text",
           heading: "What the first prototype taught me",
           text: "In the first enclosure, the buttons and the input expander sat on two 30 × 70 mm protoboards, joined with loose wiring and lever connectors. It was quick to change, but it meant a lot of loose wiring inside the case. The redesign puts the buttons, sensors and lights on one daughterboard instead.",
         },
@@ -783,6 +879,8 @@ export const homeControllerDeepDive: DeepDive = {
             { text: "Flexible PCB for knob-press sensing", status: "planned" },
             { text: "Check the magnet position under the final knob fixture", status: "planned" },
             { text: "Print and assemble a test enclosure", status: "planned" },
+            { text: "Kickstand pivot and magnets", status: "planned" },
+            { text: "Knob design: mass, grip and edge presses", status: "planned" },
           ],
         },
       ],
